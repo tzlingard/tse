@@ -9,3 +9,6 @@
 
 #Debugging Symbols
 *.dSYM
+
+#VSCode Workspace
+*.code-workspace
