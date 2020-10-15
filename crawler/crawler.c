@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include "../utils/webpage.h"
 #include "../utils/queue.h"
+#include <string.h>
+
 int main(void) {
     char *html;
-    queue_t* internals= qopen(void);
+    queue_t* internals= qopen();
     webpage_t *page = webpage_new("https://thayer.github.io/engs50/", 0, NULL);
     if(webpage_fetch(page)) {
         html = webpage_getHTML(page);
@@ -26,10 +28,10 @@ int main(void) {
     int i;
     int styleCount = 0;
     for(i=1; i<sizeof(internals); ++i){
-        webpage_t internalPage=qget(internals); /*pop URL from queue, and store it*/  
-        printf("URL: %s",internalPage); /*print out URL*/
+        webpage_t* internalPage = (webpage_t*)qget(internals); /*pop URL from queue, and store it*/  
+        printf("URL: %s\n", webpage_getURL(internalPage)); /*print out URL*/
         
-        char *html= getHTML(const webpage_t *internalPage); /*get the html*/
+        char *html= webpage_getHTML(internalPage); /*get the html*/
         if (strcmp(html, "CodingStyle.html")){ /*if the html is CodingStyle.html*/
             styleCount=styleCount+1; /*add to our counter*/ 
         }
