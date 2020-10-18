@@ -35,6 +35,8 @@ queue_t* qopen(void){
     printf("[Error: malloc failed allocating person]\n");
     return NULL;
   }
+	head->front = NULL;
+	head->back = NULL;
   return (queue_t*)head;
 }
 

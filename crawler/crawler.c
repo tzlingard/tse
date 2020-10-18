@@ -12,54 +12,89 @@ bool checkURLs(void* url1, const void* url2) {
 	else return true;
 }
 
+void printURL(void *page){
+	if(page==NULL){return;}
+	printf("%s\n",webpage_getURL((webpage_t*)page));
+}
+
+
+bool urlcheck(void* elementp, const void* searchkeyp){
+	webpage_t* p = (webpage_t*)elementp;
+	char* url = (char*)searchkeyp;
+	return (!strcmp(webpage_getURL(p),url));
+}
+
 int main(void) {
 	queue_t* internals= qopen();
-	int len = 0;
-	//hashtable_t* ht = hopen(10);
+	hashtable_t* table = hopen(2); //not sure if 20 is a good number to use but i dont think it really matters
+	
 	webpage_t *page = webpage_new("https://thayer.github.io/engs50/", 0, NULL);
-	char* html = NULL;
+	webpage_t *new;
+
 	if(webpage_fetch(page)) {
-		html = webpage_getHTML(page);
+		//		char* html = webpage_getHTML(page);
 		char* result = NULL;
 		int i = 0;
+		hput(table, (void*)page, (webpage_getURL(page)), strlen(webpage_getURL(page)));
 		while ((i = webpage_getNextURL(page, i, &result)) > 0) {
-			if(IsInternalURL(result)) {
-				//if (hsearch(ht, checkURLs, result, sizeof(result)) == NULL) { //if the URL isn't already in the hash table
-					webpage_t* new = webpage_new(result, 1, NULL); //create a new webpage for the given URL
-					qput(internals, (void*)new);
-					len++;
-					//hput(ht, (void*)result, (char*)&i, sizeof(i));
-					printf("Internal: %s\n",result);
-				//}
-			}
-			else {
-				printf("External: %s\n",result);
+			if(hsearch(table, urlcheck, result, sizeof(result))==NULL){
+				if(IsInternalURL(result)) {
+					new = webpage_new(result, 1, NULL); //create a new webpage for the given URL
+					qput(internals, new);
+					//printf("Internal: %s\n",result);
+					hput(table, (void*)new, (webpage_getURL(new)), sizeof(webpage_getURL(new)));
+				}
+				else {
+					//printf("External: %s\n",result);
+				}
+				
 			}
 			free(result);
+			printf("\n");
 		}
+	
 	}
 	else {
 		exit(EXIT_FAILURE);
 	}
+	printf("\n");
+
+	//print all urls in queue
+	printf("printing queue\n");
+	qapply(internals, printURL);
+
+	/*
+	printf("\n");
 	//Ensure that there are 2 stylecounts
 	int i;
 	int styleCount = 0;
 	char* styleURL = "https://thayer.github.io/engs50/Resources/CodingStyle.html";
 	char* currURL;
 	for(i=0; i<len-1; i++){
-		webpage_t* p = (webpage_t*)(qget(internals)); /*pop URL from queue, and store it*/  
+		webpage_t* p = (webpage_t*)(qget(internals));
 		currURL = webpage_getURL(p);
 		printf("URL: %s\n", currURL);
-		if (strcmp(currURL, styleURL)==0){ /*if the html is CodingStyle.html*/
-			styleCount=styleCount+1; /*add to our counter*/ 
+		if (strcmp(currURL, styleURL)==0){ 
+			styleCount=styleCount+1; 
 		}
 		webpage_delete(p);
 	}
+	//	printf("There are %d CodingStyle.html entries\n", styleCount);
+	*/
+
+	//free all memory stored in queue
+		webpage_t* site = NULL;
+	while((site = (webpage_t*)qget(internals))!=NULL){
+		free(webpage_getURL(site));
+		free(webpage_getHTML(site));
+		free(site);
+	}
+	hclose(table);
+	
 	webpage_delete(page);	
 	qclose(internals);
-	//hclose(ht);
-	printf("There are %d CodingStyle.html entries\n", styleCount);
-  
 	exit(EXIT_SUCCESS);
 	return 0;
+	
 }
+
