@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include "../utils/webpage.h"
 #include "../utils/queue.h"
+#include "../utils/hash.h"
 #include <string.h>
-
-
 
 void printURL(void *page){
 	if(page==NULL){return;}
@@ -11,32 +10,38 @@ void printURL(void *page){
 }
 
 
+bool urlcheck(void* elementp, const void* searchkeyp){
+	webpage_t* p = (webpage_t*)elementp;
+	char* url = (char*)searchkeyp;
+	return (!strcmp(webpage_getURL(p),url));
+}
+
 int main(void) {
 	queue_t* internals= qopen();
+	hashtable_t* table = hopen(2); //not sure if 20 is a good number to use but i dont think it really matters
+	
 	webpage_t *page = webpage_new("https://thayer.github.io/engs50/", 0, NULL);
 	webpage_t *new;
 
 	if(webpage_fetch(page)) {
 		//		char* html = webpage_getHTML(page);
-		
 		char* result = NULL;
 		int i = 0;
-		
+		hput(table, (void*)page, (webpage_getURL(page)), strlen(webpage_getURL(page)));
 		while ((i = webpage_getNextURL(page, i, &result)) > 0) {
-			//if(strcmp(result, "https://thayer.github.io/engs50/")!=0){
+			if(hsearch(table, urlcheck, result, sizeof(result))==NULL){
 				if(IsInternalURL(result)) {
 					new = webpage_new(result, 1, NULL); //create a new webpage for the given URL
-					printf("Putting %s into queue\n", result);
 					qput(internals, new);
-					printf("Internal: %s\n",result);
+					//printf("Internal: %s\n",result);
+					hput(table, (void*)new, (webpage_getURL(new)), sizeof(webpage_getURL(new)));
 				}
 				else {
-					printf("External: %s\n",result);
+					//printf("External: %s\n",result);
 				}
-				//if(strcmp(result, "https://thayer.github.io/engs50/")!=0){
-					free(result);
-					//}
-			//}
+				
+			}
+			free(result);
 			printf("\n");
 		}
 	
@@ -71,16 +76,19 @@ int main(void) {
 	*/
 
 	//free all memory stored in queue
-	webpage_t* site = NULL;
+		webpage_t* site = NULL;
 	while((site = (webpage_t*)qget(internals))!=NULL){
 		free(webpage_getURL(site));
 		free(webpage_getHTML(site));
 		free(site);
 	}
+	hclose(table);
+	
 	webpage_delete(page);	
 	qclose(internals);
 
 	exit(EXIT_SUCCESS);
 	return 0;
+	
 }
 
