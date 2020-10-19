@@ -32,7 +32,7 @@ int32_t pagesave(webpage_t* pagep, int id, char* dirname) {
 	printf("dirname = %s, dest = %s\n", dirname, dest);
 	if (access(dest, F_OK)) { //if the file doesn't exist yet
 		FILE* fp;
-		fp = fopen(dest, "w+");
+		fp = fopen(dest, "w");
 		fprintf(fp, "%s\n%d\n%d\n%s", webpage_getURL(pagep), webpage_getDepth(pagep), webpage_getHTMLlen(pagep), webpage_getHTML(pagep));
 		fclose(fp);
 		return 0;
@@ -46,10 +46,10 @@ int main(void) {
 	queue_t* internals= qopen();
 	hashtable_t* table = hopen(20); //not sure if 20 is a good number to use but i dont think it really matters
 	webpage_t *page = webpage_new("https://thayer.github.io/engs50/", 0, NULL);
-	pagesave(page, 1, "../pages");
 	webpage_t *new;
 	if(webpage_fetch(page)) {
 		//		char* html = webpage_getHTML(page);
+		pagesave(page, 1, "../pages");
 		char* result = NULL;
 		int i = 0;
 		hput(table, (void*)page, (webpage_getURL(page)), strlen(webpage_getURL(page)));
