@@ -29,7 +29,6 @@ bool urlcheck(void* elementp, const void* searchkeyp){
 int32_t pagesave(webpage_t* pagep, int id, char* dirname) {
 	char dest[80];
 	sprintf(dest, "%s/%d", dirname, id);
-	printf("dirname = %s, dest = %s\n", dirname, dest);
 	if (access(dest, F_OK)) { //if the file doesn't exist yet
 		FILE* fp;
 		fp = fopen(dest, "w");
@@ -42,24 +41,46 @@ int32_t pagesave(webpage_t* pagep, int id, char* dirname) {
 	}
 }
 
-int main(void) {
+int main(int argc, char* argv[]) {
+	const char* usage = "usage: crawler <seedurl> <pagedir> <maxdepth>";
+	char* seedurl, pagedir;
+	int maxdepth;
+	if (argc != 3) {
+		printf("%s\n", usage);
+		return -1;
+	}
+	sscanf(argv[1], "%s", seedurl); //TODO: debug this
+	sscanf(argv[2], "%s", pagedir);
+	sscanf(argv[3], "%d", &maxdepth);
+	if (access(pagedir, R_OK) != 0) {
+		printf("Page directory is not valid.\n%s\n",usage);
+		return -1;
+	}
+	if (maxdepth < 0) {
+		printf("Enter a non-negative max depth.\n%s\n",usage);
+		return -1;
+	}
 	queue_t* internals= qopen();
 	hashtable_t* table = hopen(20); //not sure if 20 is a good number to use but i dont think it really matters
-	webpage_t *page = webpage_new("https://thayer.github.io/engs50/", 0, NULL);
+	webpage_t *page = webpage_new(seedurl, 0, NULL);
 	webpage_t *new;
 	if(webpage_fetch(page)) {
-		//		char* html = webpage_getHTML(page);
-		pagesave(page, 1, "../pages");
+		int id = 1;
+		pagesave(page, id, pagedir);
+		id++;
 		char* result = NULL;
 		int i = 0;
 		hput(table, (void*)page, (webpage_getURL(page)), strlen(webpage_getURL(page)));
-		while ((i = webpage_getNextURL(page, i, &result)) > 0) {
+		int depth = 1;
+		//TODO: save crawled web pages with new id (fetch first)
+		while ((i = webpage_getNextURL(page, i, &result)) > 0 && depth <= maxdepth) {
 			if(hsearch(table, urlcheck, result, sizeof(result))==NULL){
 				if(IsInternalURL(result)) {
 					new = webpage_new(result, 1, NULL); //create a new webpage for the given URL
 					qput(internals, new);
 					//printf("Internal: %s\n",result);
 					hput(table, (void*)new, (webpage_getURL(new)), sizeof(webpage_getURL(new)));
+					depth++;
 				}
 				else {
 					//printf("External: %s\n",result);
