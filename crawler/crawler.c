@@ -4,6 +4,8 @@
 #include "../utils/hash.h"
 #include <string.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <unistd.h>
 
 bool checkURLs(void* url1, const void* url2) {
 	if (strcmp((char*)url1, (char*) url2)) {
@@ -24,13 +26,28 @@ bool urlcheck(void* elementp, const void* searchkeyp){
 	return (!strcmp(webpage_getURL(p),url));
 }
 
+int32_t pagesave(webpage_t* pagep, int id, char* dirname) {
+	char dest[80];
+	sprintf(dest, "%s/%d", dirname, id);
+	printf("dirname = %s, dest = %s\n", dirname, dest);
+	if (access(dest, F_OK)) { //if the file doesn't exist yet
+		FILE* fp;
+		fp = fopen(dest, "w+");
+		fprintf(fp, "%s\n%d\n%d\n%s", webpage_getURL(pagep), webpage_getDepth(pagep), webpage_getHTMLlen(pagep), webpage_getHTML(pagep));
+		fclose(fp);
+		return 0;
+	}
+	else {
+		return -1;
+	}
+}
+
 int main(void) {
 	queue_t* internals= qopen();
-	hashtable_t* table = hopen(2); //not sure if 20 is a good number to use but i dont think it really matters
-	
+	hashtable_t* table = hopen(20); //not sure if 20 is a good number to use but i dont think it really matters
 	webpage_t *page = webpage_new("https://thayer.github.io/engs50/", 0, NULL);
+	pagesave(page, 1, "../pages");
 	webpage_t *new;
-
 	if(webpage_fetch(page)) {
 		//		char* html = webpage_getHTML(page);
 		char* result = NULL;
