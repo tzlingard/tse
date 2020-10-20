@@ -79,32 +79,31 @@ int main(int argc, char* argv[]) {
 		printf("depth = %d, maxDepth = %d\n", depth, maxdepth);
 		webpage_t* qp1;
 		while ((qp1 = (webpage_t*)qget(internals))) {
-			printf("qp1 = %s\n",webpage_getURL(qp1));
-			depth = webpage_getDepth(qp1);
-			while ((i = webpage_getNextURL(qp1, i, &result)) > 0 && depth < maxdepth) {
-				if(hsearch(table, urlcheck, result, strlen(result))==NULL && IsInternalURL(result)) { //if the given URL isn't already in the hash table
-					new = webpage_new(result, depth, NULL); //create a new webpage for the given URL
-					if (webpage_fetch(new)) {
-						pagesave(new, id, pagedir);
-						id++;
+			if (depth <= maxdepth) {
+				printf("qp1 = %s\n",webpage_getURL(qp1));
+				if (webpage_fetch(qp1)) {
+					pagesave(qp1, id, pagedir);
+					id++;
+				}
+				while ((i = webpage_getNextURL(qp1, i, &result)) > 0) {
+					if(hsearch(table, urlcheck, result, strlen(result))==NULL && IsInternalURL(result)) { //if the given URL isn't already in the hash table
+						new = webpage_new(result, webpage_getDepth(qp1)+1, NULL); //create a new webpage for the given URL
+						qput(internals, new);
+						printf("Added to queue: %s\n",result);
+						hput(table, result, result, strlen(result));
 					}
-					qput(internals, new);
-					hput(table, result, result, strlen(result));
+					else { //if URL is already in hash table
+						free(result); 
+					}
+					printf("\n");
 				}
-				else { //if URL is already in hash table
-					free(result); 
-				}
-				printf("\n");
 			}
+			webpage_delete(qp1);
 		}
 	}
 	else {
 		return -1;
 	}
-	printf("\n");
-	//print all urls in queue
-	printf("printing queue\n");
-	qapply(internals, printURL);
 	/*
 	printf("\n");
 	//Ensure that there are 2 stylecounts
