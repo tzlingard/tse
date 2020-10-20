@@ -21,9 +21,9 @@ void printURL(void *page){
 
 
 bool urlcheck(void* elementp, const void* searchkeyp){
-	webpage_t* p = (webpage_t*)elementp;
+	char* p = (char*)elementp;
 	char* url = (char*)searchkeyp;
-	return (!strcmp(webpage_getURL(p),url));
+	return (!strcmp(p,url));
 }
 
 int32_t pagesave(webpage_t* pagep, int id, char* dirname) {
@@ -34,6 +34,7 @@ int32_t pagesave(webpage_t* pagep, int id, char* dirname) {
 		fp = fopen(dest, "w");
 		fprintf(fp, "%s\n%d\n%d\n%s", webpage_getURL(pagep), webpage_getDepth(pagep), webpage_getHTMLlen(pagep), webpage_getHTML(pagep));
 		fclose(fp);
+		printf("Saved: %s\n",webpage_getURL(pagep));
 		return 0;
 	}
 	else {
@@ -75,22 +76,26 @@ int main(int argc, char* argv[]) {
 		strcpy(pageCopy, webpage_getURL(page));
 		hput(table, pageCopy, pageCopy, strlen(pageCopy));
 		int depth = 1;
-		while ((i = webpage_getNextURL(page, i, &result)) > 0 && depth <= maxdepth) {
-			if(hsearch(table, urlcheck, result, strlen(result))==NULL && IsInternalURL(result)) { //if the given URL isn't already in the hash table
-				new = webpage_new(result, depth, NULL); //create a new webpage for the given URL
-				if (webpage_fetch(new)) {
-					pagesave(new, id, pagedir);
-					id++;
+		printf("depth = %d, maxDepth = %d\n", depth, maxdepth);
+		webpage_t* qp1;
+		while ((qp1 = (webpage_t*)qget(internals))) {
+			printf("qp1 = %s\n",webpage_getURL(qp1));
+			depth = webpage_getDepth(qp1);
+			while ((i = webpage_getNextURL(qp1, i, &result)) > 0 && depth < maxdepth) {
+				if(hsearch(table, urlcheck, result, strlen(result))==NULL && IsInternalURL(result)) { //if the given URL isn't already in the hash table
+					new = webpage_new(result, depth, NULL); //create a new webpage for the given URL
+					if (webpage_fetch(new)) {
+						pagesave(new, id, pagedir);
+						id++;
+					}
+					qput(internals, new);
+					hput(table, result, result, strlen(result));
 				}
-				qput(internals, new);
-				//printf("Internal: %s\n",result);
-				hput(table, result, result, strlen(result));
-				depth++;
+				else { //if URL is already in hash table
+					free(result); 
+				}
+				printf("\n");
 			}
-			else { //if URL is already in hash table
-				free(result); 
-			}
-			printf("\n");
 		}
 	}
 	else {
