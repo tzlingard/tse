@@ -7,12 +7,12 @@
 #include <stdint.h>
 #include <unistd.h>
 
-bool checkURLs(void* url1, const void* url2) {
+/*bool checkURLs(void* url1, const void* url2) {
 	if (strcmp((char*)url1, (char*) url2)) {
 		return false;
 	}
 	else return true;
-}
+}*/
 
 void printURL(void *page){
 	if(page==NULL){return;}
@@ -43,26 +43,27 @@ int32_t pagesave(webpage_t* pagep, int id, char* dirname) {
 
 int main(int argc, char* argv[]) {
 	const char* usage = "usage: crawler <seedurl> <pagedir> <maxdepth>";
-	char* seedurl, pagedir;
+	char seedurl[80], pagedir[80];
 	int maxdepth;
-	if (argc != 3) {
+	if (argc != 4) { //ensure 3 arguments after crawler
 		printf("%s\n", usage);
 		return -1;
 	}
-	sscanf(argv[1], "%s", seedurl); //TODO: debug this
+	sscanf(argv[1], "%s", seedurl); //scan the arguments into their respective variables
 	sscanf(argv[2], "%s", pagedir);
 	sscanf(argv[3], "%d", &maxdepth);
-	if (access(pagedir, R_OK) != 0) {
+	if (access(pagedir, R_OK) != 0) { //fail if page directory cannot be read
 		printf("Page directory is not valid.\n%s\n",usage);
 		return -1;
 	}
-	if (maxdepth < 0) {
+	if (maxdepth < 0) { //fail if max depth is negative
 		printf("Enter a non-negative max depth.\n%s\n",usage);
 		return -1;
 	}
 	queue_t* internals= qopen();
 	hashtable_t* table = hopen(20); //not sure if 20 is a good number to use but i dont think it really matters
 	webpage_t *page = webpage_new(seedurl, 0, NULL);
+	qput(internals, page);
 	webpage_t *new;
 	if(webpage_fetch(page)) {
 		int id = 1;
@@ -70,37 +71,35 @@ int main(int argc, char* argv[]) {
 		id++;
 		char* result = NULL;
 		int i = 0;
-		hput(table, (void*)page, (webpage_getURL(page)), strlen(webpage_getURL(page)));
+		char* pageCopy = (char*)calloc(strlen(seedurl) + 1, sizeof(char));
+		strcpy(pageCopy, webpage_getURL(page));
+		hput(table, pageCopy, pageCopy, strlen(pageCopy));
 		int depth = 1;
-		//TODO: save crawled web pages with new id (fetch first)
 		while ((i = webpage_getNextURL(page, i, &result)) > 0 && depth <= maxdepth) {
-			if(hsearch(table, urlcheck, result, sizeof(result))==NULL){
-				if(IsInternalURL(result)) {
-					new = webpage_new(result, 1, NULL); //create a new webpage for the given URL
-					qput(internals, new);
-					//printf("Internal: %s\n",result);
-					hput(table, (void*)new, (webpage_getURL(new)), sizeof(webpage_getURL(new)));
-					depth++;
+			if(hsearch(table, urlcheck, result, strlen(result))==NULL && IsInternalURL(result)) { //if the given URL isn't already in the hash table
+				new = webpage_new(result, depth, NULL); //create a new webpage for the given URL
+				if (webpage_fetch(new)) {
+					pagesave(new, id, pagedir);
+					id++;
 				}
-				else {
-					//printf("External: %s\n",result);
-				}
-				
+				qput(internals, new);
+				//printf("Internal: %s\n",result);
+				hput(table, result, result, strlen(result));
+				depth++;
 			}
-			free(result);
+			else { //if URL is already in hash table
+				free(result); 
+			}
 			printf("\n");
 		}
-	
 	}
 	else {
-		exit(EXIT_FAILURE);
+		return -1;
 	}
 	printf("\n");
-
 	//print all urls in queue
 	printf("printing queue\n");
 	qapply(internals, printURL);
-
 	/*
 	printf("\n");
 	//Ensure that there are 2 stylecounts
@@ -121,18 +120,13 @@ int main(int argc, char* argv[]) {
 	*/
 
 	//free all memory stored in queue
-		webpage_t* site = NULL;
-	while((site = (webpage_t*)qget(internals))!=NULL){
-		free(webpage_getURL(site));
-		free(webpage_getHTML(site));
-		free(site);
+	webpage_t* site = NULL;
+	while((site = (webpage_t*)qget(internals))!=NULL) {
+		webpage_delete(site);
 	}
 	hclose(table);
-	
-	webpage_delete(page);	
 	qclose(internals);
 	exit(EXIT_SUCCESS);
 	return 0;
-	
 }
 
