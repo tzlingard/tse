@@ -7,4 +7,4 @@ crawler:
 	gcc $(CFLAGS) crawler.c $(LIBS) -o $@
 
 clean:
-	rm crawler debugger
+	rm crawler

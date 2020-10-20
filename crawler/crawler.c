@@ -66,28 +66,25 @@ int main(int argc, char* argv[]) {
 	webpage_t *page = webpage_new(seedurl, 0, NULL);
 	qput(internals, page);
 	webpage_t *new;
-	if(webpage_fetch(page)) {
-		int id = 1;
-		pagesave(page, id, pagedir);
-		id++;
-		char* result = NULL;
-		int i = 0;
-		char* pageCopy = (char*)calloc(strlen(seedurl) + 1, sizeof(char));
-		strcpy(pageCopy, webpage_getURL(page));
-		hput(table, pageCopy, pageCopy, strlen(pageCopy));
-		int depth = 1;
-		printf("depth = %d, maxDepth = %d\n", depth, maxdepth);
-		webpage_t* qp1;
-		while ((qp1 = (webpage_t*)qget(internals))) {
-			if (depth <= maxdepth) {
-				printf("qp1 = %s\n",webpage_getURL(qp1));
-				if (webpage_fetch(qp1)) {
-					pagesave(qp1, id, pagedir);
-					id++;
-				}
+	int id = 0;
+	char* pageCopy = (char*)calloc(strlen(seedurl) + 1, sizeof(char));
+	strcpy(pageCopy, seedurl);
+	hput(table, pageCopy, pageCopy, strlen(pageCopy));
+	int depth = 0;
+	printf("depth = %d, maxDepth = %d\n", depth, maxdepth);
+	webpage_t* qp1;
+	while ((qp1 = (webpage_t*)qget(internals)) != NULL) {
+		depth = webpage_getDepth(qp1);
+		printf("qp1 = %s\n",webpage_getURL(qp1));
+		if (webpage_fetch(qp1)) {
+			pagesave(qp1, ++id, pagedir);
+			if (depth < maxdepth) {
+				int i = 0;
+				char* result = NULL;
 				while ((i = webpage_getNextURL(qp1, i, &result)) > 0) {
 					if(hsearch(table, urlcheck, result, strlen(result))==NULL && IsInternalURL(result)) { //if the given URL isn't already in the hash table
-						new = webpage_new(result, webpage_getDepth(qp1)+1, NULL); //create a new webpage for the given URL
+						printf("depth = %d\n", depth);
+						new = webpage_new(result, depth+1, NULL); //create a new webpage for the given URL
 						qput(internals, new);
 						printf("Added to queue: %s\n",result);
 						hput(table, result, result, strlen(result));
@@ -98,11 +95,8 @@ int main(int argc, char* argv[]) {
 					printf("\n");
 				}
 			}
-			webpage_delete(qp1);
 		}
-	}
-	else {
-		return -1;
+		webpage_delete(qp1);
 	}
 	/*
 	printf("\n");
@@ -124,13 +118,8 @@ int main(int argc, char* argv[]) {
 	*/
 
 	//free all memory stored in queue
-	webpage_t* site = NULL;
-	while((site = (webpage_t*)qget(internals))!=NULL) {
-		webpage_delete(site);
-	}
 	hclose(table);
 	qclose(internals);
-	exit(EXIT_SUCCESS);
 	return 0;
 }
 

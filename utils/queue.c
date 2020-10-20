@@ -50,6 +50,9 @@ void qclose(queue_t *qp){
 	node_t* n = NULL;
 	while(f!=NULL){
 		n = f->next;
+		if (f->element != NULL) {
+			free(f->element);
+		}
 		free(f);
 		f=n;
 	}
