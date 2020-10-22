@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include "../utils/hash.h"
+#include "../utils/pageio.h"
 #include "../utils/queue.h"
 #include "../utils/webpage.h"
 
@@ -26,23 +27,6 @@ bool urlcheck(void *elementp, const void *searchkeyp) {
   char *p = (char *)elementp;
   char *url = (char *)searchkeyp;
   return (!strcmp(p, url));
-}
-
-int32_t pagesave(webpage_t *pagep, int id, char *dirname) {
-  char dest[80];
-  sprintf(dest, "%s/%d", dirname, id);
-  if (access(dest, F_OK)) {  // if the file doesn't exist yet
-    FILE *fp;
-    fp = fopen(dest, "w");
-    fprintf(fp, "%s\n%d\n%d\n%s", webpage_getURL(pagep),
-            webpage_getDepth(pagep), webpage_getHTMLlen(pagep),
-            webpage_getHTML(pagep));
-    fclose(fp);
-    printf("Saved: %s\n", webpage_getURL(pagep));
-    return 0;
-  } else {
-    return -1;
-  }
 }
 
 int main(int argc, char *argv[]) {
@@ -128,4 +112,10 @@ int main(int argc, char *argv[]) {
   hclose(table);
   qclose(internals);
   return 0;
+}
+
+// free all memory stored in queue
+hclose(table);
+qclose(internals);
+return 0;
 }
