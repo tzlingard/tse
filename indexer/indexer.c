@@ -8,13 +8,17 @@ void normalizeWord(char* word) {
   int count = 0;
 
   while (word[count] != 0) {
-    char c = tolower(word[count]);
-    word[count] = c;
-    count++;
+    if (isalpha(word[count])) {
+      char c = tolower(word[count]);
+      word[count] = c;
+      count++;
+    } else {
+      word[count] = 0;
+    }
   }
   if (count < 3) {
-    word = NULL;
-    printf("word should be null. word is %s\n", word);
+    word = "";
+    // printf("word should be null. word is %s\n", word);
   }
   // printf("count = %d\n",count);
 }
