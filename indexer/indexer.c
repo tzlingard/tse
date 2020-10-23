@@ -5,12 +5,22 @@
 
 
 void normalizeWord(char* word){
+
+
+
+
 	int count = 0;
+	
 	while(word[count] != 0){
 		char c = tolower(word[count]);
 		word[count] = c;
 		count++;
 	}
+	if(count<3){
+		word = NULL;
+		printf("word should be null. word is %s\n",word);
+	}
+	//printf("count = %d\n",count);
 }
 
 int main(void) {
@@ -25,7 +35,9 @@ int main(void) {
 	int pos = 0;
 	while((pos = webpage_getNextWord(top,pos, &word))>0){
 		normalizeWord(word);
-		printf("%s\n", word);
+		if(word != NULL){
+			printf("%s\n", word);
+		}
 		free(word);		
 	}
 
