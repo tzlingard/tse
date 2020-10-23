@@ -21,5 +21,11 @@ pageio.o:  pageio.c pageio.h
 hashtest: hash.o hashtest.o queue.o
 	gcc $(CFLAGS) hash.o  hashtest.o queue.o -o hashtest
 
+pageiotest.o:  pageiotest.c pageio.h webpage.h
+	gcc $(CFLAGS) -c pageiotest.c 
+
+pageiotest: $(OFILES)
+	gcc $(CFLAGS) pageiotest.o -o pageiotest
+
 clean:
-	rm -f *.o hashtest
+	rm -f *.o hashtest pageiotest

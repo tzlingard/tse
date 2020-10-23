@@ -11,12 +11,13 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "../utils/hash.h"
-#include "../utils/queue.h"
-#include "../utils/webpage.h"
+#include "hash.h"
+#include "queue.h"
+#include "webpage.h"
 
 int32_t pagesave(webpage_t *pagep, int id, char *dirname) {
   char dest[80];
@@ -44,23 +45,29 @@ int32_t pagesave(webpage_t *pagep, int id, char *dirname) {
 webpage_t *pageload(int id, char *dirnm) {
   char file[80];                     /*location of page to load*/
   sprintf(file, "%s/%d", dirnm, id); /*pass the file from the directory*/
-  if (access(file, R_OK)) {          /*if the file is readable*/
+  printf("Trying to access %s\n", file);
+  if (access(file, R_OK) == 0) { /*if the file is readable*/
     FILE *fp;
     char url[80];
-    char html[80];
     int depth;
     int htmlLen;
     fp = fopen(file, "r"); /*set up reading of file*/
     fscanf(fp, "%s", url);
     fscanf(fp, "%d", &depth);
     fscanf(fp, "%d", &htmlLen);
+    char *html = malloc((sizeof(char) * htmlLen) + 1);
     /*get one character at a time, move pointer to next character*/
-    int ch;
+    char ch;
     do { /*continue to read file until the end*/
       ch = fgetc(fp);
-      sprintf(html, "%c", (char)ch); /*pass one char at a time to the html*/
-    } while (ch != EOF);
+      if (feof(fp)) break;
+      sprintf(html, "%c", ch); /*pass one char at a time to the html*/
+      printf("%c", ch);
+    } while (true);
+    printf("\nHTML string is now: %s", html);
     webpage_t *newpage = webpage_new(url, depth, html);
+    free(html);
+    fclose(fp);
     /*create the new webpage with the file info*/
     return newpage; /*return non-Null for success*/
   }
