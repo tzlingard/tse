@@ -4,11 +4,13 @@
 #include "../utils/webpage.h"
 int main(void) {
   webpage_t* top = pageload(1, "../pages");
-  char* word = (char*)malloc(sizeof(char) * 20);
-  while (webpage_getNextWord(top, 0, &word) != -1) {
-    printf("%s", word);
+  printf("%s\n", webpage_getURL(top));
+  char* word = (char*)malloc(sizeof(char*));
+  int pos = 0;
+  while (webpage_getNextWord(top, pos++, &word) >= 0) {
+    printf("%s\n", word);
+    free(word);
   }
-  free(word);
   webpage_delete(top);
   return 0;
 }
