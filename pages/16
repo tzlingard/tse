@@ -1,6 +1,6 @@
-https://thayer.github.io/engs50/Notes/intro/
+https://thayer.github.io/engs50/Notes/bash1/
 2
-30142
+41512
 <!DOCTYPE html>
 <html>
 
@@ -9,13 +9,13 @@ https://thayer.github.io/engs50/Notes/intro/
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>Welcome to Engs50 (CS50)!</title>
+  <title>Introduction to Bash</title>
   <meta name="description" content="In Engs 50 you will learn how to design & build large, reliable, maintainable, and understandable software systems.  In the process you will learn to program in C with Unix development tools.
 ">
 
   <link rel="shortcut icon" href="/engs50/50.png" />
   <link rel="stylesheet" href="/engs50/css/main.css">
-  <link rel="canonical" href="/engs50/Notes/intro/">
+  <link rel="canonical" href="/engs50/Notes/bash1/">
 </head>
 
 
@@ -44,470 +44,624 @@ https://thayer.github.io/engs50/Notes/intro/
         <article class="post">
 
   <header class="post-header">
-    <h1 class="post-title">Welcome to Engs50 (CS50)!</h1>
+    <h1 class="post-title">Introduction to Bash</h1>
   </header>
 
   <div class="post-content">
-    <p>This note discusses the aim and schedule of the course, and takes a
-brief look at Unix, C programming, and computer architecture.</p>
+    <p>Don’t forget this week’s <a href="/engs50/Reading/#week-1">reading</a>.</p>
 
-<h2 id="the-course">The course</h2>
+<p>In this note, we discuss the Unix shell and its commands.  The
+‘shell’ is a <em>command-line interpreter</em> and invokes kernel-level
+commands.  It also can be used as a <em>programming language</em> to design
+your own commands.  We’ll come to shell programming in a future
+note.</p>
 
-<p>The aim of this course is to develop the necessary systems programming
-skills in C and Unix as a foundation to tackle the design,
-implementation, and integration of a large software project working in
-small teams.  The challenge of the course is to quickly get people up
-to speed so there is sufficient time to get into the details of a
-complex software design project.  The first part of the course serves
-to develop design, programming and other systems skills such as
-source-code management, testing, and debugging.  The second part of
-the course is all about the project and team work.  Good team work
-will lead to success.  That’s the message.</p>
+<p>We do not recommend that you buy a book about Unix or the shell; there
+are some very good references and free-access online books – see the
+<a href="/engs50/Resources">resources page</a> – and we have selected some
+interesting and useful <a href="/engs50/Reading">readings</a>.</p>
 
-<p>A note about Unix/Linux: Unix came first.  All of the others,
-including BSD, MacOS, and all the variants of Linux, are derivations
-of that original effort.  While we use Ubuntu Linux on the M210
-machines, you may elect to use your own copy of Linux or the Unix that
-Mac OSX is based on.  Except when it <em>really</em> matters, I use the term
-Unix to refer to them all.</p>
+<p>If you need help on the meaning or syntax of any Unix shell command
+you can use the manual (man) pages on a Unix system (see below) or the
+<a href="http://www.computerhope.com/unix.htm#04">web unix commands</a>.  Just
+keep in mind that some commands’ syntax varies a bit across Unix
+flavors, so when in doubt, check the man page on the system you’re
+using.</p>
 
-<p>The syllabus in a nutshell:</p>
+<h2 id="unix-philosophy">Unix Philosophy</h2>
+
+<p>In their book <em>Program Design in the Unix Environment</em> (1984), Rob
+Pike and Brian Kernighan put it this way:</p>
+
+<blockquote>
+  <p>``Much of the power of the Unix operating system comes from a style
+of program design that makes programs easy to use and, more
+important, easy to combine with other programs. This style has been
+called the use of software tools, and depends more on how the
+programs fit into the programming environment and how they can be
+used with other programs than on how they are designed
+internally. This style was based on the use of tools: using
+programs separately or in combination to get a job done, rather than
+doing it by hand, by monolithic self-sufficient subsystems, or by
+special-purpose, one-time programs.’’</p>
+</blockquote>
+
+<h3 id="historical-note---unix">Historical note - Unix</h3>
+
+<p><a href="https://en.wikipedia.org/wiki/Unix">Unix</a> was developed at Bell 
+Labs in the 1970s by a group led by 
+<a href="https://en.wikipedia.org/wiki/Douglas_McIlroy">Doug McIlroy</a>.</p>
+
+<blockquote>
+  <p>``This is the Unix philosophy: Write programs that do one thing and do it well.
+Write programs to work together.
+Write programs to handle text streams, because that is a universal interface.’’
+— Doug McIlroy</p>
+</blockquote>
+
+<h2 id="goals">Goals</h2>
+
+<p>We plan to cover the following topics in this note.</p>
 
 <ul>
-  <li>Unix: shell, commands, shell programming;</li>
-  <li>C: structure, arrays, pointers, dynamic memory, files;</li>
-  <li>Programming tools: gcc (GNU compiler), make (maintain groups of programs), gdb (GNU debugger), git (source code management), valgrind (profiling and memory leak checker).</li>
-  <li>Software development methodology: design, implement, unit test/debug, integration, demo, maintenance.</li>
-  <li>Programming: building a search engine (crawler, indexer, query engine).</li>
-  <li>Team project: it’s a surprise!</li>
+  <li>The shell</li>
+  <li>The file system</li>
 </ul>
 
-<p>The course includes several Unix shell and C programming assignments
-listed under Modules on Canvas. There are no lectures; all the lecture
-material is on videos for easy reference. Class time is devoted to
-working programming problems individually in Module 1 and in teams for
-the remainder of the course.</p>
+<h2 id="the-shell">The shell</h2>
 
-<p>Please take note of the <a href="/engs50/Reading">reading assigned</a>
-each week.  I will list the reading week by week, rather than lecture
-by lecture, to give you some flexibility – but please do the reading,
-you’ll find it to be interesting and valuable!</p>
+<h3 id="commands-switches-arguments">Commands, switches, arguments</h3>
 
-<h2 id="logistics">Logistics</h2>
+<p>The shell is the Unix command-line interpreter.  It provides an
+interface between the user and the kernel and executes programs called
+‘commands’.  For example, if a user enters <code class="highlighter-rouge">ls </code>then the shell
+executes the <code class="highlighter-rouge">ls</code> command, which actually executes a program stored in
+the file <code class="highlighter-rouge">/bin/ls</code>.  The shell can also execute other programs
+including scripts (text files interpreted by a program like python or
+bash) and compiled programs (e.g., written in C).  Even your own
+programs – once marked ‘executable’ – become commands you can run
+from the shell!</p>
 
-<p>Read the <a href="">Logistics</a> information.</p>
+<p>You will get by in the course by becoming familiar with a subset of
+the Unix commands; don’t let yourself be overwhelmed by the presence
+of hundreds of commands.  You will probably be regularly using 2-3
+dozen of them by the end of the term.</p>
 
-<p><strong>About communication:</strong> be sure to track Canvas for announcements and updates.</p>
+<p>Unix has often been criticized for being very terse (it’s rumored that
+its designers were bad typists).  Many commands have short, cryptic
+names and vowels are a rarity:</p>
 
-<p><strong>About engagement:</strong> you will learn more from this course if you are
-actively engaged, where <em>engagement = preparation + participation.</em>
-Read the lecture notes and weekly reading, practice at home, and
-participate with your team mates.</p>
-
-<p><strong>About the programming:</strong> <em>There is a significant amount
-of programming in this course, requiring
-a considerable time commitment on the part of the student.</em></p>
-
-<p>You will need to be well organized to complete all the programming
-assignments and project.  Start each lab early.  It will be
-challenging, but we hope it will be fun!</p>
-
-<p><strong>About the project</strong>:
-You will be assigned to a team and given about three weeks to complete
-a large project requiring strong collaboration and a problem-solving
-mindset.  Each member is responsible for contributing to the overall
-system design, implementation, testing, integration, and
-documentation.  The goal of this activity is to help you develop the
-confidence, skills, and habits necessary to write large computer
-programs while part of a multi-person team.  You will become
-conversant in software engineering paradigms, such as source code
-control with <code class="highlighter-rouge">git</code> and other open source tools that ease the software
-development process.  In addition, you will develop vital skills in
-self-directed learning, problem solving, and communication.  The
-project concludes with a demo and a review of your design and
-implementation.</p>
-
-<p>In the first few Modules we cover Unix, the shell, and shell
-programming.  This is not meant to be a detailed presentation of the
-Unix OS and its programming tools – it would require a whole term to
-cover all that material in detail.  We need to know enough about Unix
-and its tools to be able to navigate our way around the system, write
-some basic shell scripts, and use its programming tools.</p>
-
-<p>It is important that you use these notes as a starting point, but like
-any budding engineer you need to do some experimenting and read up on
-the details.  You need to go on the web and find information if there
-are gaps in your knowledge, and then come see the instructor or TAs
-for help if you’re still stuck.  There are many references on the
-<a href="/engs50/Resources">Resources</a> page.</p>
-
-<p><strong>Caveat</strong>: Please take note that the notes will not always be
-detailed.  You will need to augment these notes with your own comments
-and by using the references and reading assignments so you can dive
-deeper into the topic.</p>
-
-<h2 id="the-command-line">The command line</h2>
-
-<p><a href="/engs50/Notes/intro/script.txt">shell examples.</a></p>
-
-<p>Unix was originally developed for computers with hardwired
-‘terminals’, each of which was basically an electronic typewriter - a
-printer with a keyboard.  There were no graphical displays, and the
-concepts of ‘windows’ and ‘mouse’ had not yet been invented.  To
-interact with the computer, the user types on the keyboard, and the
-computer echos the keystrokes on the paper.  (See the <a href="#historical-note">historical
-note</a> below.  The system is controlled by typing
-‘commands’, most of which print results for the user to see.  The
-interaction occurs over the ‘command line’.</p>
-
-<p>Modern Unix systems support rich graphical user interfaces, but under
-the hood they all support the command line.  In this class, I will
-demonstrate everything using the MacOS command line, accessed via the
-MacOS application called <code class="highlighter-rouge">Terminal</code>.  If you have a Mac, you can
-follow along.  If you use Windows, consider installing Linux on your
-laptop (either ‘dual boot’ or ‘virtual machine’).  But all of us can
-(and will) also use the Thayer M210 machines.</p>
-
-<p>When I open a new Terminal window on my Mac, I can type Unix commands
-at the ‘prompt’.  This prompt is from the ‘shell’ – a program – that
-interprets your command line and runs a program representing each
-command.  Your prompt may look different - the shell allows users to
-customize prompts and you’ll see a few formats in the examples below.</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>MacBook ~]<span class="nv">$ </span><span class="nb">ls
-</span>Applications/           Movies/                 bin/
-Creative Cloud Files/   Music/                  cs50@
-Desktop/                Pictures/               lib/
-Documents/              Pictures personal/      projects/
-Downloads/              Public/                 public_html/
-Dropbox/                Scans/                  repositories/
-Google Drive/           Shared@                 src/
-Library/                Sites/
-<span class="o">[</span>MacBook ~]<span class="nv">$ </span><span class="nb">echo </span>Hello CS50
-Hello CS50
-<span class="o">[</span>MacBook ~]<span class="nv">$ </span>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>awk, cat, cp, cd, chmod, echo, find, grep, ls, mv, rm, tr, sed, comm
 </code></pre></div></div>
 
-<p>The <code class="highlighter-rouge">ls</code> command is the “list directory contents” command.
-The <code class="highlighter-rouge">echo</code> command is like a print statement - it echos its arguments back.</p>
+<p>We will learn to use all of these commands and more.</p>
 
-<p>Most commands quickly produce some output and then exit.  Some will
-run too long - perhaps printing too much output; you can stop (kill)
-the command, forcing it to exit, by typing control-C <code class="highlighter-rouge">^C</code> at the
-keyboard.  One silly program, <code class="highlighter-rouge">yes</code>, just prints an infinite sequence
-of <code class="highlighter-rouge">y</code> characters until you kill it:</p>
+<p>Unix command output is also very terse - the default action on success
+is silence.  Only errors are reported, and error messages are often
+terse.  Unix commands are often termed ‘tools’ or ‘utilities’, because
+they are meant to be simple tools that you can combine in novel ways.</p>
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>DFK:~] yes
-y
-y
-y
-^C
-<span class="o">[</span>DFK:~]
+<p>Instructions entered in response to the shell prompt are interpreted
+first by the shell - expanding any variable references, filename
+wildcards, or special syntax.  Thus, the shell can rewrite the command
+line; then, it expects the command line to have the following syntax:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nb">command</span> <span class="o">[</span>arg1]...
 </code></pre></div></div>
 
-<p>Some commands ask for your input, and continue to read input until they read an “end of file” (EOF); you can cause the program to detect an EOF by typing control-D <code class="highlighter-rouge">^D</code> at the beginning of an input line.
-Below I typed three lines of text, the <code class="highlighter-rouge">^D</code> at the start of the fourth input line, to the <code class="highlighter-rouge">cat</code> program:</p>
+<p>The brackets <code class="highlighter-rouge">[ ]</code> indicate that the arguments are optional, and the
+notation above means that there are zero or more arguments.  Arguments
+are separated by white space.  Many commands can be executed with or
+without arguments.  Others require arguments, or a certain number of
+arguments, (e.g., <code class="highlighter-rouge">cp sort.c anothersort.c</code>) to work correctly.  If
+none are supplied, they will provide some error message in return.
+Another part of the Unix philosophy is to avoid an explosion in the
+number of commands by having most commands support various <em>options</em>
+(sometimes called <em>flags</em> or <em>switches</em>), which modify the actions of
+the commands.</p>
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>cs50@flume ~]<span class="nv">$ </span>mail kotz@cs
-Subject: Hello from cs50
-This is an email message from me to kotz@cs.
-I can end the message by typing ctrl-D.
-bye!
-EOT
-<span class="o">[</span>cs50@flume ~]<span class="nv">$ </span>
+<p>For example, let’s use the <code class="highlighter-rouge">ls</code> command and the <code class="highlighter-rouge">-l</code> option switch to
+list in long format the file <code class="highlighter-rouge">filename.c</code>.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nb">ls</span> <span class="nt">-l</span> filename.c
 </code></pre></div></div>
 
-<p>Here, when we typed ctrl-D the <code class="highlighter-rouge">mail</code> program detected an end of file (EOF) on its input (i.e., the keyboard), then printed <code class="highlighter-rouge">EOT</code> and exited.
-Moments later, the mail message landed in my inbox.</p>
+<p>Switches are often single characters preceded by a hyphen (e.g.,
+<code class="highlighter-rouge">-l</code>).  Most commands accept switches in any order, though they
+generally must appear before all the real arguments (usually
+filenames).  In the case of the <code class="highlighter-rouge">ls</code> example below, the command
+arguments represent file or directory names.  The options modify the
+operation of the command and are usually operated on by the program
+invoked by the shell rather than the shell itself.</p>
 
-<p>Notice the difference between <code class="highlighter-rouge">^C</code> and <code class="highlighter-rouge">^D</code>; the former kills the program immediately, whereas the latter causes it to detect EOF when it next reads input from the keyboard.</p>
+<p>Unix programs always receive a list of arguments, containing at least
+one argument, which is always the command name itself.  So, for <code class="highlighter-rouge">ls</code>
+that first argument would be “<code class="highlighter-rouge">ls</code>”.  The first argument is referred
+to as argument 0, “the zero-th argument”.  In our <code class="highlighter-rouge">ls</code> example,
+argument 1 is <code class="highlighter-rouge">-l</code> and argument 2 is <code class="highlighter-rouge">filename.c</code>.  Some commands also
+accept their switches grouped together.  For example, the following
+switches to <code class="highlighter-rouge">ls</code> are identical:</p>
 
-<h2 id="logging-into-a-remote-machine-using-ssh">Logging into a remote machine using <code class="highlighter-rouge">ssh</code></h2>
-
-<p>Thayer operates a set of Linux machines called
-hubN.thayer.dartmouth.edu where N is a number between 1 and 16. You
-can use these to practice using ssh, but use the M210 machines for
-verifying your labs before you hand them in your labs.</p>
-
-<p>I’ll login in from my Mac using the <strong>s</strong>ecure <strong>sh</strong>ell (<code class="highlighter-rouge">ssh</code>) Unix command.
-The <code class="highlighter-rouge">ssh</code> command establishes a secure channel and uses public-key cryptography to authenticate the remote computer and the user.</p>
-
-<blockquote>
-  <p>The <code class="highlighter-rouge">ssh</code> command replaces the archaic <code class="highlighter-rouge">telnet</code> (remote communications with another computer) and <code class="highlighter-rouge">rlogin</code> (remote login) because they lack security.
-The <code class="highlighter-rouge">ssh</code> command is exclusively used, these days, because your session is encrypted when it’s transmitted over the network, rather than being sent in clear text.</p>
-</blockquote>
-
-<p>Below, I remotely log in as user <code class="highlighter-rouge">kotz</code> to the server named <code class="highlighter-rouge">flume</code> by giving its full IP name - <code class="highlighter-rouge">flume.cs.dartmouth.edu</code>.</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>MacBook ~]<span class="nv">$ </span>ssh <span class="nt">-l</span> kotz flume.cs.dartmouth.edu
-Last login: Fri Jan 27 13:25:26 2017 from 10.31.126.2
-<span class="o">[</span>kotz@flume ~]<span class="nv">$ </span><span class="nb">ls
-</span>cs50/  old/  public_html/
-<span class="o">[</span>kotz@flume ~]<span class="nv">$ </span><span class="nb">ls </span>cs50
-labs/
-<span class="o">[</span>kotz@flume ~]<span class="nv">$ </span><span class="nb">ls </span>cs50/labs
-<span class="o">[</span>kotz@flume ~]<span class="nv">$ </span><span class="nb">logout
-</span>Connection to flume.cs.dartmouth.edu closed.
-<span class="o">[</span>MacBook ~]<span class="nv">$ </span>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nb">ls</span> <span class="nt">-tla</span> foople<span class="k">*</span>
+    ...
+    <span class="nb">ls</span> <span class="nt">-t</span> <span class="nt">-l</span> <span class="nt">-a</span> foople<span class="k">*</span>
 </code></pre></div></div>
 
-<blockquote>
-  <p>It is also possible to connect to a remote Linux server using X-windows, an early form of graphical user interface that has the capability to run applications on a remote server but put the windows on your local computer.
-I won’t be using X in this course, but you may wish to explore the option.</p>
-</blockquote>
+<p>The shell parses the words or tokens (command name and arguments) you
+type on the command line, and asks the kernel to execute the program
+corresponding to that command; the interpretation of the arguments (as
+switches, filenames, or something else) is determined by that program.</p>
 
-<p>There are hundreds of Unix commands – but you probably only need a few dozen to get by.
-Each Unix command has a short abbreviated command name (e.g., LiSt directory (ls) or Secure SHell (ssh)) and its associated syntax that typically includes various arguments, and options; typically, these options (or <em>switches</em> as they are also known) are either a single letter preceded by a hyphen (e.g., <code class="highlighter-rouge">-l</code>) or one or more words preceded by two hyphens (e.g., <code class="highlighter-rouge">--verbose</code>).
-For example, the format of an <code class="highlighter-rouge">ssh</code> command line looks like this:</p>
+<p>Typically, the shell processes the complete line after a carriage
+return is entered and then goes off to find the program that the
+command line specified.  If the command is a pathname, whether
+relative (e.g., <code class="highlighter-rouge">./mycommand</code>) or absolute (e.g., <code class="highlighter-rouge">/bin/ls</code> or
+<code class="highlighter-rouge">~engs50/mycommand</code>), the shell simply executes the program in that
+file.  If the command is not a pathname, the shell searches through a
+list of directories in your “path”, which is defined by the shell
+variable called <code class="highlighter-rouge">PATH</code>.</p>
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	ssh <span class="o">[</span>options] <span class="o">[</span>user@] hostname <span class="o">[</span><span class="nb">command</span><span class="o">]</span>
+<h2 id="shells-path">Shell’s ‘Path’</h2>
+
+<p>Take a look at your <code class="highlighter-rouge">PATH</code> by asking the shell to substitute its value
+(<code class="highlighter-rouge">$PATH</code>) and pass it as an argument to the <code class="highlighter-rouge">echo</code> command:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>engs50@mc ~]<span class="nv">$ </span><span class="nb">echo</span> <span class="nv">$PATH</span>
+/usr/lib64/qt-3.3/bin:/usr/lib64/ccache:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/net/class/engs50/bin:/bin:/usr/bin:/sbin:/usr/sbin:/usr/java/j2sdk/bin:/usr/local/bin:/usr/local/bin/X11:.
+<span class="o">[</span>engs50@mc ~]<span class="nv">$ </span>
 </code></pre></div></div>
 
-<p>In <code class="highlighter-rouge">ssh -l kotz flume.cs.dartmouth.edu</code>, the switch <code class="highlighter-rouge">-l</code> informs the <code class="highlighter-rouge">ssh</code> command that the username of the user logging in is kotz.
-(Alternately, I could have used the form <code class="highlighter-rouge">ssh kotz@flume.cs.dartmouth.edu</code>).</p>
+<p>Note that in general the output from the commands shown in this note
+demonstrate notional output. You will not see exactly the same
+information portrayed if you execute the same commands. Shell prompts
+show you the current user, machine, and location e.g.</p>
 
-<p>This is a good time to look at the formatting of these command help texts.
-The <code class="highlighter-rouge">[ ]</code> are used to denote optional things, like</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[command]
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>engs50@mc ~]<span class="err">$</span>
 </code></pre></div></div>
 
-<p>while the things outside of the <code class="highlighter-rouge">[ ]</code> , like <code class="highlighter-rouge">hostname</code>, must be specified.</p>
+<p>is a shell prompt ($) for user “engs50” on machine “mc” with the shell
+currently in the users home directory (~).</p>
 
-<h2 id="getting-information-using-the-online-manual-man">Getting Information using the online manual (man)</h2>
+<p>So where does the <code class="highlighter-rouge">ls</code> command executed above reside in the Unix directory hierarchy?
+Let’s use another command to find out.</p>
 
-<p>If you want the detailed syntax of a Unix command you can use the manual command followed by the command, as in <code class="highlighter-rouge">man ssh</code> which produced the following:</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>engs50@mc ~]<span class="nv">$ </span>which <span class="nb">ls
+ls </span>is aliased to <span class="sb">`</span><span class="nb">ls</span> <span class="nt">-F</span><span class="s1">'
+ls is /usr/bin/ls
+ls is /bin/ls
+ls is /usr/bin/ls
+[engs50@mc ~]$ 
+</span></code></pre></div></div>
 
-<pre><code class="language-man">    SSH(1)                    BSD General Commands Manual                   SSH(1)
+<p>The first line of response says that <code class="highlighter-rouge">ls</code> is “aliased”.  This is a
+shell feature; the shell allows us to define “aliases”, which act just
+like commands but are actually just a textual substitution of a
+command name (the alias) to some other string (in this case, <code class="highlighter-rouge">ls -F</code>).
+Thus, any time I type <code class="highlighter-rouge">ls blah blah</code>, it treats it as if I had typed
+<code class="highlighter-rouge">ls -F blah blah</code>.  The <code class="highlighter-rouge">-F</code> option tells <code class="highlighter-rouge">ls</code> to add a trailing
+symbol to some names in its output; it adds a <code class="highlighter-rouge">/</code> to the names of
+directories, a <code class="highlighter-rouge">@</code> to the names of symbolic links (um, that’s another
+conversation), and some other even specialized cases.</p>
 
-    NAME
-         ssh -- OpenSSH SSH client (remote login program)
+<p>Of course, the shell then still needs to resolve <code class="highlighter-rouge">ls</code>.  It then
+searches the <code class="highlighter-rouge">PATH</code> to find an executable file with that name; in this
+case, it appears that <code class="highlighter-rouge">ls</code> exists in both <code class="highlighter-rouge">/usr/bin</code> and in <code class="highlighter-rouge">/bin</code>.
+The shell will execute the first one, because it is found first in the
+PATH.  Below you can see the effect of running <code class="highlighter-rouge">ls</code> (the alias) and
+<code class="highlighter-rouge">/bin/ls</code> (the raw command, without the <code class="highlighter-rouge">-F</code>).</p>
 
-    SYNOPSIS
-         ssh [-1246AaCfgKkMNnqsTtVvXxYy] [-b bind_address] [-c cipher_spec]
-             [-D [bind_address:]port] [-e escape_char] [-F configfile] [-I pkcs11] 
-             [-i identity_file] [-L [bind_address:]port:host:hostport] [-l login_name]
-             [-m mac_spec] [-O ctl_cmd] [-o option] [-p port] 
-                [-R [bind_address:]port:host:hostport] [-S ctl_path]
-             [-W host:port] [-w local_tun[:remote_tun]] [user@]hostname [command]
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>engs50@mc ~]<span class="nv">$ </span><span class="nb">ls
+</span>Archive/  private/  proc-log  public_html/  resources/	web@
+<span class="o">[</span>engs50@mc ~]<span class="nv">$ </span>/bin/ls
+Archive  private  proc-log  public_html  resources  web
+<span class="o">[</span>engs50@mc ~]<span class="nv">$ </span>
+</code></pre></div></div>
 
-    DESCRIPTION
-         ssh (SSH client) is a program for logging into a remote machine and for executing
-         commands on a remote machine.  It is intended to replace rlogin and rsh, and
-         provide secure encrypted communications between two untrusted hosts over an 
-         insecure network.  X11 connections and arbitrary TCP ports can also be forwarded 
-         over the secure channel.
+<h2 id="viewing-files">Viewing files</h2>
 
-         ssh connects and logs into the specified hostname (with optional user name).  The 
-         user must prove his/her identity to the remote machine using one of several methods 
-         depending on the protocol version used (see below).
+<p>You can see the contents of any file with the <code class="highlighter-rouge">cat</code> command, so named because it concatenates all the files listed as arguments, printing one after the other.
+For very long files, though, the output will quickly scroll off your terminal.</p>
 
-         If command is specified, it is executed on the remote host instead of a login shell.
+<p>Less Is More: The  <code class="highlighter-rouge">less</code> and <code class="highlighter-rouge">more</code> commands are handy for quickly looking at files.
+The syntax is <code class="highlighter-rouge">less filename</code> and <code class="highlighter-rouge">more filename</code>.
+Take a look at the <code class="highlighter-rouge">man</code> pages to get the details of each.
+Similarly, <code class="highlighter-rouge">head</code> and <code class="highlighter-rouge">tail</code> display a number of lines (selectable via switches, of course) at the beginning and end of a file, respectively.</p>
 
-         The options are as follows:
+<p>See what these do: <code class="highlighter-rouge">cat /etc/passwd</code>, <code class="highlighter-rouge">head /etc/passwd</code>, <code class="highlighter-rouge">tail /etc/passwd</code>, <code class="highlighter-rouge">more /etc/passwd</code>, and <code class="highlighter-rouge">less /etc/passwd</code>.
+The file <code class="highlighter-rouge">/etc/passwd</code> lists all the accounts on the system, and information about each account.</p>
 
-         -1      Forces ssh to try protocol version 1 only.
+<h2 id="editing-files">Editing files</h2>
 
-         -2      Forces ssh to try protocol version 2 only.
+<p>Long before there were windows and graphical displays, or even
+screens, there were text editors.  Two are in common use on Unix
+system today: <code class="highlighter-rouge">emacs</code> and <code class="highlighter-rouge">vi</code>.  Actually, there is an
+expanded/improved version of <code class="highlighter-rouge">vi</code> called <code class="highlighter-rouge">vim</code>, which is quite
+popular.</p>
 
-         -4      Forces ssh to use IPv4 addresses only.
+<p>I strongly recommend emacs if you are planning to take Engs62 – our
+embedded systems course, since the Xilinx vivado tool chain provides
+an Emacs mode for editing. Also, you will find that many emacs
+commands are available in bash for working at the command line.</p>
 
-         -6      Forces ssh to use IPv6 addresses only.
+<p>You should try both and become comfortable with at least one.  Yes,
+it’s tempting to use an external graphical editor (like Sublime), but
+it is frequently the case when working with embedded systems and/or
+servers that there simply is not a graphical user interface; in these
+cases you <em>must</em> use a text-only editor so you should get used
+to it now.</p>
 
-         -A      Enables forwarding of the authentication agent connection.  This can also
-                 be specified on a per-host
+<p>See /engs50/Resources/#editors for some resources that can help you
+learn <code class="highlighter-rouge">emacs</code> or <code class="highlighter-rouge">vim</code>. I’ve provided a 15 min – “Learn Emacs Fast”
+video to help.</p>
 
-    ... and a whole lot more
+<h2 id="unix-file-system">Unix file system</h2>
+
+<p>The Unix file system is a <em>hierarchical file system</em>.  The file system
+consists of a very small number of different file <em>types</em>.  The two
+most common types are <em>files</em> and <em>directories</em>.</p>
+
+<p>A directory (akin to a folder on a MacOS or Windows computer) contains
+the names and locations of all files and directories below it.  A
+directory always contains two special files <code class="highlighter-rouge">.</code> (dot) and <code class="highlighter-rouge">..</code> (dot
+dot); <code class="highlighter-rouge">.</code> represents the directory itself, and <code class="highlighter-rouge">..</code> represents the
+directory’s parent.  In the following, I make a new directory, change
+my current working directory to be that new directory, create a new
+file in that directory, and use <code class="highlighter-rouge">ls</code> to explore the contents of the
+new directory and its parent.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>engs50@mc ~]<span class="nv">$ </span>mkdir <span class="nb">test</span>
+<span class="o">[</span>engs50@mc ~]<span class="nv">$ </span><span class="nb">cd test</span>
+<span class="o">[</span>engs50@mc ~/test]<span class="nv">$ </span><span class="nb">echo </span>hello <span class="o">&gt;</span> somefile
+<span class="o">[</span>engs50@mc ~/test]<span class="nv">$ </span><span class="nb">ls</span> <span class="nt">-a</span>
+./  ../  somefile
+<span class="o">[</span>engs50@mc ~/test]<span class="nv">$ </span><span class="nb">ls 
+</span>somefile
+<span class="o">[</span>engs50@mc ~/test]<span class="nv">$ </span><span class="nb">ls</span> <span class="nb">.</span>
+somefile
+<span class="o">[</span>engs50@mc ~/test]<span class="nv">$ </span><span class="nb">ls</span> ..
+Archive/  private/  proc-log  public_html/  resources/	<span class="nb">test</span>/  web@
+<span class="o">[</span>engs50@mc ~/test]<span class="nv">$ </span>
+</code></pre></div></div>
+
+<p>Directory names are separated by a <em>forward</em> slash <code class="highlighter-rouge">/</code>, forming
+pathnames.  A <em>pathname</em> is a filename that includes some or all of
+the directories leading to the file; an <em>absolute pathname</em> is
+relative to the root (<code class="highlighter-rouge">/</code>) directory and begins with a <code class="highlighter-rouge">/</code>, in the
+first example below, whereas a <em>relative pathname</em> is relative to the
+current working directory, as in the second example below.  Notice
+that a relative pathname can also use <code class="highlighter-rouge">.</code> or <code class="highlighter-rouge">..</code>, as in the third
+example below.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>engs50@mc ~]<span class="nv">$ </span><span class="nb">ls</span> /net/class/engs50/public_html/Labs/<span class="k">*</span>
+/net/class/engs50/public_html/Labs/index.html
+/net/class/engs50/public_html/Labs/Lab0-Preliminaries.html
+/net/class/engs50/public_html/Labs/usernames.txt
+<span class="o">[</span>engs50@mc ~]<span class="nv">$ </span><span class="nb">ls </span>public_html/Resources/<span class="k">*</span>
+public_html/Resources/DougMcIlroy.pdf
+public_html/Resources/Homebrew0.png
+public_html/Resources/Homebrew1.png
+public_html/Resources/Homebrew.html
+public_html/Resources/index.html
+public_html/Resources/RC13972-C-Programming.docx
+public_html/Resources/RC13972-C-Programming.pdf
+public_html/Resources/StartingSublime.pdf
+public_html/Resources/toomey-unix.pdf
+<span class="o">[</span>engs50@mc ~]<span class="nv">$ </span><span class="nb">ls</span> ../cs10/public_html/
+azul.css    help.html	   lab/       oldindex.html  software.html
+exams/	    indexBAK.html  lectures/  sa/	     syllabus.html
+exams.html  index.html	   old/       schedule.html
+<span class="o">[</span>engs50@mc ~]<span class="nv">$ </span>
+</code></pre></div></div>
+
+<p>As implied by the shell prompt, the current working directory is
+<code class="highlighter-rouge">~engs50</code>, which is shorthand for “the home directory of user
+<code class="highlighter-rouge">engs50</code>”, which happens to be the directory at path
+<code class="highlighter-rouge">/net/class/engs50</code>.</p>
+
+<h3 id="moving-around-the-file-system">Moving around the file system</h3>
+
+<p>The “change directory” command (<code class="highlighter-rouge">cd</code>) allows us to move around the
+Unix directory hierarchy, that is, to change our “current working
+directory” from which all relative filenames and pathnames will be
+resolved.  Let’s combine <code class="highlighter-rouge">pwd</code>, <code class="highlighter-rouge">ls</code>, and <code class="highlighter-rouge">cd</code> to move around the
+local directories that are rooted at <code class="highlighter-rouge">/net/class/engs50</code>.  Remember that
+<code class="highlighter-rouge">~</code> refers to the home directory and <code class="highlighter-rouge">..</code> refers to the parent
+directory.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>engs50@mc ~]<span class="nv">$ </span>mkdir <span class="nb">test</span>
+<span class="o">[</span>engs50@mc ~]<span class="nv">$ </span><span class="nb">cd test</span>
+<span class="o">[</span>engs50@mc ~/test]<span class="nv">$ </span><span class="nb">ls</span>
+<span class="o">[</span>engs50@mc ~/test]<span class="nv">$ </span><span class="nb">cd</span> ..
+<span class="o">[</span>engs50@mc ~]<span class="nv">$ </span><span class="nb">cd </span>public_html/
+<span class="o">[</span>engs50@mc ~/public_html]<span class="nv">$ </span><span class="nb">ls
+</span>css/	    Labs/      Logistics/  Reading/    Schedule.pdf
+index.html  Notes/  Project/    Resources/  Schedule.xlsx
+<span class="o">[</span>engs50@mc ~/public_html]<span class="nv">$ </span><span class="nb">cd </span>Resources/
+<span class="o">[</span>engs50@mc ~/public_html/Resources]<span class="nv">$ </span><span class="nb">ls
+</span>DougMcIlroy.pdf  Homebrew.html		     RC13972-C-Programming.pdf
+Homebrew0.png	 index.html		     StartingSublime.pdf
+Homebrew1.png	 RC13972-C-Programming.docx  toomey-unix.pdf
+<span class="o">[</span>engs50@mc ~/public_html/Resources]<span class="nv">$ </span><span class="nb">cd</span> ../..
+<span class="o">[</span>engs50@mc ~]<span class="nv">$ </span><span class="nb">ls
+</span>Archive/  private/  proc-log  public_html/  resources/	<span class="nb">test</span>/  web@
+<span class="o">[</span>engs50@mc ~]<span class="nv">$ </span>
+</code></pre></div></div>
+
+<p>The shell prompt is helpfully tracking the current working directory as we move.</p>
+
+<h3 id="listing-and-globbing-files">Listing and globbing files</h3>
+
+<p>Here are a popular set of switches you can use with <code class="highlighter-rouge">ls</code>:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>-l list in long format (as we have been doing)
+-a list all entries (including `dot` files, which are normally hidden)
+-t sort by modification time (latest first)
+-r list in reverse order (alphabetical or time)
+-R list the directory and its subdirectories recursively
+</code></pre></div></div>
+
+<p>The shell also interprets certain special characters like <code class="highlighter-rouge">*</code>, <code class="highlighter-rouge">?</code>,
+and <code class="highlighter-rouge">[]</code>; <code class="highlighter-rouge">*</code> matches zero or more characters, <code class="highlighter-rouge">?</code> matches one
+character, and <code class="highlighter-rouge">[]</code> matches one character from the set (or range) of
+characters listed within the brackets:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>engs50@mc ~]<span class="nv">$ </span><span class="nb">cd </span>public_html/Resources/
+<span class="o">[</span>engs50@mc ~/public_html/Resources]<span class="nv">$ </span><span class="nb">ls
+</span>DougMcIlroy.pdf  Homebrew.html		     RC13972-C-Programming.pdf
+Homebrew0.png	 index.html		     StartingSublime.pdf
+Homebrew1.png	 RC13972-C-Programming.docx  toomey-unix.pdf
+<span class="o">[</span>engs50@mc ~/public_html/Resources]<span class="nv">$ </span><span class="nb">ls</span> <span class="k">*</span>.pdf
+DougMcIlroy.pdf		   StartingSublime.pdf
+RC13972-C-Programming.pdf  toomey-unix.pdf
+<span class="o">[</span>engs50@mc ~/public_html/Resources]<span class="nv">$ </span><span class="nb">ls </span>H<span class="k">*</span>
+Homebrew0.png  Homebrew1.png  Homebrew.html
+<span class="o">[</span>engs50@mc ~/public_html/Resources]<span class="nv">$ </span><span class="nb">ls</span> <span class="k">*</span>-<span class="k">*</span>
+RC13972-C-Programming.docx  RC13972-C-Programming.pdf  toomey-unix.pdf
+<span class="o">[</span>engs50@mc ~/public_html/Resources]<span class="nv">$ </span><span class="nb">ls </span>Homebrew<span class="k">*</span>.<span class="k">*</span>
+Homebrew0.png  Homebrew1.png  Homebrew.html
+<span class="o">[</span>engs50@mc ~/public_html/Resources]<span class="nv">$ </span><span class="nb">ls </span>Homebrew?.<span class="k">*</span>
+Homebrew0.png  Homebrew1.png
+<span class="o">[</span>engs50@mc ~/public_html/Resources]<span class="nv">$ </span><span class="nb">ls </span>Homebrew[0-9].png
+Homebrew0.png  Homebrew1.png
+<span class="o">[</span>engs50@mc ~/public_html/Resources]<span class="nv">$ </span>
+</code></pre></div></div>
+
+<h3 id="hidden-files">Hidden files</h3>
+<p>The <code class="highlighter-rouge">ls</code> program normally does not list any files whose filename begins with <code class="highlighter-rouge">.</code>  There is nothing special about these files, except <code class="highlighter-rouge">.</code> and <code class="highlighter-rouge">..</code>, as far as Unix is concerned.
+It’s simply a convention - files whose names begin with <code class="highlighter-rouge">.</code> are to be considered ‘hidden’, and thus not listed by <code class="highlighter-rouge">ls</code> or matched with by the shell’s <code class="highlighter-rouge">*</code> globbing character.
+Home directories, in particular, include many ‘hidden’ (but important!) files.
+The <code class="highlighter-rouge">-a</code> switch tells <code class="highlighter-rouge">ls</code> to list “all” files, including those that begin with a dot (aka, the hidden files).</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>engs50@mc ~]<span class="nv">$ </span><span class="nb">ls
+</span>Archive/  private/  public_html/  resources/  web@
+<span class="o">[</span>engs50@mc ~]<span class="nv">$ </span><span class="nb">ls</span> <span class="nt">-a</span>
+./   Archive/	    .bash_logout   .bashrc    .environset  private/	public_html/  .ssh/  .viminfo  web@
+../  .bash_history  .bash_profile  .emacs.d/  .forward	   .procmailrc	resources/    .vim/  .vimrc
+</code></pre></div></div>
+
+<p>to see just the dot files, let’s get clever with the shell’s glob characters:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>engs50@mc ~]<span class="nv">$ </span><span class="nb">ls</span> <span class="nt">-ad</span> .??<span class="k">*</span>
+.bash_history  .bash_profile  .emacs.d/    .forward	.ssh/  .viminfo
+.bash_logout   .bashrc	      .environset  .procmailrc	.vim/  .vimrc
+<span class="o">[</span>engs50@mc ~]<span class="nv">$ </span>
+</code></pre></div></div>
+
+<p>All of these “dot files” (or “dot directories”) are important to one program or another:</p>
+
+<ul>
+  <li><code class="highlighter-rouge">.bash_history</code> - used by bash to record a history of the commands you’ve typed</li>
+  <li><code class="highlighter-rouge">.bash_logout</code> - executed by bash when you log out</li>
+  <li><code class="highlighter-rouge">.bash_profile</code> - executed by bash when you log in</li>
+  <li><code class="highlighter-rouge">.bashrc</code> - executed by bash whenever you start a new shell</li>
+  <li><code class="highlighter-rouge">.emacs.d/</code> - a directory used by emacs text editor</li>
+  <li><code class="highlighter-rouge">.environset</code> - a Dartmouth-specific thing; read by .bashrc</li>
+  <li><code class="highlighter-rouge">.forward</code> - tells Mail where to forwad your email</li>
+  <li><code class="highlighter-rouge">.procmailrc</code> - for handling email with <code class="highlighter-rouge">procmail</code></li>
+  <li><code class="highlighter-rouge">.ssh/</code> - directory used by inbound ssh connections</li>
+  <li><code class="highlighter-rouge">.vim/</code> - a directory used by vim text editor</li>
+  <li><code class="highlighter-rouge">.viminfo</code> - used by vim text editor</li>
+  <li><code class="highlighter-rouge">.vimrc</code> - used by vim text editor</li>
+</ul>
+
+<h3 id="bash-shell-startup-files">Bash shell startup files</h3>
+
+<p>The <code class="highlighter-rouge">bash</code> shell looks for several files in your home directory:</p>
+
+<ul>
+  <li><code class="highlighter-rouge">.bash_profile</code> - executed by bash when you log in</li>
+  <li><code class="highlighter-rouge">.bashrc</code> - executed by bash whenever you start a new shell</li>
+  <li><code class="highlighter-rouge">.bash_logout</code> - executed by bash when you log out</li>
+  <li><code class="highlighter-rouge">.bash_history</code> - used by bash to record a history of the commands you’ve typed</li>
+</ul>
+
+<p>The <code class="highlighter-rouge">.bashrc</code> file is especially important, because <code class="highlighter-rouge">bash</code> reads it
+every time you start a new <code class="highlighter-rouge">bash</code> shell, that is, when you log in,
+when you start a new interactive shell, or when you run a new bash
+script.  (In contrast, <code class="highlighter-rouge">.bash_profile</code> is only read when you login.)
+In each case,<code class="highlighter-rouge">bash</code> reads the files and executes the commands therein.
+Thus, you can configure your <code class="highlighter-rouge">bash</code> experience by having it declare
+some variables, define some aliases, and set up some personal
+favorites.</p>
+
+<h2 id="locating-files">Locating files</h2>
+
+<p>Many times you want to find a file but do not know where it is in the
+directory tree (Unix directory structure is a tree - rooted at the <code class="highlighter-rouge">/</code>
+directory) .  The <code class="highlighter-rouge">find</code> command can walk a file hierarchy:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>engs50@mc ~]<span class="nv">$ </span>find <span class="nb">.</span> <span class="nt">-name</span> DougMcIlroy.pdf <span class="nt">-print</span>
+./public_html/Resources/DougMcIlroy.pdf
+<span class="o">[</span>engs50@mc ~]<span class="nv">$ </span>find public_html <span class="nt">-iname</span> reading <span class="nt">-print</span>
+public_html/Reading
+<span class="o">[</span>engs50@mc ~]<span class="nv">$ </span>find public_html <span class="nt">-type</span> d <span class="nt">-print</span>
+public_html
+public_html/Logistics
+public_html/Resources
+public_html/Labs
+public_html/Project
+public_html/Notes
+public_html/css
+public_html/Reading
+<span class="o">[</span>engs50@mc ~]<span class="nv">$ </span>find public_html <span class="nt">-name</span> <span class="se">\*</span>.html <span class="nt">-print</span>
+public_html/Logistics/index.html
+public_html/Resources/index.html
+public_html/Resources/Homebrew.html
+public_html/Labs/index.html
+public_html/Labs/Lab0-Preliminaries.html
+public_html/Project/index.html
+public_html/Notes/01-gettingstarted.html
+public_html/Notes/index.html
+public_html/index.html
+public_html/Reading/index.html
+<span class="o">[</span>engs50@mc ~]<span class="nv">$ </span>find public_html <span class="nt">-name</span> <span class="se">\*</span>.png <span class="nt">-mtime</span> <span class="nt">-1</span> <span class="nt">-print</span>
+public_html/Resources/Homebrew1.png
+public_html/Resources/Homebrew0.png
+<span class="o">[</span>engs50@mc ~]<span class="nv">$ </span>
+</code></pre></div></div>
+
+<p>The first example searches directory <code class="highlighter-rouge">.</code> to find a file by a specific
+name and prints its pathname.  The second example used <code class="highlighter-rouge">-iname</code> (case
+insensitive search) instead of <code class="highlighter-rouge">-name</code> (which is case sensitive) to
+search <code class="highlighter-rouge">public_html</code> for the “reading” directory.  The third example
+searches <code class="highlighter-rouge">public_html</code> for any directories (<code class="highlighter-rouge">-type d</code>) and prints
+their pathnames.  The fourth example uses a wildcard <code class="highlighter-rouge">*</code> to print
+pathnames of files whose name matches a pattern; the backslash <code class="highlighter-rouge">\</code> is
+there to prevent the shell from interpreting the <code class="highlighter-rouge">*</code>, allowing it to
+be part of the argument to <code class="highlighter-rouge">find</code>, which interprets that character
+itself.  The fifth example combines two factors, to print pathnames of
+files whose name matches <code class="highlighter-rouge">*.png</code> and whose modication time <code class="highlighter-rouge">mtime</code> is
+less than one day <code class="highlighter-rouge">-1</code> in the past.</p>
+
+<h2 id="our-top-commands">Our top commands</h2>
+
+<p>We’ve explored almost four dozen shell commands, below (those with *asterisk will be introduced later).
+You’ll often need only about half of them.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nb">alias
+
+    cat</span>, <span class="nb">cd</span>, chmod, comm, cp, cut
+
+    date
+
+    <span class="nb">echo</span>, emacs, expr, <span class="nb">exit
+
+    </span>file, find
+
+    gcc, gdb<span class="k">*</span>, git<span class="k">*</span>, <span class="nb">grep
+
+    </span>head
+
+    less, <span class="nb">logout</span>, lpr, <span class="nb">ls
+
+    </span>make<span class="k">*</span>, man, mkdir, more, mv
+
+    open <span class="o">(</span>MacOS<span class="o">)</span>
+
+    pbpaste, pbcopy <span class="o">(</span>MacOS<span class="o">)</span>
+
+    <span class="nb">pwd
+
+    </span>rm, rmdir
+
+    scp, sed, sort, ssh
+
+    tail, <span class="nb">tar</span>, touch, tr
+
+    uniq
+
+    whereis, which
+
+    vi, vim
+</code></pre></div></div>
+
+<h1 id="historical-note">Historical note</h1>
+
+<p>Recall we mentioned “teletypes” in the first lecture.  <strong>It was <em>at
+Dartmouth</em> that a teletype was actually used to interact with a remote
+computer</strong> - the first ever long-distance terminal, decades before the
+Internet.</p>
+
+<p><img src="/engs50/Notes/bash1/history-Stibitz1.jpg" alt="Stibitz plaque" /></p>
+
+<h2 id="navigating-within-man-pages">Navigating within man pages</h2>
+
+<p>You may have found the <code class="highlighter-rouge">man</code> system to be a little challenging to navigate.
+There is a message that is displayed at the very bottom of the screen when you first enter the command that you might have missed (most people do):</p>
+
+<pre><code class="language-man">Manual page xxx(n) line 1 (press h for help or q to quit)
 </code></pre>
 
-<p>This is just a snippet of the <code class="highlighter-rouge">man ssh</code> output (<code class="highlighter-rouge">man</code> is short for manual).
-The manual output includes all the nitty gritty details on options and about the command.
-For most commands you can use the common option <code class="highlighter-rouge">--help</code> (two hyphens) to get a brief breakdown of the command and its switches.
-This doesn’t work for all commands (including <code class="highlighter-rouge">ssh</code>, interestingly), but in that case the use of <code class="highlighter-rouge">-help</code> is interpreted as an invalid entry by ssh and it lists of the options anyway.</p>
+<p>If you enter ‘<code class="highlighter-rouge">h</code>’ to see the help you will find many more commands than you’re likely to ever use when reading <code class="highlighter-rouge">man</code> pages.
+This is because the man-page reader is actually the <code class="highlighter-rouge">less</code> command of Unix.
+I tend to use only a few:</p>
 
-<p>You can use</p>
+<ul>
+  <li><code class="highlighter-rouge">f</code> or <em>space</em> (the spacebar) advances to the next screenful,</li>
+  <li><code class="highlighter-rouge">b</code> goes back to the previous screenful,</li>
+  <li><code class="highlighter-rouge">e</code> or down-arrow advances one more line,</li>
+  <li><code class="highlighter-rouge">y</code> or up-arrow goes back one line,</li>
+  <li><code class="highlighter-rouge">/</code> allows one to type a search phrase and hit return,</li>
+  <li><code class="highlighter-rouge">q</code> quits <code class="highlighter-rouge">man</code>, and returns to the shell prompt.</li>
+</ul>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>man -k keyword
+<h2 id="there-are-shells-shells-and-more-shells">There are shells, shells, and more shells</h2>
+
+<p>There are a number of shells available to a Unix user – so which one do you select?
+The most common shells are:</p>
+
+<ul>
+  <li><code class="highlighter-rouge">sh</code> : the original shell, known as the Bourne Shell,</li>
+  <li><code class="highlighter-rouge">csh</code>, <code class="highlighter-rouge">tcsh</code> : well-known and widely used derivatives of the Bourne shell,</li>
+  <li><code class="highlighter-rouge">ksh</code> : the Korn shell, and</li>
+  <li><code class="highlighter-rouge">bash</code> : the Bourne Again SHell, developed by GNU, is the most popular shell used for Linux.</li>
+</ul>
+
+<p><code class="highlighter-rouge">bash</code> is the default shell for new Unix accounts in our department.</p>
+
+<p>The basic shell operation is as follows.  The shell parses the command
+line; the first word on the line is the command name.  If the command
+is an alias, it substitutes the alias text and again identifies the
+command.  If the command is one built-in to the shell (there are a
+few, like <code class="highlighter-rouge">cd</code>, <code class="highlighter-rouge">echo</code>, <code class="highlighter-rouge">pwd</code>, and <code class="highlighter-rouge">which</code>) it performs that command’s
+action.  Otherwise, the shell looks for the executable file that
+matches that program name by searching directories listed in the
+<code class="highlighter-rouge">PATH</code> variable.  The shell then starts that program as a new process
+and passes any options and arguments to the program.  A <em>process</em> is a
+running program.  You can see a list of your processes with the
+command <code class="highlighter-rouge">ps</code>.</p>
+
+<h2 id="file-type">File type</h2>
+
+<p>Unix itself imposes almost no constraints or interpretation on the
+contents of files - the only common case is that of a compiled,
+executable program: it has to be in a very specific binary format for
+the operating system (Unix) to execute it.  All other files are used
+by some program or another, and it’s up to those programs to interpret
+the contents as they see fit.  The great power of Unix, and the common
+shell commands, is that any file can be read by any program; the most
+common format are plain-text (ASCII) files that are formatted as a
+series of “lines” delimited by “newline” characters (\n, known by its
+ASCII code 012).</p>
+
+<p>If you are unsure about the contents of a file (text, binary,
+compressed, Unix executabe, some format specific a certain
+application, etc.).  The <code class="highlighter-rouge">file</code> command is useful; it makes an attempt
+to judge the format of the file.</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>engs50@mc ~]<span class="nv">$ </span>file downloaded
+downloaded: POSIX <span class="nb">tar </span>archive
+<span class="o">[</span>engs50@mc ~]<span class="nv">$ </span>file fig1
+fig1: GIF image data, version 87a, 440 x 306
+<span class="o">[</span>engs50@mc ~]<span class="nv">$ </span>file trash.tar.gz
+trash.tar.gz: gzip compressed data, from Unix
+<span class="o">[</span>engs50@mc ~]<span class="nv">$ </span>file public_html/Schedule.<span class="k">*</span>
+public_html/Schedule.pdf:  PDF document, version 1.3
+public_html/Schedule.xlsx: Microsoft Excel 2007+
+<span class="o">[</span>engs50@mc ~]<span class="nv">$ </span>file /bin/ls
+/bin/ls: ELF 64-bit LSB shared object, x86-64, version 1 <span class="o">(</span>SYSV<span class="o">)</span>, dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, <span class="k">for </span>GNU/Linux 2.6.32, BuildID[sha1]<span class="o">=</span>0ac5c509289d650534ce80cdbf5b72744b5c5f3d, stripped
+<span class="o">[</span>engs50@mc ~]<span class="nv">$ </span>
 </code></pre></div></div>
-
-<p>to search through the manual pages for matches on a keyword.
-For example:</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[kotz@flume ~]$ man -k shell
-bash (1)             - GNU Bourne-Again SHell
-capsh (1)            - capability shell wrapper
-chroot (1)           - run command or interactive shell with special root directory
-chsh (1)             - change your login shell
-CPAN::Admin (3pm)    - A CPAN Shell for CPAN admins
-CPAN::Plugin (3pm)   - Base class for CPAN shell extensions
-csh (1)              - C shell with file name completion and command line editing
-... and much more
-</code></pre></div></div>
-
-<h2 id="your-home-directory-and-its-files">Your home directory and its files</h2>
-
-<p>Each user has a ‘home directory’.  After you have logged in using
-<code class="highlighter-rouge">ssh</code> you are in your home directory - that is, the shell’s notion of
-your ‘current working directory’ is your home directory.</p>
-
-<p>We can look at our home directory ‘path’ using the <code class="highlighter-rouge">pwd</code> (print
-working directory) command.  You can always use the <code class="highlighter-rouge">man</code> and <code class="highlighter-rouge">info</code>
-commands to get more information.</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>kotz@flume ~]<span class="nv">$ </span><span class="nb">pwd</span>
-/net/nusers/kotz
-<span class="o">[</span>kotz@flume ~]<span class="nv">$ </span>
-</code></pre></div></div>
-
-<p>The tilde (~) above is shorthand for ‘home’.  Let’s take a look at the
-contents of my home directory (using the -l switch which means long
-format):</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>kotz@flume ~]<span class="nv">$ </span><span class="nb">ls
-</span>cs50/  old/  public_html/
-<span class="o">[</span>kotz@flume ~]<span class="nv">$ </span><span class="nb">ls</span> <span class="nt">-l</span>
-total 12
-drwxrwxr-x 5 kotz root 4096 Feb  2 11:24 cs50/
-drwxrwxr-x 2 kotz root 4096 Jan 27 20:00 old/
-drwxr-xr-x 3 kotz root 4096 Mar 17 12:01 public_html/
-<span class="o">[</span>kotz@flume ~]<span class="nv">$ </span><span class="nb">cd </span>cs500
-<span class="nt">-bash</span>: <span class="nb">cd</span>: cs500: No such file or directory
-<span class="o">[</span>kotz@flume ~]<span class="nv">$ </span>cs cs50
-<span class="nt">-bash</span>: cs: <span class="nb">command </span>not found
-<span class="o">[</span>kotz@flume ~]<span class="nv">$ </span><span class="nb">cd </span>cs50
-<span class="o">[</span>kotz@flume ~/cs50]<span class="nv">$ </span><span class="nb">ls</span> <span class="nt">-l</span>
-total 20
-drwxr-xr-x 2 kotz root 4096 Jan 28 11:08 lab1/
-drwxr-xr-x 2 kotz root 4096 Feb  2 10:36 lab2/
-drwxr-xr-x 2 kotz root 4096 Jan 28 10:14 project/
-<span class="nt">-rw-r--r--</span> 1 kotz root   74 Feb  2 11:19 testfile
-<span class="nt">-rwxr-xr-x</span> 1 kotz root  402 Feb  2 11:23 testread.sh<span class="k">*</span>
-<span class="o">[</span>kotz@flume ~/cs50]<span class="nv">$ </span>
-</code></pre></div></div>
-
-<p>Yes, I mistyped two commands in that example: <code class="highlighter-rouge">cd cs500</code> and <code class="highlighter-rouge">cs
-cs50</code>.  I wanted you to see what the system says when you make a
-mistake … just in case you make one yourself sometime. ;-)</p>
-
-<p>The <code class="highlighter-rouge">cd</code> command changes the current working directory; I finally
-typed it right and the shell reported that my working directory is
-<code class="highlighter-rouge">~/cs50</code>.  The same command, <code class="highlighter-rouge">ls -l</code>, listed <em>that</em> directory the
-second time.</p>
-
-<p>Files can be plain files, directories, or special files (more later).
-We can see that each file has file permissions and other data
-associated with it; for example, the directory <code class="highlighter-rouge">public_html</code>:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>drwxr-xr-x 3 kotz root 4096 Mar 17 12:01 public_html/
-</code></pre></div></div>
-
-<p>You can traverse directory trees assuming you have the appropriate permission.</p>
-
-<p>Unix supports a number of shells (command line interpreters).  If we
-use the echo command we can look at the environment variable that
-tells us which shell is running.  For this course we will use the bash
-(Born Again SHell) shell.</p>
-
-<p>Again, the shell is the command processor for Unix systems.  One way
-to find out what shell you’re running, try this:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>kotz@flume ~/cs50]<span class="nv">$ </span><span class="nb">echo </span>my shell is <span class="nv">$SHELL</span>
-my shell is /bin/bash
-<span class="o">[</span>kotz@flume ~/cs50]<span class="nv">$ </span>
-</code></pre></div></div>
-
-<p>The last parameter to <code class="highlighter-rouge">echo</code> substitutes the value of the variable <code class="highlighter-rouge">SHELL</code>.
-More on the bash shell later.</p>
-
-<p>Another useful command for copying files between machines is the <code class="highlighter-rouge">scp</code> - secure copy (remote file copy program) command.
-Below I find, then copy, of the schedule for CS50 from the course website.</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>DFK:~] ssh kotz@flume
-Last login: Mon Mar 28 10:17:04 2016 from 10.31.123.28
-<span class="o">[</span>kotz@flume ~]<span class="nv">$ </span><span class="nb">cd</span> ~cs50
-<span class="o">[</span>kotz@flume /net/class/cs50]<span class="nv">$ </span><span class="nb">ls
-</span>Archive/		 master.bashrc	proc-log      src/  web-tse-from-2016W/
-download_16S_repos.awk<span class="k">*</span>  private/	public_html/  web@
-<span class="o">[</span>kotz@flume /net/class/cs50]<span class="nv">$ </span><span class="nb">cd </span>public_html/
-<span class="o">[</span>kotz@flume /net/class/cs50/public_html]<span class="nv">$ </span><span class="nb">ls
-</span>css/	    Labs/      Logistics/  Reading/    Schedule.pdf
-index.html  Lectures/  Project/    Resources/  Schedule.xlsx
-<span class="o">[</span>kotz@flume /net/class/cs50/public_html]<span class="nv">$ </span><span class="nb">logout
-</span>Connection to flume closed.
-<span class="o">[</span>DFK:~] scp flume.cs.dartmouth.edu:/net/class/cs50/public_html/Schedule.pdf <span class="nb">.</span>
-Schedule.pdf                                           100%   44KB  44.1KB/s   00:00    
-<span class="o">[</span>DFK:~] open Schedule.pdf
-<span class="o">[</span>DFK:~] 
-</code></pre></div></div>
-
-<p>Recall that <code class="highlighter-rouge">~</code> is my home directory, so <code class="highlighter-rouge">~cs50</code> is the home directory
-for user <code class="highlighter-rouge">cs50</code>.  I changed my working directory to the cs50 home,
-then into its <code class="highlighter-rouge">public_html</code>, and listed the files there.  Now I know
-the ‘path name’ for the desired file - the directory name followed by
-slash followed by the filename.  The <code class="highlighter-rouge">scp</code> command allows me to
-specify the host and pathname for the source and destination of the
-copy; here the destination is <code class="highlighter-rouge">.</code>, a shorthand for ‘current working
-directory.  Finally, I used the MacOS command <code class="highlighter-rouge">open</code> to open the file,
-which launches <code class="highlighter-rouge">Preview</code> to show me the pdf.</p>
-
-<h3 id="logging-out">Logging out</h3>
-
-<p>When we are ready to logout from our session on
-flume.cs.dartmouth.edu, we use <code class="highlighter-rouge">logout</code> or <code class="highlighter-rouge">exit</code>:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>kotz@flume ~]<span class="nv">$ </span><span class="nb">logout
-</span>Connection to flume.cs.dartmouth.edu closed.
-</code></pre></div></div>
-
-<h2 id="one-more-thing-unix-machines">One more thing: Unix machines</h2>
-
-<p>Note the following, depending on your personal computer’s operating system.</p>
-
-<p><strong>Linux</strong>: The systems in M210 are running Ubuntu GNU/Linux.
-Your Linux will likely be sufficiently compatible that you won’t have
-any trouble developing on your machine and delivering your assignments
-on a machine in M210.</p>
-
-<p><strong>Mac</strong>: Mac OSX Unix conforms to the POSIX standard for the C API,
-shell utilities, and threads and can compile and run your existing
-code.  The GNU tools we will be using, such as <code class="highlighter-rouge">gcc</code>, <code class="highlighter-rouge">make</code>, etc.,
-are either included or freely available.  (You may need to install
-command-line tools via Xcode; if so, you will be prompted to do so
-when you first type <code class="highlighter-rouge">gcc</code> or <code class="highlighter-rouge">make</code> or related commands.) You can use
-the <code class="highlighter-rouge">Terminal</code> application.  You can also use the <code class="highlighter-rouge">ssh</code> command to
-remotely log on to computers, as discussed above.  <strong>We recommend you
-install <a href="/engs50/Resources/Homebrew.html">Homebrew</a>.</strong></p>
-
-<p><strong>Windows</strong>: There are Unix-command shells for Windows and even an
-X-Window system for Windows systems.  However, since this is a Unix
-course you would be far better off doing your assignments on the
-Thayer machines in M210.</p>
-
-<h2 id="historical-note">Historical note</h2>
-
-<p>The name “Terminal” is still commonly used in Unix parlance, right
-down to the MacOS app by that name.  This term refers to the fact that
-early Unix computers, like other computers of its time, had a small
-number of interactive ‘terminals’ connected to it – each directly
-connected by a dedicated wire to a card within the computer.  Each
-terminal was little more than a keyboard and a screen - or in the
-early days, a keyboard and a printer that would print each character
-as it was typed, and print the characters sent by the computer.</p>
-
-<p>The first such terminals were “teletypes”, adapted from the device
-used by newsrooms around the country, which printed characters
-transmitted over the phone line from a distant device.  This
-<a href="https://www.youtube.com/watch?v=E4IztV7M3jI">video</a> shows a Teletype
-model ASR33.  From the sound of this machine, can you tell why
-television news shows’ opening music usually has a stocatto
-tap-tap-tap-tap-tap background theme?</p>
-
-<!--David-->
-<!--
-> One of the first interactive computer systems I ever used was a PDP8/e running ETOS and BASIC - far simpler than Unix - with a couple of teletype terminals.
-I found a [video of a refurbished PDP8/e driving a teletype](https://www.youtube.com/watch?v=2B-U-5ylvWo).
-Fun.
--->
 
   </div>
 

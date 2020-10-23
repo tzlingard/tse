@@ -1,6 +1,6 @@
-https://thayer.github.io/engs50/Labs/Lab2/
+https://thayer.github.io/engs50/Labs/Lab3/
 2
-31749
+40604
 <!DOCTYPE html>
 <html>
 
@@ -9,13 +9,13 @@ https://thayer.github.io/engs50/Labs/Lab2/
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>Lab 2 - C and Bash</title>
+  <title>Lab 3 - Data structures in C</title>
   <meta name="description" content="In Engs 50 you will learn how to design & build large, reliable, maintainable, and understandable software systems.  In the process you will learn to program in C with Unix development tools.
 ">
 
   <link rel="shortcut icon" href="/engs50/50.png" />
   <link rel="stylesheet" href="/engs50/css/main.css">
-  <link rel="canonical" href="/engs50/Labs/Lab2/">
+  <link rel="canonical" href="/engs50/Labs/Lab3/">
 </head>
 
 
@@ -44,702 +44,444 @@ https://thayer.github.io/engs50/Labs/Lab2/
         <article class="post">
 
   <header class="post-header">
-    <h1 class="post-title">Lab 2 - C and Bash</h1>
+    <h1 class="post-title">Lab 3 - Data structures in C</h1>
   </header>
 
   <div class="post-content">
-    <p>This second lab is focused on three small C programs, and a regression-testing bash script.
-They start easy and get progressively more difficult.</p>
+    <p><strong>Due Friday, April 20, at 10pm</strong></p>
+
+<p>In this lab you’ll code a set of data structures that will support the needs of the Tiny Search Engine (TSE).</p>
 
 <ul id="markdown-toc">
-  <li><a href="#reminder" id="markdown-toc-reminder">Reminder</a></li>
-  <li><a href="#preparation" id="markdown-toc-preparation">Preparation</a></li>
-  <li><a href="#assignment" id="markdown-toc-assignment">Assignment</a></li>
-  <li><a href="#regresssh" id="markdown-toc-regresssh">regress.sh</a></li>
-  <li><a href="#chillc" id="markdown-toc-chillc">chill.c</a></li>
-  <li><a href="#wordsc" id="markdown-toc-wordsc">words.c</a></li>
-  <li><a href="#histoc" id="markdown-toc-histoc">histo.c</a>    <ul>
-      <li><a href="#representing-a-histogram" id="markdown-toc-representing-a-histogram">Representing a histogram</a></li>
+  <li><a href="#assignment" id="markdown-toc-assignment">Assignment</a>    <ul>
+      <li><a href="#about-the-data-structures" id="markdown-toc-about-the-data-structures">About the data structures</a></li>
+      <li><a href="#bag" id="markdown-toc-bag">bag</a></li>
+      <li><a href="#set" id="markdown-toc-set">set</a></li>
+      <li><a href="#counters" id="markdown-toc-counters">counters</a></li>
+      <li><a href="#hashtable" id="markdown-toc-hashtable">hashtable</a></li>
+      <li><a href="#general-notes" id="markdown-toc-general-notes">General notes</a></li>
     </ul>
   </li>
-  <li><a href="#what-to-hand-in-and-how" id="markdown-toc-what-to-hand-in-and-how">What to hand in, and how</a></li>
+  <li><a href="#hints" id="markdown-toc-hints">Hints</a></li>
+  <li><a href="#what-to-hand-in-and-how" id="markdown-toc-what-to-hand-in-and-how">What to hand in, and how</a>    <ul>
+      <li><a href="#submitting-your-lab" id="markdown-toc-submitting-your-lab">Submitting your lab</a></li>
+    </ul>
+  </li>
 </ul>
 
-<h2 id="reminder">Reminder</h2>
+<p>In this lab you will develop some general-purpose data structures that, with modular design, can be re-used for other labs - most notably, the Tiny Search Engine.</p>
 
 <p>Grading will focus on <a href="/engs50/Resources/CodingStyle.html">CS50 coding style</a> - including consistent formatting, selection of identifier names, and use of meaningful comments - in addition to correctness and testing.</p>
 
 <p><strong><em>Your C code must compile without producing any compiler warnings.</em></strong>  You will lose points if the compiler produces warnings when using our CS50-standard compiler flags.</p>
 
 <p><strong><em>If your submitted code fails to compile, or triggers a segmentation fault,</em></strong> we’ll notify you and give you an opportunity to repair and resubmit.
-(See <em><a href="/index.html#crashes">programs that crash</a>.</em>)</p>
-
-<h2 id="preparation">Preparation</h2>
-
-<p>Set up four directories for this lab:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span><span class="nb">cd</span>
-<span class="nv">$ </span>mkdir <span class="nt">-p</span> cs50/labs/lab2
-<span class="nv">$ </span><span class="nb">cd </span>cs50/labs/lab2
-<span class="nv">$ </span>mkdir regress chill histo words
-</code></pre></div></div>
+(See <em><a href="/index.html#crashes">programs that crash</a>.</em>) Write defensive code: each function should check its pointer parameters for NULL, and take some appropriate (safe) action.</p>
 
 <h2 id="assignment">Assignment</h2>
 
-<p>Please follow the <a href="/engs50/Resources/CodingStyle.html">CS50 coding style</a>.</p>
-
-<p>Design, write, document, and <strong>fully test</strong> the following three separate C programs and one bash script.</p>
-
-<p><strong><em>Point breakdown:</em></strong></p>
+<p>Obtain our <a href="starter">starter kit</a>, which implements the <code class="highlighter-rouge">bag</code> module and includes the <em>readlinep</em> and <em>memory</em> module. Your assignment is to add three new modules, each of which defines a different data structure.</p>
 
 <ul>
-  <li>(25 points) regress.sh</li>
-  <li>(25 points) chill.c</li>
-  <li>(25 points) words.c</li>
-  <li>(25 points) histo.c</li>
+  <li>(30 points) <em><code class="highlighter-rouge">set</code></em></li>
+  <li>(30 points) <em><code class="highlighter-rouge">counters</code></em></li>
+  <li>(40 points) <em><code class="highlighter-rouge">hashtable</code></em></li>
 </ul>
 
-<h2 id="regresssh">regress.sh</h2>
+<p>You can copy the starter kit to your own work directory on the CS department systems:</p>
 
-<p><em>Regression testing</em> is important to any quality software-development
-process.  As a software project evolves, each new revision is tested
-against a thorough suite of test cases to ensure that the new revision
-still performs correctly where it had before.  As new functionality is
-added, new tests are added to the suite.</p>
-
-<p>Write a bash script <code class="highlighter-rouge">regress.sh</code> to perform regression testing.  Its
-command line looks like</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./regress.sh dirname testfilename...
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c"># assuming you've logged into a CS system</span>
+mkdir <span class="nt">-p</span> ~/cs50/labs/lab3
+cp <span class="nt">-r</span> ~cs50/public_html/Labs/Lab3/starter/<span class="k">*</span> ~/cs50/labs/lab3/
 </code></pre></div></div>
+
+<p>or to your Mac using <code class="highlighter-rouge">scp</code>:</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>scp <span class="nt">-r</span> username@flume:~cs50/public_html/Labs/Lab3/starter lab3
+</code></pre></div></div>
+
+<h3 id="about-the-data-structures">About the data structures</h3>
+
+<p>The specific data structures are defined in the sections below.</p>
+
+<p>In the table below, we compare these data structures with the two we explored in class.
+Most of these data structures allow you to store a collection of “items”.
+Both the <code class="highlighter-rouge">set</code> and <code class="highlighter-rouge">hashtable</code> are examples of an abstract data structure called a <em>dictionary</em>, which provide methods like <code class="highlighter-rouge">insert(key, item)</code> and <code class="highlighter-rouge">item = retrieve(key)</code>, where the <code class="highlighter-rouge">key</code> allows the structure to distinguish among the items it stores.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">Behavior</th>
+      <th style="text-align: left"><code class="highlighter-rouge">list</code></th>
+      <th style="text-align: left"><code class="highlighter-rouge">bag</code></th>
+      <th style="text-align: left"> </th>
+      <th style="text-align: left"><code class="highlighter-rouge">set</code></th>
+      <th style="text-align: left"><code class="highlighter-rouge">counters</code></th>
+      <th><code class="highlighter-rouge">hashtable</code></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">stores an <em>item</em></td>
+      <td style="text-align: left">yes</td>
+      <td style="text-align: left">yes</td>
+      <td style="text-align: left"> </td>
+      <td style="text-align: left">yes</td>
+      <td style="text-align: left">no</td>
+      <td>yes</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">uses a <em>key</em></td>
+      <td style="text-align: left">no</td>
+      <td style="text-align: left">no</td>
+      <td style="text-align: left"> </td>
+      <td style="text-align: left">yes</td>
+      <td style="text-align: left">yes</td>
+      <td>yes</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">keeps items in order</td>
+      <td style="text-align: left">yes</td>
+      <td style="text-align: left">no</td>
+      <td style="text-align: left"> </td>
+      <td style="text-align: left">no</td>
+      <td style="text-align: left">no</td>
+      <td>no</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">retrieval</td>
+      <td style="text-align: left">first item</td>
+      <td style="text-align: left">any item</td>
+      <td style="text-align: left"> </td>
+      <td style="text-align: left">by key</td>
+      <td style="text-align: left">by key</td>
+      <td>by key</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">insertion of duplicates</td>
+      <td style="text-align: left">allowed</td>
+      <td style="text-align: left">allowed</td>
+      <td style="text-align: left"> </td>
+      <td style="text-align: left">error</td>
+      <td style="text-align: left">increment count</td>
+      <td>error</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Notice that</p>
+
 <ul>
-  <li>where <code class="highlighter-rouge">dirname</code> is the name of a directory containing test results, and</li>
-  <li>where each <code class="highlighter-rouge">testfilename</code> is the name of a file containing bash command(s) for one test case.</li>
+  <li>a <code class="highlighter-rouge">list</code> keeps <em>items</em> in order, but a <code class="highlighter-rouge">bag</code> or a <code class="highlighter-rouge">set</code> does not.</li>
+  <li>a <code class="highlighter-rouge">set</code> and <code class="highlighter-rouge">hashtable</code> allow you to retrieve a specific <em>item</em> (indicated by its <em>key</em>) whereas a <code class="highlighter-rouge">bag</code> might return any <em>item</em>.</li>
+  <li>because the <code class="highlighter-rouge">bag</code> and <code class="highlighter-rouge">list</code> don’t distinguish among <em>items</em> they store, they can hold duplicates; the others cannot.</li>
+  <li>the <code class="highlighter-rouge">counters</code> data structure maintains a set of counters, each identified by a <em>key</em>, but it stores no <em>items</em>.
+Instead, it keeps a counter for each key. Attempting to insert a duplicate <em>key</em> results in an increment of the counter.</li>
 </ul>
 
-<p>The script verifies the validity of its arguments (exit with non-zero status on any error):</p>
+<h3 id="bag">bag</h3>
+
+<p>A <code class="highlighter-rouge">bag</code> is an unordered collection of <em>items</em>.
+The <code class="highlighter-rouge">bag</code> starts empty, grows as the caller adds one <em>item</em> at a time, and shrinks as the caller extracts one <em>item</em> at a time.
+It could be empty, or could contain hundreds of <em>items</em>.
+<em>Items</em> are indistinguishable, so the <em>extract</em> function is free to return any <em>item</em> from the <code class="highlighter-rouge">bag</code>.</p>
+
+<p>The starter kit includes our <code class="highlighter-rouge">bag</code> module, which contains:</p>
+<ul>
+  <li><code class="highlighter-rouge">bag.c</code> implements a bag of <code class="highlighter-rouge">void*</code>, and exports <strong>exactly</strong> the following functions through <code class="highlighter-rouge">bag.h</code>:</li>
+</ul>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/* Create a new (empty) bag; return NULL if error. */</span>
+<span class="n">bag_t</span> <span class="o">*</span><span class="n">bag_new</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+
+<span class="cm">/* Add new item to the bag; a NULL bag is ignored; a NULL item is ignored. */</span>
+<span class="kt">void</span> <span class="n">bag_insert</span><span class="p">(</span><span class="n">bag_t</span> <span class="o">*</span><span class="n">bag</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">item</span><span class="p">);</span>
+
+<span class="cm">/* Return any data item from the bag; return NULL if bag is NULL or empty. */</span>
+<span class="kt">void</span> <span class="o">*</span><span class="n">bag_extract</span><span class="p">(</span><span class="n">bag_t</span> <span class="o">*</span><span class="n">bag</span><span class="p">);</span>
+
+<span class="cm">/* Print the whole bag; provide the output file and func to print each item.
+ * If fp==NULL; do nothing. If bag==NULL, print (null).
+ * If itemprint==NULL, print nothing for each item.
+ */</span>
+<span class="kt">void</span> <span class="n">bag_print</span><span class="p">(</span><span class="n">bag_t</span> <span class="o">*</span><span class="n">bag</span><span class="p">,</span> <span class="kt">FILE</span> <span class="o">*</span><span class="n">fp</span><span class="p">,</span>
+               <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">itemprint</span><span class="p">)(</span><span class="kt">FILE</span> <span class="o">*</span><span class="n">fp</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">item</span><span class="p">));</span>
+
+<span class="cm">/* Iterate over the whole bag; call the given function on each item,
+ * passing both the item and an argument. Ignore if NULL bag or NULL itemfunc.
+ */</span>
+<span class="kt">void</span> <span class="n">bag_iterate</span><span class="p">(</span><span class="n">bag_t</span> <span class="o">*</span><span class="n">bag</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span>
+                 <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">itemfunc</span><span class="p">)(</span><span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">item</span><span class="p">)</span> <span class="p">);</span>
+
+<span class="cm">/* Delete the whole bag; ignore NULL bag.
+ * Provide a function that will delete each item (may be NULL).
+ */</span>
+<span class="kt">void</span> <span class="n">bag_delete</span><span class="p">(</span><span class="n">bag_t</span> <span class="o">*</span><span class="n">bag</span><span class="p">,</span> <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">itemdelete</span><span class="p">)(</span><span class="kt">void</span> <span class="o">*</span><span class="n">item</span><span class="p">)</span> <span class="p">);</span>
+</code></pre></div></div>
+
+<h3 id="set">set</h3>
+
+<p>A <code class="highlighter-rouge">set</code> maintains an unordered collection of <em>(key,item)</em> pairs; any given <em>key</em> can only occur in the <code class="highlighter-rouge">set</code> once.
+It starts out empty and grows as the caller inserts new <em>(key,item)</em> pairs.
+The caller can retrieve <em>items</em> by asking for their <em>key</em>, but cannot remove or update pairs.
+Items are distinguished by their <em>key</em>.</p>
+
+<p>Your <code class="highlighter-rouge">set.c</code> should implement a <code class="highlighter-rouge">set</code> of <code class="highlighter-rouge">void*</code> with <code class="highlighter-rouge">char*</code> <em>keys</em>, and export <strong>exactly</strong> the following functions through <code class="highlighter-rouge">set.h</code>:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/* Create a new (empty) set; return NULL if error. */</span>
+<span class="n">set_t</span> <span class="o">*</span><span class="n">set_new</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+
+<span class="cm">/* Insert item, identified by a key (string), into the given set.
+ * The key string is copied for use by the set.
+ * Return false if key exists, any parameter is NULL, or error;
+ * return true iff new item was inserted.
+ */</span>
+<span class="n">bool</span> <span class="n">set_insert</span><span class="p">(</span><span class="n">set_t</span> <span class="o">*</span><span class="n">set</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">item</span><span class="p">);</span>
+
+<span class="cm">/* Return the item associated with the given key;
+ * return NULL if set is NULL, key is NULL, or key is not found.
+ */</span>
+<span class="kt">void</span> <span class="o">*</span><span class="n">set_find</span><span class="p">(</span><span class="n">set_t</span> <span class="o">*</span><span class="n">set</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">);</span>
+
+<span class="cm">/* Print the whole set; provide the output file and func to print each item.
+ * Ignore if NULL fp. Print (null) if NULL set.
+ * Print a set with no items if NULL itemprint.
+*/</span>
+<span class="kt">void</span> <span class="n">set_print</span><span class="p">(</span><span class="n">set_t</span> <span class="o">*</span><span class="n">set</span><span class="p">,</span> <span class="kt">FILE</span> <span class="o">*</span><span class="n">fp</span><span class="p">,</span>
+               <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">itemprint</span><span class="p">)(</span><span class="kt">FILE</span> <span class="o">*</span><span class="n">fp</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">item</span><span class="p">)</span> <span class="p">);</span>
+
+<span class="cm">/* Iterate over all items in the set, in undefined order.
+ * Call the given function on each item, with (arg, key, item).
+ * If set==NULL or itemfunc==NULL, do nothing.
+ */</span>
+<span class="kt">void</span> <span class="n">set_iterate</span><span class="p">(</span><span class="n">set_t</span> <span class="o">*</span><span class="n">set</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span>
+                 <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">itemfunc</span><span class="p">)(</span><span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">item</span><span class="p">)</span> <span class="p">);</span>
+
+<span class="cm">/* Delete the whole set; ignore NULL set.
+ * Provide a function that will delete each item (may be NULL).
+ */</span>
+<span class="kt">void</span> <span class="n">set_delete</span><span class="p">(</span><span class="n">set_t</span> <span class="o">*</span><span class="n">set</span><span class="p">,</span> <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">itemdelete</span><span class="p">)(</span><span class="kt">void</span> <span class="o">*</span><span class="n">item</span><span class="p">)</span> <span class="p">);</span>
+</code></pre></div></div>
+
+<h3 id="counters">counters</h3>
+
+<p>A <em>counter set</em> is a <code class="highlighter-rouge">set</code> of counters, each distinguished by an integer <em>key</em>.
+It’s a <code class="highlighter-rouge">set</code> - each <em>key</em> can only occur once in the <code class="highlighter-rouge">set</code> - but instead of storing <em>(key,item)</em> pairs, it tracks a <code class="highlighter-rouge">counter</code> for each <em>key</em>.
+It starts empty.
+Each time <code class="highlighter-rouge">counters_add</code> is called on a given <em>key</em>, that <em>key</em>’s <code class="highlighter-rouge">counter</code> is incremented.
+The current <code class="highlighter-rouge">counter</code> value can be retrieved by asking for the relevant <em>key</em>.</p>
+
+<p>Your <code class="highlighter-rouge">counters.c</code> should implement a set of integer counters with <code class="highlighter-rouge">int</code> <em>keys</em> (where <em>keys</em> must be non-negative) and export <strong>exactly</strong> the following functions through <code class="highlighter-rouge">counters.h</code>:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/* Create a new (empty) counter structure; return NULL if error. */</span>
+<span class="n">counters_t</span> <span class="o">*</span><span class="n">counters_new</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+
+<span class="cm">/* Increment the counter indicated by key; key must be &gt;= 0.
+ * If the key does not yet exist, create a counter for it and initialize to 1.
+ * Ignore if ctrs is NULL or key is negative.
+ */</span>
+<span class="kt">void</span> <span class="n">counters_add</span><span class="p">(</span><span class="n">counters_t</span> <span class="o">*</span><span class="n">ctrs</span><span class="p">,</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">key</span><span class="p">);</span>
+
+<span class="cm">/* Return current value of counter associated with the given key;
+ * return 0 if ctrs is NULL or if key is not found.
+ */</span>
+<span class="kt">int</span> <span class="n">counters_get</span><span class="p">(</span><span class="n">counters_t</span> <span class="o">*</span><span class="n">ctrs</span><span class="p">,</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">key</span><span class="p">);</span>
+
+<span class="cm">/* Set the current value of counter associated with the given key;
+ * If the key does not yet exist, create a counter for it and initialize to
+ * the given value. Ignore if ctrs is NULL, if key &lt; 0, or count &lt; 0.
+ */</span>
+<span class="kt">void</span> <span class="n">counters_set</span><span class="p">(</span><span class="n">counters_t</span> <span class="o">*</span><span class="n">ctrs</span><span class="p">,</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">key</span><span class="p">,</span> <span class="kt">int</span> <span class="n">count</span><span class="p">);</span>
+
+<span class="cm">/* Print all counters; provide the output file.
+ * Ignore if NULL fp. Print (null) if NULL ctrs.
+ */</span>
+<span class="kt">void</span> <span class="n">counters_print</span><span class="p">(</span><span class="n">counters_t</span> <span class="o">*</span><span class="n">ctrs</span><span class="p">,</span> <span class="kt">FILE</span> <span class="o">*</span><span class="n">fp</span><span class="p">);</span>
+
+<span class="cm">/* Iterate over all counters in the set (in undefined order):
+ * call itemfunc for each item, with (arg, key, count).
+ * If ctrs==NULL or itemfunc==NULL, do nothing.
+ */</span>
+<span class="kt">void</span> <span class="n">counters_iterate</span><span class="p">(</span><span class="n">counters_t</span> <span class="o">*</span><span class="n">ctrs</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span>
+                      <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">itemfunc</span><span class="p">)(</span><span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">key</span><span class="p">,</span> <span class="kt">int</span> <span class="n">count</span><span class="p">));</span>
+
+<span class="cm">/* Delete the whole counters. ignore NULL ctrs. */</span>
+<span class="kt">void</span> <span class="n">counters_delete</span><span class="p">(</span><span class="n">counters_t</span> <span class="o">*</span><span class="n">ctrs</span><span class="p">);</span>
+</code></pre></div></div>
+
+<h3 id="hashtable">hashtable</h3>
+
+<p>A <code class="highlighter-rouge">hashtable</code> is a <code class="highlighter-rouge">set</code> of <em>(key,item)</em> pairs.
+It acts just like a <code class="highlighter-rouge">set</code>, but is far more efficient for large collections.</p>
+
+<p>Your <code class="highlighter-rouge">hashtable.c</code> should implement a <code class="highlighter-rouge">set</code> of <code class="highlighter-rouge">void*</code> with <code class="highlighter-rouge">char*</code> <em>keys</em>, and export <em>exactly</em> the following functions through <code class="highlighter-rouge">hashtable.h</code>:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/* Create a new (empty) hashtable; return NULL if error. */</span>
+<span class="n">hashtable_t</span> <span class="o">*</span><span class="n">hashtable_new</span><span class="p">(</span><span class="k">const</span> <span class="kt">int</span> <span class="n">num_slots</span><span class="p">);</span>
+
+<span class="cm">/* Insert item, identified by key (string), into the given hashtable.
+ * The key string is copied for use by the hashtable.
+ * Return false if key exists in ht, any parameter is NULL, or error;
+ * return true iff new item was inserted.
+ */</span>
+<span class="n">bool</span> <span class="n">hashtable_insert</span><span class="p">(</span><span class="n">hashtable_t</span> <span class="o">*</span><span class="n">ht</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">item</span><span class="p">);</span>
+
+<span class="cm">/* Return the item associated with the given key;
+ * return NULL if hashtable is NULL, key is NULL, key is not found.
+ */</span>
+<span class="kt">void</span> <span class="o">*</span><span class="n">hashtable_find</span><span class="p">(</span><span class="n">hashtable_t</span> <span class="o">*</span><span class="n">ht</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">);</span>
+
+<span class="cm">/* Print the whole table; provide the output file and func to print each item.
+ * Ignore if NULL fp. Print (null) if NULL ht.
+ * Print a table with no items if NULL itemprint.
+ */</span>
+<span class="kt">void</span> <span class="n">hashtable_print</span><span class="p">(</span><span class="n">hashtable_t</span> <span class="o">*</span><span class="n">ht</span><span class="p">,</span> <span class="kt">FILE</span> <span class="o">*</span><span class="n">fp</span><span class="p">,</span>
+                     <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">itemprint</span><span class="p">)(</span><span class="kt">FILE</span> <span class="o">*</span><span class="n">fp</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">item</span><span class="p">));</span>
+
+<span class="cm">/* Iterate over all items in the table; in undefined order.
+ * Call the given function on each item, with (arg, key, item).
+ * If ht==NULL or itemfunc==NULL, do nothing.
+ */</span>
+<span class="kt">void</span> <span class="n">hashtable_iterate</span><span class="p">(</span><span class="n">hashtable_t</span> <span class="o">*</span><span class="n">ht</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span>
+               <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">itemfunc</span><span class="p">)(</span><span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">item</span><span class="p">)</span> <span class="p">);</span>
+
+<span class="cm">/* Delete the whole hashtable; ignore NULL ht.
+ * Provide a function that will delete each item (may be NULL).
+ */</span>
+<span class="kt">void</span> <span class="n">hashtable_delete</span><span class="p">(</span><span class="n">hashtable_t</span> <span class="o">*</span><span class="n">ht</span><span class="p">,</span> <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">itemdelete</span><span class="p">)(</span><span class="kt">void</span> <span class="o">*</span><span class="n">item</span><span class="p">)</span> <span class="p">);</span>
+</code></pre></div></div>
+
+<p>The starter kit provides code for the hash function.</p>
+
+<h3 id="general-notes">General notes</h3>
 
 <ul>
-  <li>there must be at least two arguments;</li>
-  <li>if something by the name <code class="highlighter-rouge">dirname</code> exists, it must be a directory;</li>
-  <li>each <code class="highlighter-rouge">testfilename</code> must be a regular file and be readable.</li>
+  <li>Your modules must implement <em>exactly</em> the above interface.
+Do not modify those function prototypes.</li>
+  <li>If you need helper functions or data types (likely <code class="highlighter-rouge">struct</code> types), those should be defined within your <code class="highlighter-rouge">module.c</code> and marked <code class="highlighter-rouge">static</code> so they are not visible to users of the module.</li>
+  <li>Your modules must print <em>nothing</em> (except, of course, in the <code class="highlighter-rouge">xxx_print()</code> function).
+If you want to add debugging <code class="highlighter-rouge">printf</code>s, they must be protected by something like <code class="highlighter-rouge">#ifdef DEBUG</code> or <code class="highlighter-rouge">#ifdef TEST</code>.
+(You can see some examples in <code class="highlighter-rouge">bag.c</code> where we’ve protected some debugging code with <code class="highlighter-rouge">#ifdef MEMTEST</code>, and a spot in the <code class="highlighter-rouge">bag/Makefile</code> that controls that flag from the compiler command line.)</li>
+  <li>Your modules must have no global variables.</li>
+  <li>Your modules must have no <code class="highlighter-rouge">main()</code> function; as modules, they are meant to be used by other programs.
+Recall how the module defined by <code class="highlighter-rouge">bag.c</code> and <code class="highlighter-rouge">bag.h</code> is used by a test program <code class="highlighter-rouge">bagtest.c</code>.</li>
+  <li>Your modules store <code class="highlighter-rouge">void*</code> items; this type is C’s way of describing a “pointer to anything”.
+The caller (user of your module) must pass a pointer (address of some item) to your code; your data structure holds that pointer, and later returns it to the caller in response to an ‘extract’ or ‘find’ operation.
+Your module doesn’t know, or doesn’t care, what kind of things the items are.
+Your module doesn’t allocate memory for items, free memory for items, or copy items - it just tracks the <em>pointer</em> to the item.</li>
+  <li>For all modules, the <em>caller</em> is responsible for the <em>item</em> pointer, which must be allocated (somehow) by the caller.
+The modules’ <code class="highlighter-rouge">_delete</code> function (like a destructor) allows the caller to provide a custom <code class="highlighter-rouge">itemdelete</code> function that knows how to free any memory consumed by an item.</li>
+  <li>For this reason, the caller must avoid inserting the same item (same address) multiple times; later, the <code class="highlighter-rouge">itemdelete</code> method would be called multiple times on that item… which could lead to trouble.</li>
+  <li>Both <code class="highlighter-rouge">set</code> and <code class="highlighter-rouge">hashtable</code> work with string-type keys.
+When adding a new item with <code class="highlighter-rouge">set_insert()</code> or <code class="highlighter-rouge">hashtable_insert()</code>, both modules make their own copy of the string - presumably in memory allocated by <code class="highlighter-rouge">malloc()</code>.
+(The module is then responsible for this memory - and later freeing it - just like any other memory it allocates.)  This ‘copy’ semantic is convenient for the caller, who need not worry about how to allocate and manage the key string after inserting it into the set or hashtable.</li>
+  <li>You may assume that a non-NULL <code class="highlighter-rouge">key</code> is a proper C string; that is, it is null-terminated.</li>
+  <li>You may use the <em>memory</em> module - or use the native <code class="highlighter-rouge">malloc</code> and <code class="highlighter-rouge">free</code>, and you
+may use <code class="highlighter-rouge">valgrind</code> - or not.
+However, we will be checking your code for memory leaks.</li>
+  <li>Your modules must each have a <code class="highlighter-rouge">Makefile</code> to compile and test the module code.</li>
+  <li>Your directory for module <code class="highlighter-rouge">x</code> must, therefore, have an <code class="highlighter-rouge">xtest.c</code> program.</li>
 </ul>
 
-<p>After checking its arguments, the script creates new directory whose name has the form YYYYMMDD.HHMMSS, representing the current date and time, in the current directory.
-(For example, <code class="highlighter-rouge">20170402.143702</code>.) If any error, exit with non-zero status.</p>
+<h2 id="hints">Hints</h2>
 
-<p>The script then runs each test case with bash, redirecting stdin from <code class="highlighter-rouge">/dev/null</code>, producing four files for each case:</p>
+<p>You are encouraged to follow the style and layout of the <code class="highlighter-rouge">bag</code> module when developing new modules.</p>
 
-<ul>
-  <li><code class="highlighter-rouge">YYYYMMDD.HHMMSS/testfilename.test</code> - a copy of <code class="highlighter-rouge">testfilename</code></li>
-  <li><code class="highlighter-rouge">YYYYMMDD.HHMMSS/testfilename.status</code> - the exit status of <code class="highlighter-rouge">bash testfilename</code></li>
-  <li><code class="highlighter-rouge">YYYYMMDD.HHMMSS/testfilename.stdout</code> - the stdout from <code class="highlighter-rouge">bash testfilename</code></li>
-  <li><code class="highlighter-rouge">YYYYMMDD.HHMMSS/testfilename.stderr</code> - the stderr from <code class="highlighter-rouge">bash testfilename</code></li>
-</ul>
+<p>You can also learn a lot from our <a href="/engs50/Examples/trees">binary trees</a> example.
+You are welcome to copy snippets of code from this (or any other) CS50 example code as long as you add a comment indicating you’ve done so.</p>
 
-<p>If the directory <code class="highlighter-rouge">dirname</code> <em>does not exist,</em> YYYYMMDD.HHMMSS is renamed <code class="highlighter-rouge">dirname</code>.
-Exit 0 if success, non-zero if any error.</p>
+<p>We suggest implementing the <code class="highlighter-rouge">set</code> and <code class="highlighter-rouge">counters</code> as simplified linked lists, much like we did for <code class="highlighter-rouge">bag</code>.
+Each should be a separate implementation because they differ in detail and semantics.</p>
 
-<p>If the directory <code class="highlighter-rouge">dirname</code> <em>already exists,</em> YYYYMMDD.HHMMSS is compared with <code class="highlighter-rouge">dirname</code> to provide a brief listing of any differences - or the simple statement “no differences”.
-Exit 0 if no differences, non-zero if differences.</p>
+<p>Your <code class="highlighter-rouge">hashtable</code> module, on the other hand, should make use of the <code class="highlighter-rouge">set</code> data structure.
+Indeed, your hashtable will be an array of pointers to sets.
+Allocating an array of pointers can be tricky; consider these <a href="array-allocate.html">tips</a>.</p>
 
-<p>In typical usage, the first time the developer runs <code class="highlighter-rouge">regress.sh</code>, the script creates a directory by name <code class="highlighter-rouge">dirname</code>; in subsequent runs, it compares the new test results with those from the prior run.
-Over time, directories YYYYMMDD.HHMMSS accumulate, providing a historical record of test results.</p>
+<p><strong><em>Linked lists</em></strong> were demonstrated in <a href="/engs50/Examples/names6.c">names6.c</a>, although for a specialized case; you will need to generalize.
+They were also covered in CS10; see the <a href="http://www.cs.dartmouth.edu/~tjp/cs10/notes6.php">notes</a>.</p>
 
-<h4 class="no_toc" id="exit">exit</h4>
-
-<p>Non-zero if any error, or any differences from the earlier <code class="highlighter-rouge">dirname</code> directory.</p>
-
-<p>Zero if <code class="highlighter-rouge">dirname</code> created successfully, or there were no differences from an existing <code class="highlighter-rouge">dirname</code>.</p>
-
-<h4 class="no_toc" id="example">Example</h4>
-
-<p>Suppose we used <code class="highlighter-rouge">regress.sh</code> to support development of the <code class="highlighter-rouge">shake.sh</code> solution.
-The directory contains the script and four test files, each with a one-line command.
-(Here <code class="highlighter-rouge">regress.sh</code> is elsewhere in the PATH.) We start out by listing the four test cases, then run <code class="highlighter-rouge">regress.sh</code> twice, then add a test case, then change a test case.
-Finally, we test some erroneous cases.</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[lab2]$ ls
-shake.sh*	test0		test1		test2		test3
-[lab2]$ cat test?
-cat shake.sh
-./shake.sh
-./shake.sh love
-./shake.sh computer
-[lab2]$ regress.sh base test?
-20170402.143657
-saved test results in base
-[lab2]$ regress.sh base test?
-20170402.143702
-comparing 20170402.143702 with base...
-no differences.
-[lab2]$ echo ./shake.sh two words &gt; test4
-[lab2]$ regress.sh base test?
-20170402.143721
-comparing 20170402.143721 with base...
-Only in 20170402.143721: test4.status
-Only in 20170402.143721: test4.stderr
-Only in 20170402.143721: test4.stdout
-Only in 20170402.143721: test4.test
-[lab2]$ echo ./shake.sh rose &gt; test2
-[lab2]$ cat test?
-cat shake.sh
-./shake.sh
-./shake.sh rose
-./shake.sh computer
-./shake.sh two words
-[lab2]$ regress.sh base test?
-20170402.143806
-comparing 20170402.143806 with base...
-Files base/test2.stdout and 20170402.143806/test2.stdout differ
-Files base/test2.test and 20170402.143806/test2.test differ
-Only in 20170402.143806: test4.status
-Only in 20170402.143806: test4.stderr
-Only in 20170402.143806: test4.stdout
-Only in 20170402.143806: test4.test
-[lab2]$ ls
-20170402.143702/        shake.sh*               test3
-20170402.143721/        test0                   test4
-20170402.143806/        test1
-base/                   test2
-[lab2]$
-######## now some error cases
-[lab2]$ regress.sh
-usage: regress.sh dirname testfilename...
-[lab2]$ regress.sh base
-usage: regress.sh dirname testfilename...
-[lab2]$ regress.sh test?
-first argument ('test0') is not a directory
-[lab2]$ regress.sh /base test?
-20170402.144605
-mv: rename 20170402.144605 to /base: Permission denied
-failed to save test results in /base; they remain in 20170402.144605
-[lab2]$ regress.sh base testing
-test case 'testing' is not a file (or not readable)
-[lab2]$ regress.sh base base
-test case 'base' is not a file (or not readable)
-[lab2]$ chmod -r test?
-[lab2]$ regress.sh base test?
-test case 'test0' is not a file (or not readable)
-[lab2]$
-</code></pre></div></div>
-
-<p>Note above how we use the bash globbing syntax <code class="highlighter-rouge">?</code> to indicate a wildcard that matches any single character; thus, <code class="highlighter-rouge">test?</code> expands to</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>test0 test1 test2 test3 test4
-</code></pre></div></div>
-
-<p>Note how <code class="highlighter-rouge">test0</code> simply prints the current copy of <code class="highlighter-rouge">shake.sh</code>, which adds nicely to the historic record.</p>
-
-<blockquote>
-  <p>The name of test files is not important to <code class="highlighter-rouge">regress.sh</code>, but a development team may want to agree on a naming convention.
-For example, suppose you chose to name them all with extension <code class="highlighter-rouge">.test</code>.
-If you had saved the first run of <code class="highlighter-rouge">regress.sh</code> in a directory named <code class="highlighter-rouge">base</code>, you could then run future tests as</p>
-
-  <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./regress.sh base *.test
-</code></pre></div>  </div>
-</blockquote>
-
-<p>Just to be clear, each testfile contains bash command(s), and your
-<code class="highlighter-rouge">regress.sh</code> script should execute those commands by running bash and
-providing <code class="highlighter-rouge">testfilename</code> as an argument.  (Recall how we did the test
-cases for <code class="highlighter-rouge">shake.sh</code>.)  But you should run each test only <em>once</em>
-within any given run of <code class="highlighter-rouge">regress.sh</code> – not only is that more
-efficient, it’s possible that the commands within some test files
-might actually not be amenable to being run multiple times (e.g., if
-they have side effects like creating or removing files).</p>
-
-<p>It’s easily possible to redirect the stdin, stdout, and stderr, all in
-one run of a test - and to catch the exit status of that run.</p>
-
-<h4 class="no_toc" id="assumptions">Assumptions</h4>
-
-<p>Please expect that dirname names a directory that could be anywhere -
-not necessarily a subdirectory of the current working directory.
-(This assumption should not complicate your work.)</p>
-
-<p>Please assume that the testfilenames name files that <em>are</em> in the
-current directory.  (In principle, we should support testfiles from
-anywhere, but it’s a bit trickier; this assumption simplifies your
-work.  Your script need not validate the assumption - just assume it.)</p>
-
-<p>Please <em>do not assume</em> that the script itself, regress.sh, is in the
-current working directory.  (This assumption should not complicate
-your work.)</p>
-
-<h4 class="no_toc" id="hints">Hints</h4>
-
-<blockquote>
-  <p>Check out the <code class="highlighter-rouge">date</code> command and its <code class="highlighter-rouge">+</code> option.</p>
-
-  <p>Check out the <code class="highlighter-rouge"><span class="gh">diff --brief</span></code> command form.</p>
-
-  <p>Check out the <code class="highlighter-rouge">shift</code> built-in bash command and this <a href="/engs50/Examples/shifter.sh">example SHIFTING file</a>.</p>
-</blockquote>
-
-<h2 id="chillc">chill.c</h2>
-
-<p>Write a program to calculate “wind chill” based on the current
-temperature and wind speed.  The standard formula for this calculation
-is:</p>
-
-<pre><code class="language-Matlab">    Wind Chill = 35.74 + 0.6215T - 35.75(V^0.16) + 0.4275T(V^0.16)
-</code></pre>
-
-<p>where <code class="highlighter-rouge">T</code> is the temperature in degrees Fahrenheit (when less than 50)
-and <code class="highlighter-rouge">V</code> is the wind velocity in miles per hour.  The <code class="highlighter-rouge">^</code> character
-denotes exponentiation.  Note that the above formula is <em>not</em> in C
-programming language syntax.</p>
-
-<h4 class="no_toc" id="input">input</h4>
-
-<p>No input files; stdin is ignored.</p>
-
-<p>The user may run your program with no arguments, one argument, or two arguments as explained below.</p>
-
-<h4 class="no_toc" id="output-no-arguments">output: no arguments</h4>
-
-<p>If the user provides no arguments to your program, it should print out
-a table of temperatures (from -10 to +40 by 10’s) and and wind speeds
-(from 5 to 15 by 5’s).  Your output should look similar to the
-following, with nice columns and titles:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nv">$ </span>./chill
-    Temp    Wind    Chill
-    <span class="nt">----</span>    <span class="nt">----</span>    <span class="nt">-----</span>
-     <span class="nt">-10</span>       5    <span class="nt">-22</span>.3
-     <span class="nt">-10</span>      10    <span class="nt">-28</span>.3
-     <span class="nt">-10</span>      15    <span class="nt">-32</span>.2
-
-       0       5    <span class="nt">-10</span>.5
-       0      10    <span class="nt">-15</span>.9
-       0      15    <span class="nt">-19</span>.4
-
-      10       5     1.2
-      10      10    <span class="nt">-3</span>.5
-      10      15    <span class="nt">-6</span>.6
-
-      20       5     13.0
-      20      10     8.9
-      20      15     6.2
-
-      30       5     24.7
-      30      10     21.2
-      30      15     19.0
-
-      40       5     36.5
-      40      10     33.6
-      40      15     31.8
-</code></pre></div></div>
-
-<h4 class="no_toc" id="output-one-argument">output: one argument</h4>
-
-<p>If the user provides one argument, it will assumed to be a temperature (expressed as a floating-point number).
-If that temperature is less than 50, it is acceptable; <code class="highlighter-rouge">chill</code> then prints a table of wind speeds (from 5 to 15 by 5’s) and the calculated wind chills <em>for that temperature only</em>.
-Your program’s output for one argument should look like this:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nv">$ </span>./chill 32
-     Temp   Wind   Chill
-    <span class="nt">-----</span>   <span class="nt">----</span>   <span class="nt">-----</span>
-      32      5     27.1
-      32     10     23.7
-      32     15     21.6
-</code></pre></div></div>
-
-<h4 class="no_toc" id="output-two-arguments">output: two arguments</h4>
-
-<p>If the user provides two arguments, they will be temperature and
-velocity, respectively (expressed as floating-point numbers).  The
-temperature must be less than 50 and the velocity must be greater than
-or equal to 0.5.</p>
-
-<p>If the arguments are acceptable, then your program should calculate
-and print the wind chill for <em>that temperature and velocity only</em>.</p>
-
-<p>Your program’s output for two arguments should look like this:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nv">$ </span>./chill 5 20
-     Temp    Wind   Chill
-     <span class="nt">-----</span>   <span class="nt">----</span>   <span class="nt">-----</span>
-        5     20    <span class="nt">-15</span>.4
-</code></pre></div></div>
-
-<p>If either argument is out of range, your program should issue a
-message and exit.  Here’s an example:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nv">$ </span>./chill 55
-    Temperature must be less than 50 degrees Fahrenheit
-
-    <span class="nv">$ </span>./chill <span class="nt">-150</span> 
-    Temperature must be greater than <span class="nt">-139</span> Fahrenheit 
-    <span class="o">(</span>coldest recorded earth temperature, see https://en.wikipedia.org/wiki/Lowest_temperature_recorded_on_Earth<span class="o">)</span>
-
-    <span class="nv">$ </span>./chill 10 0
-    Wind velocity must be greater than or equal to 0.5 MPH
-</code></pre></div></div>
-
-<blockquote>
-  <p>In the preceding examples some values were printed as integers and some as decimal fractions.
-You may print everything in the format “x.y”, if you wish, but do not print more than one decimal place.
-Indeed, it may be wise to use this format when the user specifies temperature or windspeed, because the user may specify a non-integral value and it may be misleading to print it as an integer.</p>
-</blockquote>
-
-<h4 class="no_toc" id="output-more-than-two-arguments">output: more than two arguments</h4>
-
-<p>print a “usage” line and exit with error status.</p>
-
-<h4 class="no_toc" id="exit-1">exit</h4>
-
-<p>If the program terminates normally, it exits with a return code  of <code class="highlighter-rouge">0</code>.
-Otherwise, it terminates with a documented, non-zero return code.</p>
-
-<h4 class="no_toc" id="compiling">Compiling</h4>
-
-<p>You will likely need the math library.
-To use it, add
-<code class="highlighter-rouge">#include &lt;math.h&gt;</code>
-to your <code class="highlighter-rouge">chill.c</code> file, and add
-<code class="highlighter-rouge">-lm</code> to your <code class="highlighter-rouge">mygcc</code> command.
-(That is “dash ell emm”, which is short for “library math”.)</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mygcc chill.c <span class="nt">-lm</span> <span class="nt">-o</span> chill
-</code></pre></div></div>
-
-<h2 id="wordsc">words.c</h2>
-
-<p>Write a C program reminiscent of one of the pipelines we explored in Lab 1; specifically, a program called <code class="highlighter-rouge">words</code> that breaks its input into a series of words, one per line.
-It may take input from stdin, or from files whose names are listed as arguments.</p>
-
-<h4 class="no_toc" id="usage">usage</h4>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>words [filename]...
-</code></pre></div></div>
-
-<h4 class="no_toc" id="input-1">input</h4>
-
-<p>When no filenames are given on the command line, <code class="highlighter-rouge">words</code> reads from stdin.</p>
-
-<p>When one or more filenames are given on the command line, <code class="highlighter-rouge">words</code> reads from each file in sequence.</p>
-
-<p>If the special filename <code class="highlighter-rouge">-</code> is given as one of the filenames, the stdin is read at that point in the sequence.</p>
-
-<h4 class="no_toc" id="output">output</h4>
-
-<p>In any case, the stdout should consist of a sequence of lines, with
-exactly one word on each output line (i.e., each output line contains
-exactly one word and no other characters).  A “word” is a sequence of
-letters.</p>
-
-<blockquote>
-  <p>Although you may be tempted to think of the input as a sequence of lines, it may be helpful to think of it as a sequence of characters.</p>
-</blockquote>
-
-<blockquote>
-  <p>Note it is possible for the output to be empty, if there are no words in any of the input files.</p>
-</blockquote>
-
-<p>Any error messages are written to stderr.</p>
-
-<h4 class="no_toc" id="exit-2">exit</h4>
-
-<p>If the program terminates normally, it exits with a return code  of <code class="highlighter-rouge">0</code>.
-Otherwise, it terminates with a documented, non-zero return code.</p>
-
-<h4 class="no_toc" id="hints-1">hints</h4>
-
-<blockquote>
-  <p>Check out <code class="highlighter-rouge">man ctype</code> on a mac, or <code class="highlighter-rouge">man ctype.h</code> on a Linux system.</p>
-
-  <p>Consider a function that processes a file, given a <code class="highlighter-rouge">FILE*</code> as parameter.</p>
-
-  <p>Would it be easier to process the file(s) one character at a time?</p>
-</blockquote>
-
-<h2 id="histoc">histo.c</h2>
-
-<p>Write a program that reads a series of positive integers from stdin, and prints out a histogram.
-There should be 16 bins in your histogram.
-The catch?
-You don’t know in advance the <em>range</em> of input values; assume the integers range from 0 to some unknown positive maximum.
-Thus, you will need to dynamically scale the bin size for your histogram.
-An example is below.</p>
-
-<h4 class="no_toc" id="usage-1">Usage:</h4>
-
-<p>There are no command-line arguments.</p>
-
-<h4 class="no_toc" id="requirements">Requirements:</h4>
-
-<p>You must begin with bin size 1, and double it as needed so all
-positive integers observed on input fit within the histogram.</p>
-
-<p>You must have 16 bins.
-The number ‘16’ should appear only <em>once</em> in your code.</p>
-
-<h4 class="no_toc" id="input-2">input:</h4>
-
-<p>Input is read from stdin, whether from the keyboard, redirected from a
-file, or piped in from another command.  You can use a simple
-<code class="highlighter-rouge">scanf()</code> for this.  Assume the input contains only integers,
-separated by white space (space, tab, newline).  Assume the smallest
-integer is zero; ignore any negative integers.  If there is
-non-integer non-space content in the file, it is ok for the program to
-treat that as the end of input; the program should not crash, or enter
-an infinite loop – it should just silently behave as if there are no
-more integers.  (These assumptions make it easy to use <code class="highlighter-rouge">scanf</code> for
-your input.)</p>
-
-<p>As always, any other assumptions you make should be documented in your <code class="highlighter-rouge">README</code> file and your testing procedure should be documented in your <code class="highlighter-rouge">TESTING</code> file.</p>
-
-<h4 class="no_toc" id="output-1">output:</h4>
-
-<p>See examples below.</p>
-
-<h4 class="no_toc" id="exit-3">exit</h4>
-
-<p>This program has no arguments and does not check its input for errors, so it should always exit with zero status.</p>
-
-<h4 class="no_toc" id="examples">Examples:</h4>
-
-<p>Here we compile and run the program, and type a set of numbers (spread
-over three lines, but it doesn’t matter as long as we put space or
-newline between numbers), ending with <code class="highlighter-rouge">ctrl-D</code> on the beginning of a
-line.  (That sends EOF to the program.)  It then printed a histogram,
-nicely labeling each line with the range of values assigned to that
-bin, and printing a row of <code class="highlighter-rouge">*</code> to represent the count of values that
-fell into that bin.</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ mygcc histo.c -o histo
-$ ./histo
-16 bins of size 1 for range [0,16)
-3 -4 5 1 7 0
-8 0 15 12 3 5
-3 3 3 3 3
-^D
-[ 0: 0] **
-[ 1: 1] *
-[ 2: 2]
-[ 3: 3] *******
-[ 4: 4]
-[ 5: 5] **
-[ 6: 6]
-[ 7: 7] *
-[ 8: 8] *
-[ 9: 9]
-[10:10]
-[11:11]
-[12:12] *
-[13:13]
-[14:14]
-[15:15] *
-$
-</code></pre></div></div>
-
-<p>The notation [a,b) includes all values <em>x</em> such that <em>a &lt;= x &lt; b</em>,
-that is, the range includes <em>a</em> but does not include <em>b</em>.  For
-example, [0,4) = {0, 1, 2, 3}.</p>
-
-<p>Now watch what happens if we input a number outside the original range
-of [0,16).</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ ./histo
-16 bins of size 1 for range [0,16)
-3 -4 5 1 7 0
-8 0 15 12 3 5
-18
-16 bins of size 2 for range [0,32)
-19 20 30 7 12
-50
-16 bins of size 4 for range [0,64)
-34
-32
-19
-44
-^D
-[ 0: 3] *****
-[ 4: 7] ****
-[ 8:11] *
-[12:15] ***
-[16:19] ***
-[20:23] *
-[24:27]
-[28:31] *
-[32:35] **
-[36:39]
-[40:43]
-[44:47] *
-[48:51] *
-[52:55]
-[56:59]
-[60:63]
-$
-</code></pre></div></div>
-
-<p>Each time it sees a number outside the current range, it doubles the
-range and doubles the size of each bin.  (Notice also the [low:high]
-labels in the histogram; this notation includes both <em>low</em> and <em>high</em>
-and everything in between.) It might have to repeat the doubling if we
-put in a number well past the current bin size:</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ ./histo
-16 bins of size 1 for range [0,16)
-150
-16 bins of size 2 for range [0,32)
-16 bins of size 4 for range [0,64)
-16 bins of size 8 for range [0,128)
-16 bins of size 16 for range [0,256)
-^D
-[  0: 15]
-[ 16: 31]
-[ 32: 47]
-[ 48: 63]
-[ 64: 79]
-[ 80: 95]
-[ 96:111]
-[112:127]
-[128:143]
-[144:159] *
-[160:175]
-[176:191]
-[192:207]
-[208:223]
-[224:239]
-[240:255]
-$
-</code></pre></div></div>
-
-<p>Here’s an example using bash syntax to generate a list of numbers, and
-piping the output to <code class="highlighter-rouge">histo</code>:</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ echo {1..16} 150 | ./histo
-16 bins of size 1 for range [0,16)
-16 bins of size 2 for range [0,32)
-16 bins of size 4 for range [0,64)
-16 bins of size 8 for range [0,128)
-16 bins of size 16 for range [0,256)
-[  0: 15] ***************
-[ 16: 31] *
-[ 32: 47]
-[ 48: 63]
-[ 64: 79]
-[ 80: 95]
-[ 96:111]
-[112:127]
-[128:143]
-[144:159] *
-[160:175]
-[176:191]
-[192:207]
-[208:223]
-[224:239]
-[240:255]
-$
-</code></pre></div></div>
-
-<p>Although we scale the bin size (x axis), I’m not asking you to scale
-the bin count (y axis) for printing, which can lead to some really
-wide output:</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ echo {1..100} 1500 | ./histo
-16 bins of size 1 for range [0,16)
-16 bins of size 2 for range [0,32)
-16 bins of size 4 for range [0,64)
-16 bins of size 8 for range [0,128)
-16 bins of size 16 for range [0,256)
-16 bins of size 32 for range [0,512)
-16 bins of size 64 for range [0,1024)
-16 bins of size 128 for range [0,2048)
-[   0: 127] ****************************************************************************************************
-[ 128: 255]
-[ 256: 383]
-[ 384: 511]
-[ 512: 639]
-[ 640: 767]
-[ 768: 895]
-[ 896:1023]
-[1024:1151]
-[1152:1279]
-[1280:1407]
-[1408:1535] *
-[1536:1663]
-[1664:1791]
-[1792:1919]
-[1920:2047]
-$
-</code></pre></div></div>
-
-<p>We took some pains to format the [low:high] range indicators for each
-row, using a fixed-width field just wide enough to hold the biggest
-number.  It’s a nice touch (read <code class="highlighter-rouge">man printf</code> for some clues) but it’s
-ok if you make a simpler assumption (e.g., always use 6-digit field
-width).</p>
-
-<h4 id="representing-a-histogram">Representing a histogram</h4>
-
-<p>You will need an array of 16 bins to represent the number of integers
-observed in each bin.  You’ll need to keep track of the bin size and
-the range of the histogram.  If you observe a value outside the range,
-you should double the bin size and range - but first you need to
-compress the current 16 bins into the first 8 bins.  You’ll likely
-need one loop to compute the new values for the lower half of the bins
-(each bin receiving the sum of two bins’ counts), and then another to
-assign the new value (0) to the upper half of the bins.</p>
-
-<p>(Again: the number ‘16’ may only occur <em>once</em> in your code; scattering
-hard-coded numbers around your code is bad style.)</p>
-
-<p>Notice that the number of bins, bin size, and histogram range are all
-powers of 2.</p>
+<p><strong><em>Hashtables were also covered in CS10:</em></strong>
+<a href="http://www.cs.dartmouth.edu/~tjp/cs10/notes11.php">notes</a>,
+<a href="/engs50/Labs/Lab3/cs10-hashtables.pdf">slides</a>.</p>
 
 <h2 id="what-to-hand-in-and-how">What to hand in, and how</h2>
 
-<p>Make sure to compile and test your solutions on one of the machines in
-M210.  If you choose to develop your solutions on some other system,
-you are responsible to ensure that the work you submit runs correctly
-on a machine in M210 — which is where where we will test it!</p>
+<p>Make sure to compile and test your solutions on one of the <a href="http://www.cs.dartmouth.edu/~wbc/suditour/011/index.html">CS Linux systems</a> before submission.
+If you choose to develop your solutions on some other system, you are responsible to ensure that the work you submit runs correctly on a CS system — which is where where we will test it!</p>
+
+<p>Indeed, you must place your solutions in your <code class="highlighter-rouge">cs50/labs/lab3</code> directory on the department Linux servers.
+(If you worked on your laptop, use <code class="highlighter-rouge">scp</code> to copy files from your laptop to the server.)</p>
+
+<p>In addition to your code, each of the four subdirectories of <code class="highlighter-rouge">lab3</code> must include two simple text files:</p>
+
+<ol>
+  <li>
+    <p><code class="highlighter-rouge">README</code>,
+      which describes how your program should be compiled and executed, along with an explanation of any assumptions you made about the assignment.
+See the <a href="starter/bag/README.md">README.md</a> for the <code class="highlighter-rouge">bag</code> module.</p>
+  </li>
+  <li>
+    <p><code class="highlighter-rouge">TESTING</code>,
+     which describes how you tested the program, including any test inputs, test programs, and test scripts; these test files should be included in your submission.
+See the <a href="starter/bag/TESTING.md">TESTING.md</a> for the <code class="highlighter-rouge">bag</code> module in the starter kit.</p>
+  </li>
+</ol>
+
+<blockquote>
+  <p>These examples are written in <a href="/engs50/Resources/index.html#markdown">Markdown</a> format; hence the filename extension <code class="highlighter-rouge">.md</code>.
+You’ll need to use Markdown in later labs, so now’s a great time to learn.
+In this lab, the use of Markdown is optional.</p>
+</blockquote>
+
+<p>Think of your audience for each file:</p>
 
 <ul>
-  <li>
-    <p>In addition to your code, each of the four subdirectories of
-<code class="highlighter-rouge">lab2</code> must include two simple text files:</p>
-
-    <p>a.  <code class="highlighter-rouge">README</code>,
-     which describes how your program should be compiled and executed, along with an explanation of any assumptions you made about the assignment.
-See the <a href="/engs50/Examples/subtemplate-README.txt">example README file</a>.</p>
-
-    <p>b.  <code class="highlighter-rouge">TESTING</code>,
-     which describes how you tested the program, including test inputs and test scripts; these test inputs and test scripts should be included as files in the same directory.</p>
-  </li>
+  <li>the <code class="highlighter-rouge">README</code> file is written for the user of your module.
+For example, <a href="starter/bag/README.md">bag/README.md</a> refers to the interface (<code class="highlighter-rouge">bag.h</code>) and describe any assumptions, implementation details, or compilation instructions (basically, <code class="highlighter-rouge">make bag.o</code>).</li>
+  <li>the <code class="highlighter-rouge">TESTING</code> file is written for your grader.
+For example, <a href="starter/bag/TESTING.md">bag/TESTING.md</a> describes how we tested <code class="highlighter-rouge">bag.c</code>, by referring to <code class="highlighter-rouge">bagtest.c</code> and including the results of a test run in <code class="highlighter-rouge">bagtest.out</code>.
+If your test requires some input files, include those data files in your submission and refer to them in your <code class="highlighter-rouge">TESTING</code> file.
+(In the solution, the Makefile generates the necessary input files by downloading them from the web.)</li>
 </ul>
 
-<blockquote>
-  <p>See the <a href="/engs50/Examples/subtemplate-TESTING.txt">example TESTING file</a>; in that case we would not need to include testing inputs because they were CS50-provided files, or generated within the testing file itself.
-(We created this file in MacOS Terminal by choosing “Export Text As…” from the Shell menu when we had finished all the testing commands, we edited it with emacs to add the comments.</p>
-</blockquote>
+<p>Your <code class="highlighter-rouge">lab3</code> directory must contain the following:</p>
 
-<p>When finished, you should have the following files:</p>
+<ul>
+  <li>Five subdirectories:
+    <ul>
+      <li><code class="highlighter-rouge">bag</code> with <code class="highlighter-rouge">Makefile</code>, <code class="highlighter-rouge">bagtest.c</code>, <code class="highlighter-rouge">bag.c</code>, <code class="highlighter-rouge">bag.h</code>.</li>
+      <li><code class="highlighter-rouge">set</code> with <code class="highlighter-rouge">Makefile</code>, <code class="highlighter-rouge">settest.c</code>, <code class="highlighter-rouge">set.c</code>, <code class="highlighter-rouge">set.h</code>, <code class="highlighter-rouge">README</code>, <code class="highlighter-rouge">TESTING</code></li>
+      <li><code class="highlighter-rouge">counters</code> with <code class="highlighter-rouge">Makefile</code>, <code class="highlighter-rouge">counterstest.c</code>, <code class="highlighter-rouge">counters.c</code>, <code class="highlighter-rouge">counters.h</code>, <code class="highlighter-rouge">README</code>, <code class="highlighter-rouge">TESTING</code></li>
+      <li><code class="highlighter-rouge">hashtable</code> with <code class="highlighter-rouge">Makefile</code>, <code class="highlighter-rouge">hashtabletest.c</code>, <code class="highlighter-rouge">hashtable.c</code>, <code class="highlighter-rouge">hashtable.h</code>, <code class="highlighter-rouge">README</code>, <code class="highlighter-rouge">TESTING</code></li>
+      <li><code class="highlighter-rouge">common</code> directory with contents inherited from our starter kit</li>
+    </ul>
+  </li>
+  <li>Each <code class="highlighter-rouge">README</code> (or <code class="highlighter-rouge">README.md</code>) explains any assumptions and acknowledges any limitations.</li>
+  <li>Each <code class="highlighter-rouge">TESTING</code> (or <code class="highlighter-rouge">TESTING.md</code>) shows how you tested the module.</li>
+  <li>Include any special input files you used for testing.</li>
+</ul>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>lab2
-├── chill
-│   ├── README
-│   ├── TESTING
-│   └── chill.c
-├── histo
-│   ├── README
-│   ├── TESTING
-│   ├── histo.c
-├── regress
-│   ├── README
-│   ├── TESTING
-│   └── regress.sh
-└── words
-    ├── README
-    ├── TESTING
-    └── words.c
+<h4 id="submitting-your-lab">Submitting your lab</h4>
+<p>Before the deadline, run</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>~cs50/labs/submit 3
+</code></pre></div></div>
+<p>Make sure it confirms success.
+If you need to update your submission, run the same command again; it will overwrite the prior submission with the current contents of your <code class="highlighter-rouge">lab3</code> directory.</p>
+
+<p><strong><em>If you wish to use one of your 24-hour extensions,</em></strong> run this command <em>before the deadline</em>:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>~cs50/labs/submit 3 extension
+</code></pre></div></div>
+<p>This command deletes any submission you may have made previously, and leaves a single file “extension” there as an indication you are requesting an extension.
+When you are later ready to submit your work, do so as above:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>~cs50/labs/submit 3
 </code></pre></div></div>
 
-<blockquote>
-  <p>This listing was produced by the <code class="highlighter-rouge">tree</code> command.  Neat, huh?</p>
-</blockquote>
-
+<p>This overwrites any prior submission - even the extension request.
+(Thus, if you submit before the deadline, you effectively ‘cancel’ your request for an extension.) We will grade the first submission present at 0h, 24h, 48h, or 72h after the original deadline.
+To avoid confusion, <strong><em>please blitz <code class="highlighter-rouge">cs50 AT cs.dartmouth.edu</code> if you want a late submission to be graded instead of your on-time submission.</em></strong></p>
 
   </div>
 

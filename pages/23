@@ -1,6 +1,6 @@
-https://thayer.github.io/engs50/Notes/malloc/
+https://thayer.github.io/engs50/Notes/modules/
 2
-19038
+15384
 <!DOCTYPE html>
 <html>
 
@@ -9,13 +9,13 @@ https://thayer.github.io/engs50/Notes/malloc/
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>Dynamic memory allocation; linked lists</title>
+  <title>Modular data structures in C</title>
   <meta name="description" content="In Engs 50 you will learn how to design & build large, reliable, maintainable, and understandable software systems.  In the process you will learn to program in C with Unix development tools.
 ">
 
   <link rel="shortcut icon" href="/engs50/50.png" />
   <link rel="stylesheet" href="/engs50/css/main.css">
-  <link rel="canonical" href="/engs50/Notes/malloc/">
+  <link rel="canonical" href="/engs50/Notes/modules/">
 </head>
 
 
@@ -44,208 +44,156 @@ https://thayer.github.io/engs50/Notes/malloc/
         <article class="post">
 
   <header class="post-header">
-    <h1 class="post-title">Dynamic memory allocation; linked lists</h1>
+    <h1 class="post-title">Modular data structures in C</h1>
   </header>
 
   <div class="post-content">
-    <h3 id="goals">Goals</h3>
+    <p>In this class we focus on the design of reusable modules for common data structures.</p>
+
+<h3 id="goals">Goals</h3>
 
 <ul>
-  <li>To understand that <code class="highlighter-rouge">malloc</code> and <code class="highlighter-rouge">free</code> allocate and de-allocate memory from the heap.</li>
-  <li>To use dynamic memory to build a linked list.</li>
+  <li>Understanding the importance of reusable modules.</li>
+  <li>Reiterating the use of header files to enable modules.</li>
+  <li>Reiterating <code class="highlighter-rouge">struct</code> and introducing <code class="highlighter-rouge">typedef</code>.</li>
+  <li>General-purpose data structures with <code class="highlighter-rouge">void*</code>.</li>
+  <li>Function pointers.</li>
 </ul>
 
-<p>Terminal <a href="/engs50/Notes/malloc/script.txt">script</a> from today’s class.</p>
+<h2 id="modularity-and-reuse">Modularity and reuse</h2>
 
-<h3 id="background">Background</h3>
+<p>Some data structures are so common that it is valuable to code them once - lists, queues, stacks, trees, and hash tables - and then re-use that code for multiple programs (or multiple purposes within a program).
+Code re-use saves time because you don’t need to write everything from scratch.
+By using robust, well-tested modules rather than fresh (buggy) code, your program is more reliable.
+Finally, by separating ‘business logic’ from ‘data structures’, you the code is clearer and more flexible (e.g., if you later want to switch to a more-efficient data structure you can do so without rewriting all the business logic).</p>
 
-<p>We’ll be working with C code that builds and manipulates <em>linked lists</em>.
-You learned about linked lists in CS10, and may want to review the CS10 linked-list notes and implementation:</p>
+<p>Object-oriented languages make this easier, because they make it simple to define a ‘class’ of objects and then to create new ‘instances’ as needed.
+Many such languages go further by providing ‘templates’ and ‘subclasses’ as a way to derive new variants of the base class.</p>
 
-<ul>
-  <li>slides in <a href="/engs50/Notes/malloc/cs10-lists.pdf">pdf</a> or <a href="/engs50/Notes/malloc/cs10-lists.pptx">Powerpoint</a></li>
-  <li><a href="/engs50/Notes/malloc/SinglyLinked.java">SinglyLinked.java</a></li>
-  <li><a href="/engs50/Notes/malloc/SimpleList.java">SimpleList.java</a></li>
-</ul>
+<p>C has none of these capabilities.
+But we can approximate some of these concepts through good style and careful design.</p>
 
-<h1 id="dynamic-memory-allocation">Dynamic memory allocation</h1>
+<h3 id="pointers-to-anything">Pointers to anything</h3>
 
-<p>Before we dive in, check out this <a href="https://www.youtube.com/watch?v=5VnDaHBi8dM">animated explanation of pointers</a>.
-Fun!</p>
+<p>In developing a general-purpose data-structure module, we would really like the module to be able to store arbitary “things” – not just predetermined types – but anything.
+For example, instead of a linked-list of strings (as we built in the <code class="highlighter-rouge">names</code> program) we’d like a linked-list that could store pointers to anything.
+Today we want a list of string things; tomorrow we might want a list of <code class="highlighter-rouge">struct student</code> things.</p>
 
-<p>C does not have language support for dynamically allocating new ‘things’.
-Instead, the programmer has to call a library function called <code class="highlighter-rouge">malloc()</code> to allocate a new chunk of memory from the <em>heap segment</em>, and later call <code class="highlighter-rouge">free()</code> to return that chunk of memory to the heap.
-The programmer has to remember to initialize the chunk of bytes received from <code class="highlighter-rouge">malloc()</code> – which otherwise should be assumed to contain random data.
-The programmer has to be careful allocate a large enough chunk to hold the data she intends to store there, and not to use pointers to write “outside” that chunk of memory.
-Lots of flexibility and power - but as with any great power, you must take great care in using it.</p>
+<p>The solution is for the module to store <em>pointers to things</em>, rather than the things themselves.
+The user’s contract with the module is thus “I allocate and initialize a thing, and give you a pointer to remember; later, when I need that thing, I’ll ask and you give me back that pointer.
+When I ask you to print things, or delete things, I’ll give you customized functions that know how to print and delete things of this type.”</p>
 
-<blockquote>
-  <p>In Java, you can use <code class="highlighter-rouge">new</code> to dynamically create a new object, and <code class="highlighter-rouge">delete</code> to discard an object created with <code class="highlighter-rouge">new</code>, but for the most part the Java compiler and runtime handles object deletion and memory recovery automatically - it’s called ‘garbage collection.’</p>
-</blockquote>
+<p>Java and other object-oriented languages do this with <em>templates</em>.
+C has no suport for templates, but it does have a type for “pointer to anything”:  <code class="highlighter-rouge">void*</code>.
+Thus,</p>
 
-<p>There are four related functions you should understand:</p>
-
-<ul>
-  <li><strong>malloc</strong> <code class="highlighter-rouge">p = malloc(n)</code> - allocates <code class="highlighter-rouge">n</code> bytes of heap memory; the memory contents remain uninitialized.</li>
-  <li><strong>calloc</strong> <code class="highlighter-rouge">p = calloc(count, size)</code> allocates <code class="highlighter-rouge">count*size</code> bytes of heap memory and initializes it all to zero; this call is appropriate when you want to allocate an array of <code class="highlighter-rouge">count</code> items, each of <code class="highlighter-rouge">size</code> bytes.</li>
-  <li><strong>realloc</strong> <code class="highlighter-rouge">p = realloc(p, n)</code> - where <code class="highlighter-rouge">p</code> is a pointer to heap memory - expands (or shrinks) its allocation to <code class="highlighter-rouge">n</code> bytes.</li>
-  <li><strong>free</strong> <code class="highlighter-rouge">free(p)</code> - where <code class="highlighter-rouge">p</code> is a pointer to heap memory - releases that portion of heap memory for future use.</li>
-</ul>
-
-<p>Our examples today show how to use <code class="highlighter-rouge">malloc</code> to allocate space to store a string, and later, a <code class="highlighter-rouge">struct</code> holding aggregate types.
-For an example using <code class="highlighter-rouge">calloc</code> and <code class="highlighter-rouge">realloc</code>, read about <a href="/malloc/readlinep.html">how readlinep() works</a>.</p>
-
-<h2 id="memory-leaks-and-stray-pointers">Memory leaks and stray pointers</h2>
-
-<p><strong><em>For every <code class="highlighter-rouge">malloc</code> there must be a matching <code class="highlighter-rouge">free</code>.</em></strong></p>
-
-<ul>
-  <li>If you allocate space but never free it, you’ve created a <em>memory leak</em>; as the program runs, the process memory size will grow and grow, and eventually run out of memory.</li>
-  <li>If you free a pointer you’ve never allocated - or free the same pointer twice - you may cause the heap manager to corrupt its data structures and trigger a segmentation fault at some future time - often a seemingly random time.</li>
-</ul>
-
-<p>Whenever you write <code class="highlighter-rouge">malloc</code>, write the corresponding <code class="highlighter-rouge">free</code> call; or, document whose responsibility is to <code class="highlighter-rouge">free</code> that pointer.</p>
-
-<p>Whenever you call <code class="highlighter-rouge">free(p)</code>, it’s good practice to immediately set <code class="highlighter-rouge">p=NULL</code>.
-Not because you have to - it makes no difference to the heap - but because that step will prevent you from accidentally re-using that now-defunct pointer <code class="highlighter-rouge">p</code> - you’ll get a clean segmentation fault instead of unpredictable behavior.</p>
-
-<blockquote>
-  <p>When the process exits, all its memory is free - the four segments (code, global, stack, and heap) disappear.</p>
-</blockquote>
-
-<h2 id="coding-style---memory-allocation">Coding style - memory allocation</h2>
-
-<p>Avoid sprinking calls to <code class="highlighter-rouge">malloc()</code> and <code class="highlighter-rouge">free()</code> throughout your code.
-Instead, think about the kinds of things you need to create and destroy, and write type-specific wrapper for each such type.
-For example, if your program manipulates things of type <code class="highlighter-rouge">struct listnode</code>, you would write two functions:</p>
-
-<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">struct</span> <span class="n">listnode</span> <span class="o">*</span><span class="n">listnode_new</span><span class="p">(...);</span>
-    <span class="kt">void</span> <span class="n">listnode_free</span><span class="p">(</span><span class="k">struct</span> <span class="n">listnode</span> <span class="o">*</span><span class="n">node</span><span class="p">);</span>
-</code></pre></div></div>
-
-<p>The first function calls <code class="highlighter-rouge">malloc(sizeof(struct listnode))</code> and initializes all of its contents, perhaps using parameters passed by the caller.
-The second calls <code class="highlighter-rouge">free(node)</code>.
-Both involve careful error-checking code.
-See example <a href="/engs50/Examples/names7.c">names7.c</a>.</p>
-
-<p>There are many advantages to this approach:</p>
-
-<ul>
-  <li>The mainline code is more readable, because it’s clear what <code class="highlighter-rouge">listnode_new()</code> is doing.</li>
-  <li>The <code class="highlighter-rouge">new</code> function acts like a ‘constructor’ in object-oriented languages and can ensure the newly returned memory is initialized, or at least, not random bytes.</li>
-  <li>Code involving <code class="highlighter-rouge">malloc</code> can sometimes be tricky, and you isolate that trickiness in one spot and focus on getting it right once.</li>
-  <li>Some new types might need multiple <code class="highlighter-rouge">malloc</code> calls, as in our linked-list examples <a href="/engs50/Examples/names5.c">names5.c</a> <a href="/engs50/Examples/names6.c">names6.c</a> <a href="/engs50/Examples/names7.c">names7.c</a>.
-All those <code class="highlighter-rouge">malloc</code> calls (and corresponding <code class="highlighter-rouge">free</code> calls) can be in the <code class="highlighter-rouge">new</code>/<code class="highlighter-rouge">free</code> functions.</li>
-  <li>You can insert debugging output or reference-counting logic, or set debugger breakpoints, in these <code class="highlighter-rouge">new</code>/<code class="highlighter-rouge">free</code> functions and immediately have that feature apply to <em>all</em> occurrences of your program’s work with this type.</li>
-</ul>
-
-<h1 id="data-structures-in-c">Data structures in C</h1>
-
-<p>C is not an object-oriented language like Java, Python, or C++.
-It does not provide any language features to declare a ‘class’ or create and manipulate object ‘instances’ of that class.</p>
-
-<p>But C does provide two kinds of aggregate data: arrays and structures.</p>
-
-<h2 id="arrays">Arrays</h2>
-
-<p>We’ve seen examples with arrays of characters (aka strings) and arrays of character pointers, and even two-dimensional arrays of characters.
-But one can also define arrays of other types:</p>
-
-<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	<span class="kt">char</span> <span class="n">names</span><span class="p">[</span><span class="n">NumStudents</span><span class="p">][</span><span class="n">NameLength</span><span class="p">];</span>
-	<span class="kt">int</span> <span class="n">ages</span><span class="p">[</span><span class="n">NumStudents</span><span class="p">];</span>
-	<span class="kt">float</span> <span class="n">grades</span><span class="p">[</span><span class="n">NumStudents</span><span class="p">];</span>
-</code></pre></div></div>
-
-<p>and so forth.</p>
-
-<blockquote>
-  <p>Sometimes you need to understand that an array name is, in effect, a pointer to the first spot in memory where that array’s data lives; thus, <code class="highlighter-rouge">ages</code> is of type <code class="highlighter-rouge">int*</code> and is a pointer to the first entry in the array, but <code class="highlighter-rouge">ages[0]</code> is of type <code class="highlighter-rouge">int</code> and is the value of that first entry in the array.
-This concept comes up mostly in arrays of characters; <code class="highlighter-rouge">names</code> is of type <code class="highlighter-rouge">char**</code>, and even <code class="highlighter-rouge">names[0]</code> is of type <code class="highlighter-rouge">char*</code>, and <code class="highlighter-rouge">names[0][1]</code> is of type <code class="highlighter-rouge">char</code>.
-In effect, <code class="highlighter-rouge">names</code> is an array of strings, and <code class="highlighter-rouge">names[0]</code> is the first string in the array; like other strings, <code class="highlighter-rouge">names[0]</code> is of type <code class="highlighter-rouge">char*</code>.</p>
-</blockquote>
-
-<h2 id="structs">Structs</h2>
-
-<p>C allows you to define an aggregate called a ‘struct’; like an object, it has data members.
-Unlike an object, it has no methods (function members).</p>
-
-<p>Continuing our above example, we could have defined a <code class="highlighter-rouge">struct</code> for each student, and then an array of <code class="highlighter-rouge">structs</code>, as follows:</p>
-
-<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="k">struct</span> <span class="n">student</span> <span class="p">{</span>
-       <span class="kt">char</span> <span class="n">name</span><span class="p">[</span><span class="n">NameLength</span><span class="p">];</span>
-       <span class="kt">int</span> <span class="n">age</span><span class="p">;</span>
-       <span class="kt">float</span> <span class="n">grade</span><span class="p">;</span>
-   <span class="p">};</span>
-   <span class="k">struct</span> <span class="n">student</span> <span class="n">students</span><span class="p">[</span><span class="n">NumStudents</span><span class="p">];</span>
-</code></pre></div></div>
-
-<p>Now we can refer to the first student as <code class="highlighter-rouge">student[0]</code>, the second student as <code class="highlighter-rouge">student[1]</code>, and so forth.
-We can refer to the name of the first student as <code class="highlighter-rouge">student[0].name</code> and the age of the second student as <code class="highlighter-rouge">student[1].age</code>.</p>
-
-<p>In our classtime examples, <a href="/engs50/Examples/names5.c">names5.c</a>, <a href="/engs50/Examples/names5.c">names6.c</a>, and <a href="/engs50/Examples/names7.c">names7.c</a>, we declare a <code class="highlighter-rouge">struct listnode</code> and use it to build a linked list.
-There we see a different notation: instead of <code class="highlighter-rouge">.</code> to refer to a member of a struct, we have to use <code class="highlighter-rouge">-&gt;</code> to dereference the pointer and refer to member of the pointee.</p>
-
-<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="k">struct</span> <span class="n">student</span> <span class="n">alice</span><span class="p">;</span>        <span class="c1">// a single struct representing alice
-</span>   <span class="k">struct</span> <span class="n">student</span> <span class="o">*</span><span class="n">sp</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">alice</span><span class="p">;</span> <span class="c1">// a pointer, initialized to point at alice
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">char</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="s">"hello"</span><span class="p">;</span>	   <span class="c1">// pointer to a char, in this case, a string
+</span><span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">42</span><span class="p">,</span> <span class="o">*</span><span class="n">xp</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">x</span><span class="p">;</span>  <span class="c1">// pointer to an int
+</span><span class="k">struct</span> <span class="n">student</span> <span class="o">*</span> <span class="n">sp</span><span class="p">;</span>   <span class="c1">// pointer to a struct
+</span><span class="n">sp</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">student</span><span class="p">));</span> <span class="c1">// initialize the pointer
+</span><span class="n">sp</span><span class="o">-&gt;</span><span class="n">name</span> <span class="o">=</span> <span class="s">"David"</span><span class="p">;</span>  <span class="c1">// initialize the struct at that pointer
+</span><span class="n">sp</span><span class="o">-&gt;</span><span class="n">house</span> <span class="o">=</span> <span class="s">"West"</span><span class="p">;</span>  <span class="c1">// ...initialize
+</span><span class="n">sp</span><span class="o">-&gt;</span><span class="n">class</span> <span class="o">=</span> <span class="mi">1986</span><span class="p">;</span>    <span class="c1">// ...initialize
 </span>
-   <span class="c1">// the following three all do the same thing.
-</span>   <span class="kt">int</span> <span class="n">age</span> <span class="o">=</span> <span class="n">alice</span><span class="p">.</span><span class="n">age</span><span class="p">;</span>
-   <span class="kt">int</span> <span class="n">age</span> <span class="o">=</span> <span class="n">sp</span><span class="o">-&gt;</span><span class="n">age</span><span class="p">;</span>
-   <span class="kt">int</span> <span class="n">age</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">sp</span><span class="p">).</span><span class="n">age</span><span class="p">;</span>
-</code></pre></div></div>
-
-<h2 id="linked-lists">Linked lists</h2>
-
-<p>In the examples below we construct a simple linked list comprising nodes that each have a pointer to a string and a pointer to the next node.
-The list includes a dummy <em>head node</em> to simplify list management.
-The variable <code class="highlighter-rouge">head</code> is a pointer to that dummy node.</p>
-
-<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// A structure for each node in linked list
-</span><span class="k">struct</span> <span class="n">listnode</span> <span class="p">{</span>
-  <span class="kt">char</span> <span class="o">*</span><span class="n">name</span><span class="p">;</span>
-  <span class="k">struct</span> <span class="n">listnode</span> <span class="o">*</span><span class="n">next</span><span class="p">;</span>
-<span class="p">};</span>
-<span class="k">struct</span> <span class="n">listnode</span> <span class="n">head</span> <span class="o">=</span> <span class="p">{</span><span class="nb">NULL</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">};</span> <span class="c1">// dummy node at head of empty list
+<span class="kt">void</span> <span class="o">*</span><span class="n">anything</span><span class="p">;</span>       <span class="c1">// a pointer to any type
+</span><span class="n">anything</span> <span class="o">=</span> <span class="n">p</span><span class="p">;</span>         <span class="c1">// here, a pointer to a char on the stack
+</span><span class="n">anything</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">x</span><span class="p">;</span>        <span class="c1">// here, a pointer to an int on the stack
+</span><span class="n">anything</span> <span class="o">=</span> <span class="n">sp</span><span class="p">;</span>        <span class="c1">// here, a pointer to a struct in the heap
 </span></code></pre></div></div>
 
-<p>After adding three nodes, the list might look like this:</p>
+<p>Thus, our modules will accept and store <code class="highlighter-rouge">void*</code> pointers, and return them to the caller when asked.</p>
 
-<p><img src="linked-list.png" alt="" /></p>
+<h3 id="pointers-to-functions">Pointers to functions</h3>
 
-<h2 id="examples">Examples</h2>
+<p>As noted above, the module may need help when it needs to print, compare, or delete “things”.
+The module’s user must provide the module with special helper functions.
+(In an object-oriented language, like Java, “things” are objects and objects know how to print themselves, compare themselves, or delete themselves.
+C has no such support.)</p>
 
-<p>We first live-coded a simple revision of the <code class="highlighter-rouge">names</code> program, using an array of pointers instead of a two-dimensional array of characters:</p>
+<p>Thus, the caller may pass a function to the module, when needed.
+We can’t actually pass the function - we have to pass the module a pointer to the function.</p>
+
+<p>The concept of a <em>pointer to a function</em> can be confusing.
+Like any other pointer, it is an address in memory.
+Recall that the compiled code of the program lives in the code segment, in memory, so every function resides at some address.
+A function pointer is simply that address.</p>
+
+<p>We can refer to the function’s address simply by naming the function, without the syntax of calling a function.
+That is, <code class="highlighter-rouge">foo</code> is a function pointer, whereas <code class="highlighter-rouge">foo(a, b, c)</code> calls that function and passes arguments <code class="highlighter-rouge">a</code>, <code class="highlighter-rouge">b</code>, and <code class="highlighter-rouge">c</code>.
+In our <a href="/engs50/Examplespointer2.c}}">pointer2.c</a> example, we passed the address of functions <code class="highlighter-rouge">main</code> and <code class="highlighter-rouge">change</code> to <code class="highlighter-rouge">printf</code> so it could print those addresses for us to examine.</p>
+
+<p>If I have a function called <code class="highlighter-rouge">myprint</code>, like this:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">myprint</span><span class="p">(</span><span class="kt">FILE</span> <span class="o">*</span><span class="n">fp</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">item</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="kt">int</span> <span class="o">*</span><span class="n">valuep</span> <span class="o">=</span> <span class="n">item</span><span class="p">;</span> <span class="c1">// in this case, the "things" are integers
+</span>	<span class="n">fprintf</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="s">"(%s, %d)"</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="o">*</span><span class="n">valuep</span><span class="p">);</span> <span class="c1">// note *valuep derefs pointer
+</span><span class="p">}</span>
+</code></pre></div></div>
+
+<p>If I have a function pointer <code class="highlighter-rouge">printfunc</code>, I can initialize the function pointer and call through that pointer as follows:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">printfunc</span> <span class="o">=</span> <span class="n">myprint</span><span class="p">;</span>
+<span class="p">(</span><span class="o">*</span><span class="n">printfunc</span><span class="p">)(</span><span class="n">fp</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">thing</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>In other words, I dereference the pointer to get a function, and then call that function.
+Notice the <code class="highlighter-rouge">*</code> and parens, <code class="highlighter-rouge">(*printfunc)</code>.</p>
+
+<p>How would I declare that variable <code class="highlighter-rouge">printfunc</code>?
+pretty gnarly syntax:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">printfunc</span><span class="p">)(</span><span class="kt">FILE</span> <span class="o">*</span><span class="n">fp</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">item</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>declares variable <code class="highlighter-rouge">printfunc</code> to be a pointer to a function whose prototype looks like that of <code class="highlighter-rouge">myprint</code> above, that is, it takes the given three arguments and returns <code class="highlighter-rouge">void</code>.
+Indeed, it looks almost like a common function prototype, except for that <code class="highlighter-rouge">(*variablename)</code> notation.
+For this pointer to be useful, it must be initialized to the address of a function.</p>
+
+<h2 id="example---bags">Example - bags</h2>
+
+<p>Today we live-code a <em>bag</em> data structure and use it to make a bag version of our <code class="highlighter-rouge">names</code> series.
+A <em>bag</em> is an unordered collection of (items).
+The bag starts empty, grows as the caller adds one item at a time, and shrinks as the caller extracts one item at a time.
+It could be empty, or could contain hundreds of items.
+Items are indistinguishable, so the <em>extract</em> function is free to return any item from the bag.</p>
+
+<p>We start from <a href="/engs50/Examples/names5.c">names5.c</a> and modify it with the goal of coding functions that manipulate a generic “bag of things”.</p>
+
+<p>The first example demonstrates</p>
 
 <ul>
-  <li><a href="/engs50/Examples/names3.c">names3.c</a>: array of pointers; use of <code class="highlighter-rouge">readlinep</code></li>
+  <li>structure types (like <code class="highlighter-rouge">struct bag_t</code> and <code class="highlighter-rouge">struct bagnode_t</code>).</li>
+  <li>typedefs to create new type names.</li>
+  <li>Heap memory (created via <code class="highlighter-rouge">malloc</code> in <code class="highlighter-rouge">bag_new</code>).</li>
+  <li>The use of pointers to build and manipulate a bag data structure.</li>
+  <li>The use of <code class="highlighter-rouge">void*</code> to represent “a pointer to anything” and its use to build a bag of generic things.</li>
+  <li>A reminder that strings - even constant strings, in double quotes - are stored in memory as arrays of characters and referenced by a <code class="highlighter-rouge">char*</code> pointer to their first character; thus even a constant string has an address and is passed as a pointer.</li>
 </ul>
 
-<p>Here, the two-dimensional <code class="highlighter-rouge">names</code> array is replaced by a one-dimensional array of string pointers, which is more common in C, and which allows the names to be of any length - each array entry points to a dynamically allocated memory from the heap, big enough to hold that name.</p>
-
-<p>We use a new <code class="highlighter-rouge">freadlinep</code> function; after the next lecture, I recommend you read about its <a href="../readlinep.html">implementation</a>.</p>
-
-<p>We don’t have time in class, but we can extend this code to sort the array using <code class="highlighter-rouge">qsort()</code> quicksort:</p>
+<p>We extend the example to split the bag functions out as to a separate set of files, demonstrating</p>
 
 <ul>
-  <li><a href="/engs50/Examples/names4.c">names4.c</a>: sort names; <code class="highlighter-rouge">void*</code>; casting</li>
+  <li>a <em>module</em>, which is as close as we get to a <em>class</em> in C.</li>
+  <li>A set of functions exported via <code class="highlighter-rouge">bag.h</code> to other C files.</li>
+  <li>Public types (like <code class="highlighter-rouge">struct bag_t</code>) - and opaque types.</li>
+  <li>Private types (like <code class="highlighter-rouge">struct bagnode_t</code>).</li>
+  <li>Private functions (like <code class="highlighter-rouge">bagnode_new</code>).</li>
+  <li>No need for global variables.  (We always try to avoid them!)</li>
 </ul>
 
-<p>Then we live-coded a linked-list version of the <code class="highlighter-rouge">names</code> program:</p>
+<p>The result, after some cleanup, is <a href="/engs50/Examples/names9.c">names9.c</a>.</p>
 
-<ul>
-  <li><a href="/engs50/Examples/names5.c">names5.c</a> -  revises names3.c to use linked list instead of array</li>
-</ul>
+<p>A complete <em>bag</em> module is included in the <a href="/engs50/Labs/Lab3/starter">Lab 3 starter kit</a>.</p>
 
-<p>You should look at two more versions of the <code class="highlighter-rouge">names</code> program:</p>
+<h2 id="another-example---binary-trees">Another example - binary trees</h2>
 
-<ul>
-  <li><a href="/engs50/Examples/names6.c">names6.c</a> - extends names5.c to keep the list sorted</li>
-  <li><a href="/engs50/Examples/names7.c">names7.c</a> - extends names6.c to remove duplicates</li>
-</ul>
+<p>For a more complex example, demonstrating the use of binary trees as a “dictionary” data structure – that is, one that stores (key,item) pairs – study the <a href="/engs50/Examples/trees">binary-tree module</a>.</p>
 
 <h2 id="activity">Activity</h2>
 
-<p>Today’s <a href="activity.html">activity</a> deletes the list.</p>
+<p>In today’s class <a href="activity.html">activity</a>, we add a counter to track the number of items in the bag.</p>
+
 
   </div>
 

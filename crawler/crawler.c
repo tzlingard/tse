@@ -60,11 +60,9 @@ int main(int argc, char *argv[]) {
   strcpy(pageCopy, seedurl);
   hput(table, pageCopy, pageCopy, strlen(pageCopy));
   int depth = 0;
-  printf("depth = %d, maxDepth = %d\n", depth, maxdepth);
   webpage_t *qp1;
   while ((qp1 = (webpage_t *)qget(internals)) != NULL) {
     depth = webpage_getDepth(qp1);
-    printf("qp1 = %s\n", webpage_getURL(qp1));
     if (webpage_fetch(qp1)) {
       pagesave(qp1, ++id, pagedir);
       if (depth < maxdepth) {
@@ -112,10 +110,4 @@ int main(int argc, char *argv[]) {
   hclose(table);
   qclose(internals);
   return 0;
-}
-
-// free all memory stored in queue
-hclose(table);
-qclose(internals);
-return 0;
 }

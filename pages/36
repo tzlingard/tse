@@ -1,6 +1,6 @@
-https://thayer.github.io/engs50/Notes/querier/
+https://thayer.github.io/engs50/Notes/sockets/
 2
-32157
+26609
 <!DOCTYPE html>
 <html>
 
@@ -9,13 +9,13 @@ https://thayer.github.io/engs50/Notes/querier/
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>TSE Querier</title>
+  <title>Networking and Socket Programming</title>
   <meta name="description" content="In Engs 50 you will learn how to design & build large, reliable, maintainable, and understandable software systems.  In the process you will learn to program in C with Unix development tools.
 ">
 
   <link rel="shortcut icon" href="/engs50/50.png" />
   <link rel="stylesheet" href="/engs50/css/main.css">
-  <link rel="canonical" href="/engs50/Notes/querier/">
+  <link rel="canonical" href="/engs50/Notes/sockets/">
 </head>
 
 
@@ -44,388 +44,320 @@ https://thayer.github.io/engs50/Notes/querier/
         <article class="post">
 
   <header class="post-header">
-    <h1 class="post-title">TSE Querier</h1>
+    <h1 class="post-title">Networking and Socket Programming</h1>
   </header>
 
   <div class="post-content">
-    <h3 id="goals">Goals</h3>
+    <p>How do we build Internet applications?
+In this lecture, we will discuss the socket API and support for network communications between Internet hosts.
+Socket programming is the key API for programming distributed applications on the Internet.
+If you are interested in getting deeper into networking, take <em>CS60: Computer Networks</em>.</p>
 
-<p>There are three mini lectures today.</p>
+<p>Socket programming is a key skill needed for the final project.</p>
 
-<ul id="markdown-toc">
-  <li><a href="#goals" id="markdown-toc-goals">Goals</a></li>
-  <li><a href="#the-querier" id="markdown-toc-the-querier">the Querier</a></li>
-  <li><a href="#fuzz-testing" id="markdown-toc-fuzz-testing">Fuzz Testing</a></li>
-  <li><a href="#expressions" id="markdown-toc-expressions">Expressions and accumulators</a>    <ul>
-      <li><a href="#arithmetic-expressions" id="markdown-toc-arithmetic-expressions">Arithmetic expressions</a></li>
-      <li><a href="#precedence" id="markdown-toc-precedence">Precedence</a></li>
-    </ul>
-  </li>
-  <li><a href="#activity" id="markdown-toc-activity">Activity</a></li>
+<h3 id="goals">Goals</h3>
+
+<ul>
+  <li>to overview the client-server model</li>
+  <li>to provide a high-level understanding of TCP/IP</li>
+  <li>to introduce the Berkeley Sockets API for networking</li>
 </ul>
 
-<h2 id="the-querier">the Querier</h2>
+<h2 id="the-client-server-model">The client-server model</h2>
 
-<p>The third component of the Tiny Search Engine is the <em>Querier</em>, which reads the index produced by the Indexer and the page files produced by the Crawler, to interactively answer written queries entered by the user.</p>
+<p>The client-server model is one of the most commonly used communication paradigms in networked systems.
+A <em>server</em> is a long-running program that stands idle until some clients connect to the server and request service.
+Thus, it is the <em>client</em> who initiates communication with the <em>server</em>.
+Clients normally communicate with one server at a time, but most servers can communicate with multiple clients simultaneously.
+Clients need some advance knowledge of the server and its address, but the server does not need to know the address of (or even the existence of) the client prior to the connection being established.</p>
 
-<p>Our Querier loads the index into memory (a data structure we developed for the Indexer) and then prompts the user for queries.
-Queries are comprised of words, with optional <code class="highlighter-rouge">and</code>/<code class="highlighter-rouge">or</code> operators.
-For example,</p>
+<p>Client and servers communicate by means of multiple layers of network protocols.
+In this class we focus on the TCP/IP protocol suite.</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>computer science
-computer and science
-computer or science
-baseball or basketball or ultimate frisbee
+<p>When the client and server are both connected to the same Local Area Network (LAN) it looks like the following:</p>
+
+<p><img src="/engs50/Notes/sockets/ethernetccp.jpg" alt="ethernet" /></p>
+
+<hr />
+
+<p>Although the diagram shows an Ethernet, the case of Wi-Fi is exactly analogous.</p>
+
+<p>The client and the server may be in different LANs, with both LANs connected to a Wide Area Network (WAN) by means of routers.
+The largest WAN is the Internet, but companies may have their own WANs.
+This scenario is depicted below:</p>
+
+<p><img src="/engs50/Notes/sockets/wan.jpg" alt="WAN" /></p>
+
+<hr />
+
+<p>The flow of information between the client and the server goes down the protocol stack on one side, then across the network and then up the protocol stack on the other side.</p>
+
+<h3 id="tcp">Transmission Control Protocol (TCP)</h3>
+
+<p>TCP provides a connection-oriented service, since it is based on <em>connections</em> between clients and servers.</p>
+
+<p>When the client contacts the server over TCP, it asks to ‘connect’ and the server must then ‘accept’ the connection.
+Once open, the connection between a ‘socket’ on the client and a ‘socket’ on the server acts as if there is a ‘stream’ of bytes flowing from client to server, and a ‘stream’ of bytes flowing from server to client.
+These ‘streams’ look and act almost exactly like the <code class="highlighter-rouge">stdin</code> and <code class="highlighter-rouge">stdout</code> streams you’re accustomed to - the client writes to its socket and the bytes stream over the connection to the server, who then reads bytes from its socket…
+and vice versa.</p>
+
+<p>TCP provides reliability.
+When a TCP client sends data to the server, it requires an acknowledgement in return.
+If an acknowledgement is not received, TCP automatically retransmits the data and waits for a longer period of time.
+These acknowledgements are all handled by the TCP layer of the protocol stack and are invisible to applications.</p>
+
+<h3 id="addresses">Socket addresses</h3>
+
+<p>The TCP protocol depends on the underlying IP protocol.
+TCP bundles bytes from the outbound stream into “packets” and asks the IP layer to ‘route’ those packets across the LAN or WAN to the destination, where the receiving TCP layer drops those bytes ito the inbound stream.
+In this class we use IP version 4 (IPv4) – the traditional, and still most common, version of IP.</p>
+
+<p>How does the sender identify the destination of the packets?
+with an IP address.
+In the Unix socket API (aka <em><a href="https://en.wikipedia.org/wiki/Berkeley_sockets">Berkeley sockets</a></em>) the IPv4 socket address structure is named <code class="highlighter-rouge">sockaddr_in</code> and is defined by including the <code class="highlighter-rouge">netinet/in.h</code> header file.
+(I have found it sufficient to include <code class="highlighter-rouge">netdb.h</code> for the client, or <code class="highlighter-rouge">arpa/inet.h</code> for the server, because there are many socket-related include files and they all appear to include each other.)</p>
+
+<p>The standard definition is the following:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">struct</span> <span class="n">in_addr</span> <span class="p">{</span>
+  <span class="n">in_addr_t</span> <span class="n">s_addr</span><span class="p">;</span>  <span class="cm">/* 32-bit IPv4 network byte ordered address */</span>
+<span class="p">};</span>
+
+<span class="k">struct</span> <span class="n">sockaddr_in</span> <span class="p">{</span>
+  <span class="kt">uint8_t</span>        <span class="n">sin_len</span><span class="p">;</span>     <span class="cm">/* length of structure (16) */</span>
+  <span class="n">sa_family_t</span>    <span class="n">sin_family</span><span class="p">;</span>  <span class="cm">/* AF_INET */</span>
+  <span class="n">in_port_t</span>      <span class="n">sin_port</span><span class="p">;</span>    <span class="cm">/* 16 bit TCP or UDP port number */</span>
+  <span class="k">struct</span> <span class="n">in_addr</span> <span class="n">sin_addr</span><span class="p">;</span>    <span class="cm">/* 32 bit IPv4 address */</span>
+  <span class="kt">char</span>           <span class="n">sin_zero</span><span class="p">[</span><span class="mi">8</span><span class="p">];</span> <span class="cm">/* not used, but always set to zero */</span>
+<span class="p">};</span>
 </code></pre></div></div>
 
-<p>The first two examples are treated identically, matching only documents that have <em>both</em> words - not necessarily together (as in the phrase “computer science”).
-The third picks up documents that have <em>either</em> word.
-The fourth matches documents that mention baseball, or basketball, or both “ultimate” and the word “frisbee” (not necessarily together).</p>
+<p>The <code class="highlighter-rouge">uint8_t</code> data type is an unsigned 8-bit integer.</p>
 
-<p>Here’s an example run, with the output truncated a bit:</p>
+<h3 id="byte-order">Host Byte Order to Network Byte Order conversion</h3>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$  querier/querier data/cs50-3 data/cs50-index3
-KEY WORDs:&gt; computer and science
-Query: computer and science 
-Matches 139 documents (ranked):
-score 141 doc  19: http://old-www.cs.dartmouth.edu/~dfk/papers/index.html
-score 135 doc 349: http://old-www.cs.dartmouth.edu/~dfk/papers/index-t.html
-score 135 doc 348: http://old-www.cs.dartmouth.edu/~dfk/papers/index-a.html
-score 135 doc 347: http://old-www.cs.dartmouth.edu/~dfk/papers/index-c.html
-score  10 doc  11: http://old-www.cs.dartmouth.edu/~dfk/armada/
-score   4 doc   9: http://old-www.cs.dartmouth.edu/~dfk/people.html
-score   4 doc   7: http://old-www.cs.dartmouth.edu/~dfk/teaching.html
-score   3 doc 206: http://old-www.cs.dartmouth.edu/~dfk/papers/abstracts/deshpande-thesis.html
-score   3 doc 167: http://old-www.cs.dartmouth.edu/~dfk/papers/abstracts/nanda-thesis.html
-score   3 doc  18: http://old-www.cs.dartmouth.edu/~dfk/index.html
-...
-KEY WORDs:&gt; tiny search engine
-Query: tiny search engine 
-No documents match.
------------------------------------------------
-KEY WORDs:&gt; TSE
-Query: tse 
-No documents match.
------------------------------------------------
-KEY WORDs:&gt; NOTE we LOWERcase the query first
-Query: note we lowercase the query first 
-No documents match.
------------------------------------------------
-KEY WORDs:&gt;  spaces      do    not    mattter
-Query: spaces do not mattter 
-No documents match.
------------------------------------------------
-KEY WORDs:&gt; non-letter characters are disallowed
-Error: bad character '-' in query.
-KEY WORDs:&gt; even digits as in cs50
-Error: bad character '5' in query.
-KEY WORDs:&gt; and
-Query: and 
-Error: 'and' cannot be first
-KEY WORDs:&gt; or
-Query: or 
-Error: 'or' cannot be first
-KEY WORDs:&gt; what about and
-Query: what about and 
-Error: 'and' cannot be last
-KEY WORDs:&gt; friend and foe
-Query: friend and foe 
-No documents match.
------------------------------------------------
-KEY WORDs:&gt; quit
-Query: quit 
-No documents match.
------------------------------------------------
-KEY WORDs:&gt; exit
-Query: exit 
-Matches 1 documents (ranked):
-score   3 doc   3: http://old-www.cs.dartmouth.edu/~dfk/visit-dartmouth.html
------------------------------------------------
-KEY WORDs:&gt; ^D
-</code></pre></div></div>
+<p>There are two ways to store two- or four-byte integers in memory:</p>
 
-<p>Let’s study the <a href="/engs50/Labs/Lab6/REQUIREMENTS.html">Requirements Spec</a> for the Querier, and run some demos.</p>
+<ul>
+  <li>
+    <p><em>big endian</em>, with the <em>most-significant</em> byte first and bytes of <em>decreasing</em> significance as memory address increases.
+See <a href="https://en.wikipedia.org/wiki/Endianness#Big-endian">diagram</a>.</p>
+  </li>
+  <li>
+    <p><em>little endian</em>, with the <em>least-significant</em> byte first and bytes of <em>increasing</em> significance as memory address increases.
+See <a href="https://en.wikipedia.org/wiki/Endianness#Little-endian">diagram</a>.</p>
+  </li>
+</ul>
 
-<p>Today’s demo scripts are here: <a href="/engs50/Notes/querier/script1.txt">script1</a> and <a href="/engs50/Notes/querier/script2.txt">script2</a>.</p>
+<p>See Wikipedia about <em><a href="https://en.wikipedia.org/wiki/Endianness">Endianness</a></em>.</p>
 
-<h2 id="fuzz-testing">Fuzz Testing</h2>
+<p>We refer to these orders as the <em>host byte order</em>.
+For example, an Intel processor stores a 32-bit integer as four consecutive bytes in memory in the order 1-2-3-4, where 4 is the most significant byte, which is little endian.
+IBM PowerPC processors would store the integer in the byte order 4-3-2-1, which is big endian.</p>
 
-<p>In a recent lecture we talked about <em>unit testing</em>, and the difference between <em>glass-box testing</em> and <em>black-box testing</em>.
-Usually, these tests are based on a carefully constructed series of test cases, devised to test all code sequences and push on the “edge cases”.</p>
+<p>Standard Internet protocols such as IP and TCP use big-endian byte ordering.</p>
 
-<p>However, such tests are only as good as the test writer - who must logically study the code (for glass-box testing) or the specs (for black-box testing) to think of the suitable test cases.
-It’s possible they will miss some important cases.</p>
+<p>The following functions are provided on all Unix platforms to aid you converting between <em>host</em> byte order (whatever it may be) and <em>network</em> byte order: on a big-endian host, these functions do nothing; on a little-endian machine, they swap the order of bytes.
+Code using these functions can thus be compiled on either a big-endian or little-endian machine and work correctly.</p>
 
-<p>Another solution, therefore, is <strong><em>fuzz testing</em></strong>, a form of black-box testing in which you fire thousands of random inputs at the program to see how it reacts.
-The chances of triggering an unconsidered test case is far greater if you try a lot of cases!</p>
-
-<p>Here is a fuzz-testing program for our <em>querier</em>.
-It generates a series of random queries on stdout, which it then pipes to the querier on stdin.
-Here’s the core of the fuzz tester:</p>
-
-<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/**************** generate_query ****************/</span>
-<span class="cm">/* generate one random query and print to stdout.
- * pull random words from the wordlist and from the dictionary.
- */</span>
-<span class="k">static</span> <span class="kt">void</span>
-<span class="nf">generate_query</span><span class="p">(</span><span class="k">const</span> <span class="n">wordlist_t</span> <span class="o">*</span><span class="n">wordlist</span><span class="p">,</span> <span class="k">const</span> <span class="n">wordlist_t</span> <span class="o">*</span><span class="n">dictionary</span><span class="p">)</span>
-<span class="p">{</span>
-  <span class="c1">// some parameters that affect query generation
-</span>  <span class="k">const</span> <span class="kt">int</span> <span class="n">max_words</span> <span class="o">=</span> <span class="mi">6</span><span class="p">;</span>        <span class="c1">// generate 1..max_words
-</span>  <span class="k">const</span> <span class="kt">float</span> <span class="n">or_probability</span> <span class="o">=</span> <span class="mi">0</span><span class="p">.</span><span class="mi">3</span><span class="p">;</span>   <span class="c1">// P(OR between two words)
-</span>  <span class="k">const</span> <span class="kt">float</span> <span class="n">and_probability</span> <span class="o">=</span> <span class="mi">0</span><span class="p">.</span><span class="mi">2</span><span class="p">;</span>  <span class="c1">// P(AND between two words)
-</span>  <span class="k">const</span> <span class="kt">float</span> <span class="n">dict_probability</span> <span class="o">=</span> <span class="mi">0</span><span class="p">.</span><span class="mi">2</span><span class="p">;</span> <span class="c1">// P(draw from dict instead of wordlist)
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include &lt;netinet/in.h&gt;
 </span>
-  <span class="kt">int</span> <span class="n">qwords</span> <span class="o">=</span> <span class="n">random</span><span class="p">()</span> <span class="o">%</span> <span class="n">max_words</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span> <span class="c1">// number of words in query
-</span>  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">qw</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">qw</span> <span class="o">&lt;</span> <span class="n">qwords</span><span class="p">;</span> <span class="n">qw</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-    <span class="c1">// draw a word either dictionary or wordlist
-</span>    <span class="k">if</span> <span class="p">((</span><span class="n">random</span><span class="p">()</span> <span class="o">%</span> <span class="mi">100</span><span class="p">)</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">dict_probability</span> <span class="o">*</span> <span class="mi">100</span><span class="p">))</span> <span class="p">{</span>
-      <span class="n">printf</span><span class="p">(</span><span class="s">"%s "</span><span class="p">,</span> <span class="n">dictionary</span><span class="o">-&gt;</span><span class="n">words</span><span class="p">[</span><span class="n">random</span><span class="p">()</span> <span class="o">%</span> <span class="n">dictionary</span><span class="o">-&gt;</span><span class="n">nwords</span><span class="p">]);</span>
-    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-      <span class="n">printf</span><span class="p">(</span><span class="s">"%s "</span><span class="p">,</span> <span class="n">wordlist</span><span class="o">-&gt;</span><span class="n">words</span><span class="p">[</span><span class="n">random</span><span class="p">()</span> <span class="o">%</span> <span class="n">wordlist</span><span class="o">-&gt;</span><span class="n">nwords</span><span class="p">]);</span>
-    <span class="p">}</span>
+<span class="kt">uint16_t</span> <span class="n">htons</span><span class="p">(</span><span class="kt">uint16_t</span> <span class="n">host16bitvalue</span><span class="p">);</span> <span class="c1">// host to network short
+</span>
+<span class="kt">uint32_t</span> <span class="n">htonl</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">host32bitvalue</span><span class="p">);</span> <span class="c1">// host to network long
+</span>
+<span class="kt">uint16_t</span> <span class="n">ntohs</span><span class="p">(</span><span class="kt">uint16_t</span> <span class="n">net16bitvalue</span><span class="p">);</span> <span class="c1">// network to host short
+</span>
+<span class="kt">uint32_t</span> <span class="n">ntohl</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">net32bitvalue</span><span class="p">);</span> <span class="c1">// network to host long
+</span></code></pre></div></div>
 
-    <span class="c1">// last word?
-</span>    <span class="k">if</span> <span class="p">(</span><span class="n">qw</span> <span class="o">&lt;</span> <span class="n">qwords</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-      <span class="c1">// which operator to print?
-</span>      <span class="kt">int</span> <span class="n">op</span> <span class="o">=</span> <span class="n">random</span><span class="p">()</span> <span class="o">%</span> <span class="mi">100</span><span class="p">;</span>
-      <span class="k">if</span> <span class="p">(</span><span class="n">op</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">and_probability</span> <span class="o">*</span> <span class="mi">100</span><span class="p">))</span> <span class="p">{</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s">"AND "</span><span class="p">);</span>
-      <span class="p">}</span>
-      <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">op</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">and_probability</span> <span class="o">*</span> <span class="mi">100</span> <span class="o">+</span> <span class="n">or_probability</span> <span class="o">*</span> <span class="mi">100</span><span class="p">))</span> <span class="p">{</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s">"OR "</span><span class="p">);</span>
-      <span class="p">}</span>
-    <span class="p">}</span>
-  <span class="p">}</span>
-  <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
-<span class="p">}</span>
+<p>In network parlance, <em>short</em> means 16 bits and <em>long</em> means 32 bits.
+The first two functions return the value in <em>network byte order</em> (16 and 32 bit, respectively).
+The latter two functions return the value in <em>host byte order</em> (16 and 32 bit, respectively).</p>
+
+<p>The type <code class="highlighter-rouge">uint32_t</code> refers to an unsigned 32-bit integer.
+The type <code class="highlighter-rouge">uint16_t</code> refers to an unsigned 16-bit integer.
+The type <code class="highlighter-rouge">uint8_t</code> refers to an unsigned 8-bit integer.</p>
+
+<h2 id="api">TCP socket API</h2>
+
+<p>For more information about the socket API, read <em><a href="https://en.wikipedia.org/wiki/Berkeley_sockets">Berkeley sockets</a></em> (on Wikipedia) and the <code class="highlighter-rouge">man</code> pages for the functions you see used in below.</p>
+
+<p>The sequence of function calls for the client and a server participating in a TCP connection is presented below:</p>
+
+<p><img src="/engs50/Notes/sockets/TCPsockets.jpg" alt="Sockets" /></p>
+
+<hr />
+
+<p>As shown in the figure, the steps for establishing a TCP socket on the client side are the following:</p>
+
+<ul>
+  <li>Create a socket using the <code class="highlighter-rouge">socket()</code> function;</li>
+  <li>Connect the socket to the address of the server using the <code class="highlighter-rouge">connect()</code> function;</li>
+  <li>Send and receive data by means of the <code class="highlighter-rouge">write()</code> and <code class="highlighter-rouge">read()</code> functions.</li>
+</ul>
+
+<p>The steps involved in establishing a TCP socket on the server side are as follows:</p>
+
+<ul>
+  <li>Create a socket with the <code class="highlighter-rouge">socket()</code> function;</li>
+  <li>Bind the socket to an address using the <code class="highlighter-rouge">bind()</code> function;</li>
+  <li>Listen for connections with the <code class="highlighter-rouge">listen()</code> function;</li>
+  <li>Accept a connection with the <code class="highlighter-rouge">accept()</code> function system call.
+This call typically blocks until a client connects with the server.</li>
+  <li>Send and receive data by means of <code class="highlighter-rouge">write()</code> and <code class="highlighter-rouge">read()</code>.</li>
+</ul>
+
+<p>The actual determination of which side reads first, and which side writes first, depends on the particular protocol running atop TCP.</p>
+
+<h3 id="socket">The <code class="highlighter-rouge">socket()</code> function</h3>
+
+<p>The first step is to call the <code class="highlighter-rouge">socket()</code> function, specifying the type of communication protocol (TCP based on IPv4, TCP based on IPv6, UDP).</p>
+
+<p>The function is defined as follows:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include &lt;sys/socket.h&gt;
+</span>
+<span class="kt">int</span> <span class="n">socket</span> <span class="p">(</span><span class="kt">int</span> <span class="n">family</span><span class="p">,</span> <span class="kt">int</span> <span class="n">type</span><span class="p">,</span> <span class="kt">int</span> <span class="n">protocol</span><span class="p">);</span>
 </code></pre></div></div>
 
-<p>With the following setup,</p>
+<p>where <code class="highlighter-rouge">family</code> specifies the protocol family (<code class="highlighter-rouge">AF_INET</code> for the IPv4 protocols), <code class="highlighter-rouge">type</code> is a constant described the type of socket (<code class="highlighter-rouge">SOCK_STREAM</code> for stream (TCP) sockets and <code class="highlighter-rouge">SOCK_DGRAM</code> for datagram (UDP) sockets), and <code class="highlighter-rouge">protocol</code> is a parameter that can be set to zero for this course.</p>
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span><span class="nb">cd </span>tse
-<span class="nv">$ </span>mkdir data/cs50-3
-<span class="nv">$ </span>crawler/crawler http://old-www.cs.dartmouth.edu/~cs50/ data/cs50-3 3
-<span class="nv">$ </span>indexer/indexer data/cs50-3 data/cs50-index3
+<p>The function returns a non-negative integer (or <code class="highlighter-rouge">-1</code> on error).
+This number is a ‘file descriptor’.</p>
+
+<blockquote>
+  <p><strong><em>File descriptors:</em></strong> File descriptors are small non-negative integers that the kernel uses to identify the files being accessed by a particular process.
+Whenever it opens an existing file or creates a new file, the kernel returns a file descriptor that is used to read or write the file.
+<em>They are not the same thing as stdio ‘file pointers’.</em>
+ The stdio package ‘wraps’ file descriptors in its <code class="highlighter-rouge">FILE*</code> type to provide a more convenient API.
+By convention, file descriptor 0 is the ‘standard input’ (known in stdio as <code class="highlighter-rouge">stdin</code>),
+file descriptor 1 is the ‘standard output’ (wrapped by stdio as <code class="highlighter-rouge">stdout</code>), and
+file descriptor 2 is the ‘standard error’ (wrapped by stdio as <code class="highlighter-rouge">stderr</code>),</p>
+</blockquote>
+
+<h3 id="bind">The <code class="highlighter-rouge">bind()</code> function</h3>
+
+<p>The <code class="highlighter-rouge">bind()</code> assigns a local protocol address to a socket.
+With the Internet protocols, the address is the combination of an IPv4 address and a 16-bit TCP port number.</p>
+
+<p>The function is defined as follows:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include &lt;sys/socket.h&gt;
+</span>
+<span class="kt">int</span> <span class="n">bind</span><span class="p">(</span><span class="kt">int</span> <span class="n">sockfd</span><span class="p">,</span> <span class="k">const</span> <span class="k">struct</span> <span class="n">sockaddr</span> <span class="o">*</span><span class="n">servaddr</span><span class="p">,</span> <span class="n">socklen_t</span> <span class="n">addrlen</span><span class="p">);</span>
 </code></pre></div></div>
 
-<p>And here’s the output of 10 random queries:</p>
+<p>where <code class="highlighter-rouge">sockfd</code> is the socket descriptor, <code class="highlighter-rouge">servaddr</code> points to a socket address structure and <code class="highlighter-rouge">addrlen</code> is its length..</p>
 
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>querier/fuzzquery 
-usage: querier/fuzzquery indexFile numQueries randomSeed
-<span class="nv">$ </span>querier/fuzzquery data/cs50-index3 10 0
-querier/fuzzquery: generating 10 queries from 5586 words
-captured AND despite
-pcs OR frontiers activityaware OR relay tour 
-unix downloading OR pre 
-triactine pieces colgate OR aspects OR wine-wise OR direx 
-uncompressed OR early taxonomy austrian AND jewelry OR manages 
-once forced odame localization OR marsch 
-comparison 
-suffer desires OR workflow 
-facilitated 
-garth OR yang OR cardiac AND ruslan AND synthetic 
+<p><code class="highlighter-rouge">bind()</code> returns <code class="highlighter-rouge">0</code> if it succeeds, <code class="highlighter-rouge">-1</code> on error.</p>
+
+<p>This use of the generic socket address <code class="highlighter-rouge">sockaddr</code> requires that any calls to these functions must cast the pointer to the protocol-specific address structure.
+For example for an IPv4 socket structure that we use in this class:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">struct</span> <span class="n">sockaddr_in</span> <span class="n">serv</span><span class="p">;</span> <span class="cm">/* IPv4 socket address structure */</span>
+
+<span class="n">bind</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span> <span class="p">(</span><span class="k">struct</span> <span class="n">sockaddr</span><span class="o">*</span><span class="p">)</span> <span class="o">&amp;</span><span class="n">serv</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">serv</span><span class="p">))</span>
 </code></pre></div></div>
 
-<p>And here’s what happens when we pipe it to our querier (output abbreviated a little):</p>
+<p>A process can bind a specific IP address/port to its socket.
+Normally, a TCP client does not bind an IP address to its socket; the kernel chooses the source IP, based on the outgoing interface that is used, and assigns an unused port number.
+For a TCP server, <code class="highlighter-rouge">bind</code> is required and restricts the socket to receive incoming client connections destined to that IP address and port; that said, the server can pass a wildcard address to <code class="highlighter-rouge">bind</code> and allow the system to choose an address and unused port number.</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ querier/fuzzquery data/cs50-index3 10 0 | querier/querier data/cs50-3 data/cs50-index3
-querier/fuzzquery: generating 10 queries from 5586 words
-KEY WORDs:&gt; Query: captured and despite 
-No documents match.
------------------------------------------------
-KEY WORDs:&gt; Query: pcs or frontiers activityaware or relay tour 
-Matches 39 documents (ranked):
-score  37 doc 349: http://old-www.cs.dartmouth.edu/~dfk/papers/index-t.html
-score  37 doc 348: http://old-www.cs.dartmouth.edu/~dfk/papers/index-a.html
-score  37 doc 347: http://old-www.cs.dartmouth.edu/~dfk/papers/index-c.html
-score  37 doc  19: http://old-www.cs.dartmouth.edu/~dfk/papers/index.html
-score   2 doc  53: http://old-www.cs.dartmouth.edu/~dfk/papers/abstracts/oldfield-app-pario.html
-...
------------------------------------------------
-KEY WORDs:&gt; Query: unix downloading or pre 
-Matches 1 documents (ranked):
-score   1 doc 104: http://old-www.cs.dartmouth.edu/~dfk/papers/abstracts/khanna-group.html
------------------------------------------------
-KEY WORDs:&gt; Error: bad character '-' in query.
-KEY WORDs:&gt; Query: uncompressed or early taxonomy austrian and jewelry or manages 
-Matches 3 documents (ranked):
-score   2 doc  19: http://old-www.cs.dartmouth.edu/~dfk/papers/index.html
-score   1 doc  81: http://old-www.cs.dartmouth.edu/~dfk/STARFISH/
-score   1 doc  67: http://old-www.cs.dartmouth.edu/~dfk/RAPID-Transit.html
------------------------------------------------
-KEY WORDs:&gt; Query: once forced odame localization or marsch 
-Matches 5 documents (ranked):
-score   2 doc  19: http://old-www.cs.dartmouth.edu/~dfk/papers/index.html
-score   1 doc 316: http://old-www.cs.dartmouth.edu/~dfk/papers/abstracts/anthony-sith3.html
-score   1 doc 349: http://old-www.cs.dartmouth.edu/~dfk/papers/index-t.html
-score   1 doc 348: http://old-www.cs.dartmouth.edu/~dfk/papers/index-a.html
-score   1 doc 347: http://old-www.cs.dartmouth.edu/~dfk/papers/index-c.html
------------------------------------------------
-KEY WORDs:&gt; Query: comparison 
-Matches 11 documents (ranked):
-score   3 doc 349: http://old-www.cs.dartmouth.edu/~dfk/papers/index-t.html
-score   3 doc 348: http://old-www.cs.dartmouth.edu/~dfk/papers/index-a.html
-score   3 doc 347: http://old-www.cs.dartmouth.edu/~dfk/papers/index-c.html
-...
------------------------------------------------
-KEY WORDs:&gt; Query: suffer desires or workflow 
-Matches 1 documents (ranked):
-score   1 doc 336: http://old-www.cs.dartmouth.edu/~dfk/papers/abstracts/mare-thesis.html
------------------------------------------------
-KEY WORDs:&gt; Query: facilitated 
-Matches 2 documents (ranked):
-score   1 doc 260: http://old-www.cs.dartmouth.edu/~dfk/papers/abstracts/chen-fusenet.html
-score   1 doc 180: http://old-www.cs.dartmouth.edu/~dfk/papers/abstracts/tan-crf-s3.html
------------------------------------------------
-KEY WORDs:&gt; Query: garth or yang or cardiac and ruslan and synthetic 
-Matches 3 documents (ranked):
-score   1 doc  19: http://old-www.cs.dartmouth.edu/~dfk/papers/index.html
-score   1 doc  90: http://old-www.cs.dartmouth.edu/~dfk/charisma/
-score   1 doc   9: http://old-www.cs.dartmouth.edu/~dfk/people.html
------------------------------------------------
+<h3 id="listen">The <code class="highlighter-rouge">listen()</code> function</h3>
+
+<p>The <code class="highlighter-rouge">listen()</code> function converts an unconnected socket into a passive socket, indicating that the kernel should accept incoming connection requests directed to this socket.
+It is defined as follows:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include &lt;sys/socket.h&gt;
+</span>
+<span class="kt">int</span> <span class="n">listen</span><span class="p">(</span><span class="kt">int</span> <span class="n">sockfd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">backlog</span><span class="p">);</span>
 </code></pre></div></div>
 
-<p>We could generate a different series of random queries by changing the random seed, and we can run a lot more queries, too!</p>
+<p>where <code class="highlighter-rouge">sockfd</code> is the socket descriptor and <code class="highlighter-rouge">backlog</code> is the maximum number of connections the kernel should queue for this socket.
+The <code class="highlighter-rouge">backlog</code> argument provides an hint to the system of the number of outstanding connect requests that it should enqueue in behalf of the process.
+Once the queue is full, the system will reject additional connection requests.
+The <code class="highlighter-rouge">backlog</code> value must be chosen based on the expected load of the server.</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ querier/fuzzquery data/cs50-index3 10 999 | querier/querier data/cs50-3 data/cs50-index3 &gt; /dev/null
-querier/fuzzquery: generating 10 queries from 5586 words
-$ querier/fuzzquery data/cs50-index3 10000 999 | querier/querier data/cs50-3 data/cs50-index3
-querier/fuzzquery: generating 10000 queries from 5586 words
+<p>The function <code class="highlighter-rouge">listen()</code> returns <code class="highlighter-rouge">0</code> if it succeeds, <code class="highlighter-rouge">-1</code> on error.</p>
+
+<h3 id="connect">The <code class="highlighter-rouge">connect()</code> function</h3>
+
+<p>The <code class="highlighter-rouge">connect()</code> function is used by a TCP client to establish a connection with a TCP server.</p>
+
+<p>The function is defined as follows:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include &lt;sys/socket.h&gt;
+</span>
+<span class="kt">int</span> <span class="n">connect</span> <span class="p">(</span><span class="kt">int</span> <span class="n">sockfd</span><span class="p">,</span> <span class="k">const</span> <span class="k">struct</span> <span class="n">sockaddr</span> <span class="o">*</span><span class="n">servaddr</span><span class="p">,</span> <span class="n">socklen_t</span> <span class="n">addrlen</span><span class="p">);</span>
 </code></pre></div></div>
 
-<p>The fuzz tester does not test <em>all</em> aspects of the querier; in particular, it will not generate syntactically incorrect inputs.
-Those should be tested by another program, perhaps another fuzz tester.
-Furthermore, it does not verify whether the querier actually produces the right answers!</p>
+<p>where <code class="highlighter-rouge">sockfd</code> is the socket descriptor returned by the call to <code class="highlighter-rouge">socket()</code> and <code class="highlighter-rouge">servaddr</code> points to a socket address structure and <code class="highlighter-rouge">addrlen</code> is its length.</p>
 
-<p>For regression testing, we might save the querier output in a file, and then compare the output of a fresh test run against the saved results from earlier runs.
-If we had earlier believed those results to be correct, then seeing unchanged output would presumably indicate the results (and thus the new code) are still correct.</p>
+<p>The function returns <code class="highlighter-rouge">0</code> if it succeeds in establishing a TCP connection, and <code class="highlighter-rouge">-1</code> otherwise.</p>
 
-<h2 id="expressions">Expressions and accumulators</h2>
+<p>The client does not have to call <code class="highlighter-rouge">bind()</code> before calling this function: the client’s UNIX kernel will choose both an ephemeral port and the source IP if necessary.</p>
 
-<p>Thinking ahead to the querier, let’s think about how one evaluates an expression involving operators.
-We’ll work with an arithmetic analogy.</p>
+<h3 id="accept">The <code class="highlighter-rouge">accept()</code> function</h3>
 
-<h3 id="arithmetic-expressions">Arithmetic expressions</h3>
+<p>The <code class="highlighter-rouge">accept()</code> function is used to retrieve a connect request, create a new socket just like the original one, and allocate a new file descriptor for that socket.
+It is defined as follows:</p>
 
-<p>Consider the following arithmetic expression:</p>
-
-<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">sum</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span> <span class="o">+</span> <span class="n">c</span> <span class="o">+</span> <span class="n">d</span>
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include &lt;sys/socket.h&gt;
+</span>
+<span class="kt">int</span> <span class="n">accept</span><span class="p">(</span><span class="kt">int</span> <span class="n">sockfd</span><span class="p">,</span> <span class="k">struct</span> <span class="n">sockaddr</span> <span class="o">*</span><span class="n">cliaddr</span><span class="p">,</span> <span class="n">socklen_t</span> <span class="o">*</span><span class="n">addrlen</span><span class="p">);</span>
 </code></pre></div></div>
 
-<p>Since addition is a <em>left-associative</em> operator, this means the same thing as</p>
+<p>where <code class="highlighter-rouge">sockfd</code> is a new file descriptor that is connected to the client that called the <code class="highlighter-rouge">connect()</code>.
+The <code class="highlighter-rouge">cliaddr</code> and <code class="highlighter-rouge">addrlen</code> arguments are used to return the protocol address of the client.
+The new socket descriptor has the same socket type and address family of the original socket.
+The original socket passed to <code class="highlighter-rouge">accept()</code> is not associated with the connection, but instead remains available to receive additional connect requests.
+The kernel creates one connected socket for each client connection that is accepted.</p>
 
-<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">sum</span> <span class="o">=</span> <span class="p">(((</span><span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">)</span> <span class="o">+</span> <span class="n">c</span><span class="p">)</span> <span class="o">+</span> <span class="n">d</span><span class="p">)</span>
-</code></pre></div></div>
+<p>If we don’t care about the client’s identity, we can set the <code class="highlighter-rouge">cliaddr</code> and <code class="highlighter-rouge">addrlen</code> to <code class="highlighter-rouge">NULL</code>.
+Otherwise, before calling the <code class="highlighter-rouge">accept()</code> function, the <code class="highlighter-rouge">cliaddr</code> parameter has to be set to a buffer large enough to hold the address and set the integer pointed by <code class="highlighter-rouge">addrlen</code> to the size of the buffer.</p>
 
-<p>This means we can scan the expression from left to right, accumulating a sum as we go, effectively like this:</p>
+<h2 id="tcp-example">TCP client/server example</h2>
 
-<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">sum</span> <span class="o">=</span> <span class="mi">0</span>
-<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">a</span>
-<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">b</span>
-<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">c</span>
-<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">d</span>
-</code></pre></div></div>
+<p>In this example, <a href="/engs50/Examples/client-server">client-server</a>, we see a basic TCP client that can talk to our basic TCP server.</p>
 
-<p>Here, the <code class="highlighter-rouge">sum</code> acts as an <em>accumulator</em>.
-(Indeed, many early hardware architectures include an explicit register called an ‘accumulator’.)</p>
+<p>This code demonstrates</p>
 
-<p>We often see this approach generalized in code:</p>
+<ul>
+  <li>the server’s loop over clients, and handling each client in turn</li>
+  <li>the server-side flow: <code class="highlighter-rouge">socket</code>, <code class="highlighter-rouge">bind</code>, <code class="highlighter-rouge">listen</code>, <code class="highlighter-rouge">accept</code>, <code class="highlighter-rouge">read</code>, <code class="highlighter-rouge">close</code>
+7* the client-side flow: <code class="highlighter-rouge">socket</code>, <code class="highlighter-rouge">connect</code>, <code class="highlighter-rouge">write</code>, <code class="highlighter-rouge">close</code></li>
+  <li>the use of <code class="highlighter-rouge">getsockname()</code> to retrieve the port number bound to a socket</li>
+  <li>the use of <code class="highlighter-rouge">gethostbyname()</code> to find the IP address for a hostname</li>
+  <li>the use of 	<code class="highlighter-rouge">bzero()</code> to zero all bytes in a buffer</li>
+  <li>the use of 	<code class="highlighter-rouge">bcopy()</code> to copy all bytes from one buffer to another</li>
+  <li>a <code class="highlighter-rouge">read</code>/<code class="highlighter-rouge">write</code> loop, recognizing that <code class="highlighter-rouge">read</code> does not always fill the buffer</li>
+</ul>
 
-<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="n">n</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
-<span class="kt">int</span> <span class="n">array</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">42</span><span class="p">,</span> <span class="mi">34</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">19</span><span class="p">};</span>
-<span class="kt">int</span> <span class="n">sum</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
-	<span class="n">sum</span> <span class="o">+=</span> <span class="n">array</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
-<span class="n">printf</span><span class="p">(</span><span class="s">"sum = %d; average = %f</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">sum</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">sum</span> <span class="o">/</span> <span class="n">n</span><span class="p">);</span>
-</code></pre></div></div>
+<!-- See the in-class script from [flume](/engs50/Notes/sockets/script-flume.txt) and [Mac](/engs50/Notes/sockets/script-mac.txt). -->
 
-<h3 id="precedence">Precedence</h3>
+<h2 id="http-example">HTTP-over-TCP client/server example</h2>
 
-<p>What if you have a mixture of operators, with precedence?</p>
+<p>In this example, <a href="/engs50/Examples/client-server-http">client-server-http</a>, we enhance the basic example to support HTTP.
+The client can connect to our HTTP server, or to real HTTP servers.
+The server can serve our basic HTTP client, or real browsers.</p>
 
-<p>Consider the following arithmetic expression:</p>
+<p>This code demonstrates</p>
 
-<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">sum</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span> <span class="o">*</span> <span class="n">c</span> <span class="o">+</span> <span class="n">d</span>
-</code></pre></div></div>
+<ul>
+  <li>the HTTP protocol on both server and client side</li>
+  <li>the use of <code class="highlighter-rouge">fdopen()</code> to convert a ‘file descriptor’ into a ‘file pointer’ usable with stdio and our CS50 <code class="highlighter-rouge">file.c</code> module.</li>
+</ul>
 
-<p>Both addition and multiplication are <em>left-associative</em> operators, but multiplication has precedence over addition.
-Thus, we implicitly rewrite the above expression as follows:</p>
+<!-- See again the in-class script from [flume](/engs50/Notes/sockets/script-flume.txt) and [Mac](/engs50/Notes/sockets/script-mac.txt). -->
 
-<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">sum</span> <span class="o">=</span> <span class="p">((</span><span class="n">a</span> <span class="o">+</span> <span class="p">(</span><span class="n">b</span> <span class="o">*</span> <span class="n">c</span><span class="p">))</span> <span class="o">+</span> <span class="n">d</span><span class="p">)</span>
-</code></pre></div></div>
+<h3 id="to-learn-more">To learn more</h3>
 
-<p>or, in sequence,</p>
-
-<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">sum</span> <span class="o">=</span> <span class="mi">0</span>
-<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">a</span> 
-<span class="n">prod</span> <span class="o">=</span> <span class="mi">1</span>
-<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">b</span>
-<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">c</span>
-<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">prod</span>
-<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">d</span>
-</code></pre></div></div>
-
-<p>Notice how we ‘step aside’ from the sum for a moment while we compute the product <code class="highlighter-rouge">b * c</code> … using an exactly analogous process.  <code class="highlighter-rouge">prod</code> is an accumulator for the product; it is initialized to the <em>multiplicative identity</em> (1) instead of the <em>additive identity</em> (0), for reasons I hope are obvious.
-But then we just multiply in each of the successive items, one at a time.</p>
-
-<p>This generalizes to longer expressions like</p>
-
-<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">sum</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="n">b</span> <span class="o">+</span> <span class="n">c</span> <span class="o">*</span> <span class="n">d</span> <span class="o">*</span> <span class="n">e</span> <span class="o">+</span> <span class="n">f</span> <span class="o">+</span> <span class="n">g</span> <span class="o">*</span> <span class="n">h</span> <span class="o">*</span> <span class="n">i</span>
-</code></pre></div></div>
-
-<p>becomes</p>
-
-<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">sum</span> <span class="o">=</span> <span class="mi">0</span>
-<span class="n">prod</span> <span class="o">=</span> <span class="mi">1</span>
-<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">a</span>
-<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">b</span>
-<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">prod</span>
-<span class="n">prod</span> <span class="o">=</span> <span class="mi">1</span>
-<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">c</span>
-<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">d</span>
-<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">e</span>
-<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">prod</span>
-<span class="n">prod</span> <span class="o">=</span> <span class="mi">1</span>
-<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">f</span>
-<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">prod</span>
-<span class="n">prod</span> <span class="o">=</span> <span class="mi">1</span>
-<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">g</span>
-<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">h</span>
-<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">i</span>
-<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">prod</span>
-</code></pre></div></div>
-
-<p>Let’s add some indentation to make this a little easier to read:</p>
-
-<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">sum</span> <span class="o">=</span> <span class="mi">0</span>
-	<span class="n">prod</span> <span class="o">=</span> <span class="mi">1</span>
-	<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">a</span>
-	<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">b</span>
-<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">prod</span>
-	<span class="n">prod</span> <span class="o">=</span> <span class="mi">1</span>
-	<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">c</span>
-	<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">d</span>
-	<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">e</span>
-<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">prod</span>
-	<span class="n">prod</span> <span class="o">=</span> <span class="mi">1</span>
-	<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">f</span>
-<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">prod</span>
-	<span class="n">prod</span> <span class="o">=</span> <span class="mi">1</span>
-	<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">g</span>
-	<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">h</span>
-	<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">i</span>
-<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">prod</span>
-</code></pre></div></div>
-
-<p>Notice what I did with <code class="highlighter-rouge">f</code>, and that I <em>never add anything to <code class="highlighter-rouge">sum</code> other than <code class="highlighter-rouge">prod</code></em>.</p>
-
-<p>This structure should give you a hint about how you might write code to evaluate such expressions…
-if you have a <code class="highlighter-rouge">product</code> function to scan the expression left to right from a given starting point, accumulating a product of individual items until it sees a <code class="highlighter-rouge">+</code> or the end of the expression, you can then write a function <code class="highlighter-rouge">sum</code> that scans the expression left to right from the start, accumulating a sum of products by calling <code class="highlighter-rouge">product</code> at the start and after each <code class="highlighter-rouge">+</code>.</p>
+<p>For more details about the handshake protocols see this excellent <a href="https://upload.wikimedia.org/wikipedia/commons/f/f6/Tcp_state_diagram_fixed_new.svg">TCP state diagram on Wikipedia</a></p>
 
 <h2 id="activity">Activity</h2>
 
-<p>In today’s <a href="activity.html">activity</a> your group will discuss how the above ideas relate to <code class="highlighter-rouge">and</code> an <code class="highlighter-rouge">or</code> operators in a query expression.</p>
+<p>In today’s <a href="activity.html">activity</a> your group will copy and install the example code and try it out!</p>
 
   </div>
 

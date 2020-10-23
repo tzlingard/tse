@@ -1,6 +1,6 @@
-https://thayer.github.io/engs50/Resources/XQuartz/
+https://thayer.github.io/engs50/Resources/Homebrew.html
 2
-13233
+4917
 <!DOCTYPE html>
 <html>
 
@@ -9,13 +9,13 @@ https://thayer.github.io/engs50/Resources/XQuartz/
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>Install X11 on MacOS X; and, using gtk+</title>
+  <title>Homebrew installation</title>
   <meta name="description" content="In Engs 50 you will learn how to design & build large, reliable, maintainable, and understandable software systems.  In the process you will learn to program in C with Unix development tools.
 ">
 
   <link rel="shortcut icon" href="/engs50/50.png" />
   <link rel="stylesheet" href="/engs50/css/main.css">
-  <link rel="canonical" href="/engs50/Resources/XQuartz/">
+  <link rel="canonical" href="/engs50/Resources/Homebrew.html">
 </head>
 
 
@@ -44,128 +44,49 @@ https://thayer.github.io/engs50/Resources/XQuartz/
         <article class="post">
 
   <header class="post-header">
-    <h1 class="post-title">Install X11 on MacOS X; and, using gtk+</h1>
+    <h1 class="post-title">Homebrew installation</h1>
   </header>
 
   <div class="post-content">
-    <p>On MacOS X, <strong>XQuartz</strong> enables you to use the X11 window system.</p>
+    <p>MacOS users are lucky because they get all the grace of a graphical interface with a large ecosystem of applications to make their computer productive, <em>plus they have access to the full power of Unix under the hood.</em>
+Apple includes a lot of the core Unix commands and utilities, by default, but some of the commands you’ll need (or want) in this course need to be added.
+Some of these can be installed through the Apple developer’s tool (<code class="highlighter-rouge">Xcode</code>), but lots of great open-source software needs to be installed separately.</p>
 
-<h4 id="1-install-xquartz-application">1. Install XQuartz application</h4>
-<p>Here we provide two ways to install XQuartz application.
-You could either install from official website or install with Homebrew.
-In general, we recommend you to use Homebrew to install and manage packages on MacOS X.</p>
+<p>The easiest way to install open-source software is through a ‘package manager’ (Linux users are likely already familiar with this concept!).
+There are several package managers for MacOS, but I like the one called <em><a href="http://brew.sh">Homebrew</a></em>.
+It’s easy to install and easy to use for installing other tools.</p>
 
-<ol>
-  <li>Download and install directly from <a href="https://www.xquartz.org/">XQuartz</a>.</li>
-  <li>Install with <strong><a href="http://www.cs.dartmouth.edu/~cs50/Resources/Homebrew.html">Homebrew</a></strong>.  There are two steps:
-    1. <strong><a href="https://caskroom.github.io/">Homebrew Cask</a></strong> is an extension of Homebrew. It installs GUI applications under the framework of Homebrew. Install <strong>Homebrew Cask</strong> with command <code class="highlighter-rouge">brew tap caskroom/cask</code>.
-    2. Install XQuartz with command <code class="highlighter-rouge">brew cask install xquartz</code>.</li>
-</ol>
+<p>To get started, open a <code class="highlighter-rouge">Terminal</code> window and a browser window.
+In your browser, visit the <em><a href="http://brew.sh">Homebrew</a></em> site; copy the one-line command near the top of the page.</p>
 
-<h4 id="2-validate-x11-installation-on-your-mac">2. Validate X11 installation on your Mac</h4>
-<p>Open XQuartz application from the launchpad on your Mac to see if it is installed correctly.
-It will open an <code class="highlighter-rouge">xterm</code> window.
-If that does not work immediately, try restarting your computer.
-<img src="/engs50/Resources/XQuartz/xquartz.png" alt="xquartz" /></p>
+<p><img src="/engs50/Resources/Homebrew0.png" alt="homepage" /></p>
 
-<h4 id="3-validate-x11-connection-to-remote-server">3. Validate X11 connection to remote server</h4>
-<p>Next, try running an X11 application on one of the CS50 Unix servers.
-Log into a CS50 Unix server and launch an X11 application, such as <code class="highlighter-rouge">xclock</code> or <code class="highlighter-rouge">xemacs</code>.
-For a little fun, try <code class="highlighter-rouge">xeyes</code>.</p>
+<blockquote>
+  <p>Notice that it simply asks you to copy and paste a complex command into the <code class="highlighter-rouge">Terminal</code>.
+You should never blindly copy-paste shell commands without understanding what the command will do to your computer!
+In this case, the Homebrew page explains what it will do, and you’re hearing it from me - this is a safe tool to install.
+As far as I know. ;-)</p>
+</blockquote>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ssh -X username@flume.cs.dartmouth.edu
-xpdf
-</code></pre></div></div>
-<p>The <code class="highlighter-rouge">-X</code> option to <code class="highlighter-rouge">ssh</code> sets up X11 forwarding for <code class="highlighter-rouge">ssh</code> connections.
-That is, it sets up a secure tunnel between the program (like <code class="highlighter-rouge">xclock</code>) running on the server and the XQuartz application on your Mac; the program can create windows, buttons, menus, etc.; all the information flows through the ssh tunnel to XQuartz, which renders the windows on your Mac.
-It works with all CS50 Unix servers.
-<code class="highlighter-rouge">xpdf</code> will open a pdf viewer in X windows system on your local computer.
-Here’s an xpdf window.
-<img src="/engs50/Resources/XQuartz/xpdf.png" alt="xpdf" /></p>
+<p>Switch to <code class="highlighter-rouge">Terminal</code> and paste in that command.
+The installation will download some files and start running.</p>
 
-<p><strong>Note</strong></p>
+<p>If you’ve never run any of the ‘developer’-oriented commands (like <code class="highlighter-rouge">gcc</code> or <code class="highlighter-rouge">make</code>) on your Mac before, you may see a popup like the following:</p>
 
-<p>A warning may show up saying <code class="highlighter-rouge">$Home/.Xauthority does not exist</code> if it is your first time to use X11.
-The <code class="highlighter-rouge">Xauthority</code> file will be configured automatically at the first run.
-From then on, the warning should not appear.</p>
+<p><img src="/engs50/Resources/Homebrew1.png" alt="Xcode popup" /></p>
 
-<p><strong>Reference</strong></p>
+<p>Click ‘Install’ to let Xcode do its thing.
+It may be a large download.
+This installer downloads all the command-line tools from Apple and installs them on your Mac.
+You’ll need these tools, and so does Homebrew.</p>
 
-<p><a href="https://uit.stanford.edu/service/sharedcomputing/moreX">Using X-windows</a></p>
+<p>When that completes, press Return in the Terminal window to allow the Homebrew installation to complete.
+Then you can install new packages with a command line <code class="highlighter-rouge">brew install</code> followed by the package name (Homebrew actually calls them “formulas”).
+You can search for package names with <code class="highlighter-rouge">brew search</code>.</p>
 
-<h2 id="your-first-gtk-application">Your first GTK+ application</h2>
+<p>Later, periodically, you should <code class="highlighter-rouge">brew update</code> and then <code class="highlighter-rouge">brew upgrade</code> to keep all your software up to date.
+I do this about once a month.</p>
 
-<p>If you need a GUI (graphical user interface), we recommend the <code class="highlighter-rouge">gtk+</code> library, which is a popular UI toolkit for the X11 window system.
-There are two versions of <code class="highlighter-rouge">gtk+</code> libraries: <code class="highlighter-rouge">gtk+-2</code>(version 2) and <code class="highlighter-rouge">gtk+-3</code>(version 3).
-<code class="highlighter-rouge">gtk+-2</code> is still alive but we recommend the latest version, <code class="highlighter-rouge">gtk+-3</code>.
-Both versions are ready to use on our CS50 Unix servers, so you need to specify the version to work with at compile time.</p>
-
-<p>The <a href="/engs50/Resources/XQuartz/gtk-example.c">gtk-example.c</a> example program, below, uses <code class="highlighter-rouge">gtk+-3</code>.
-It opens a window with a simple button, as shown below the code.
-Feel free to use!</p>
-
-<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/*
- * filename: gtk-example.c
- * source: https://developer.gnome.org/gtk3/stable/gtk-getting-started.html
- */</span>
-<span class="cp">#include &lt;gtk/gtk.h&gt;
-</span>
-<span class="k">static</span> <span class="kt">void</span> <span class="nf">print_hello</span> <span class="p">(</span><span class="n">GtkWidget</span> <span class="o">*</span><span class="n">widget</span><span class="p">,</span>  <span class="n">gpointer</span>   <span class="n">data</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">g_print</span> <span class="p">(</span><span class="s">"Hello World</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
-<span class="p">}</span>
-
-<span class="k">static</span> <span class="kt">void</span> <span class="nf">activate</span> <span class="p">(</span><span class="n">GtkApplication</span> <span class="o">*</span><span class="n">app</span><span class="p">,</span> <span class="n">gpointer</span> <span class="n">user_data</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">GtkWidget</span> <span class="o">*</span><span class="n">window</span><span class="p">;</span>
-    <span class="n">GtkWidget</span> <span class="o">*</span><span class="n">button</span><span class="p">;</span>
-    <span class="n">GtkWidget</span> <span class="o">*</span><span class="n">button_box</span><span class="p">;</span>
-
-    <span class="n">window</span> <span class="o">=</span> <span class="n">gtk_application_window_new</span> <span class="p">(</span><span class="n">app</span><span class="p">);</span>
-    <span class="n">gtk_window_set_title</span> <span class="p">(</span><span class="n">GTK_WINDOW</span> <span class="p">(</span><span class="n">window</span><span class="p">),</span> <span class="s">"Window"</span><span class="p">);</span>
-    <span class="n">gtk_window_set_default_size</span> <span class="p">(</span><span class="n">GTK_WINDOW</span> <span class="p">(</span><span class="n">window</span><span class="p">),</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">);</span>
-
-    <span class="n">button_box</span> <span class="o">=</span> <span class="n">gtk_button_box_new</span> <span class="p">(</span><span class="n">GTK_ORIENTATION_HORIZONTAL</span><span class="p">);</span>
-    <span class="n">gtk_container_add</span> <span class="p">(</span><span class="n">GTK_CONTAINER</span> <span class="p">(</span><span class="n">window</span><span class="p">),</span> <span class="n">button_box</span><span class="p">);</span>
-
-    <span class="n">button</span> <span class="o">=</span> <span class="n">gtk_button_new_with_label</span> <span class="p">(</span><span class="s">"Hello World"</span><span class="p">);</span>
-    <span class="n">g_signal_connect</span> <span class="p">(</span><span class="n">button</span><span class="p">,</span> <span class="s">"clicked"</span><span class="p">,</span> <span class="n">G_CALLBACK</span> <span class="p">(</span><span class="n">print_hello</span><span class="p">),</span> <span class="nb">NULL</span><span class="p">);</span>
-    <span class="n">g_signal_connect_swapped</span> <span class="p">(</span><span class="n">button</span><span class="p">,</span> <span class="s">"clicked"</span><span class="p">,</span> <span class="n">G_CALLBACK</span> <span class="p">(</span><span class="n">gtk_widget_destroy</span><span class="p">),</span> <span class="n">window</span><span class="p">);</span>
-    <span class="n">gtk_container_add</span> <span class="p">(</span><span class="n">GTK_CONTAINER</span> <span class="p">(</span><span class="n">button_box</span><span class="p">),</span> <span class="n">button</span><span class="p">);</span>
-
-    <span class="n">gtk_widget_show_all</span> <span class="p">(</span><span class="n">window</span><span class="p">);</span>
-<span class="p">}</span>
-
-<span class="kt">int</span> <span class="nf">main</span> <span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">GtkApplication</span> <span class="o">*</span><span class="n">app</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">status</span><span class="p">;</span>
-
-    <span class="n">app</span> <span class="o">=</span> <span class="n">gtk_application_new</span> <span class="p">(</span><span class="s">"org.gtk.example"</span><span class="p">,</span> <span class="n">G_APPLICATION_FLAGS_NONE</span><span class="p">);</span>
-    <span class="n">g_signal_connect</span> <span class="p">(</span><span class="n">app</span><span class="p">,</span> <span class="s">"activate"</span><span class="p">,</span> <span class="n">G_CALLBACK</span> <span class="p">(</span><span class="n">activate</span><span class="p">),</span> <span class="nb">NULL</span><span class="p">);</span>
-    <span class="n">status</span> <span class="o">=</span> <span class="n">g_application_run</span> <span class="p">(</span><span class="n">G_APPLICATION</span> <span class="p">(</span><span class="n">app</span><span class="p">),</span> <span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">);</span>
-    <span class="n">g_object_unref</span> <span class="p">(</span><span class="n">app</span><span class="p">);</span>
-
-    <span class="k">return</span> <span class="n">status</span><span class="p">;</span>
-<span class="p">}</span>
-</code></pre></div></div>
-
-<p><img src="/engs50/Resources/XQuartz/gtk-example.png" alt="gtk-example" /></p>
-
-<p><strong>Compiling with gtk+</strong></p>
-
-<p>Use the following command to compile <a href="/engs50/Resources/XQuartz/gtk-example.c">gtk-example.c</a>:</p>
-
-<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>gcc <span class="sb">`</span>pkg-config <span class="nt">--cflags</span> gtk+-3.0<span class="sb">`</span> <span class="nt">-o</span> gtk-example gtk-example.c <span class="sb">`</span>pkg-config <span class="nt">--libs</span> gtk+-3.0<span class="sb">`</span>
-</code></pre></div></div>
-
-<p><code class="highlighter-rouge">pkg-config --cflags gtk+-3.0</code> will produce a list of header paths you might use in your application and <code class="highlighter-rouge">pkg-config --libs gtk+-3.0</code> will produce a list of library paths.
-(Notice the use of back-ticks for bash command substitution.) A more detailed explanation can be found in references below, which include a well-written tutorial.</p>
-
-<p><strong>Reference</strong></p>
-
-<p><a href="http://www.gtk.org/documentation.php">gtk documentation</a></p>
-
-<p><a href="https://developer.gnome.org/gtk3/stable/gtk-getting-started.html">Getting Started with GTK+</a></p>
-
-<p><a href="https://developer.gnome.org/gtk3/stable/gtk-compiling.html">Compiling GTK+ Applications</a></p>
 
   </div>
 

@@ -1,6 +1,6 @@
-https://thayer.github.io/engs50/Notes/cohesion/
+https://thayer.github.io/engs50/Notes/querier/
 2
-11260
+32157
 <!DOCTYPE html>
 <html>
 
@@ -9,13 +9,13 @@ https://thayer.github.io/engs50/Notes/cohesion/
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>Cohesion and coupling</title>
+  <title>TSE Querier</title>
   <meta name="description" content="In Engs 50 you will learn how to design & build large, reliable, maintainable, and understandable software systems.  In the process you will learn to program in C with Unix development tools.
 ">
 
   <link rel="shortcut icon" href="/engs50/50.png" />
   <link rel="stylesheet" href="/engs50/css/main.css">
-  <link rel="canonical" href="/engs50/Notes/cohesion/">
+  <link rel="canonical" href="/engs50/Notes/querier/">
 </head>
 
 
@@ -44,200 +44,388 @@ https://thayer.github.io/engs50/Notes/cohesion/
         <article class="post">
 
   <header class="post-header">
-    <h1 class="post-title">Cohesion and coupling</h1>
+    <h1 class="post-title">TSE Querier</h1>
   </header>
 
   <div class="post-content">
     <h3 id="goals">Goals</h3>
 
-<p>to discuss</p>
+<p>There are three mini lectures today.</p>
 
-<ul>
-  <li><em>routines</em> - types and names</li>
-  <li><em>cohesion</em> - and why we want strong cohesion</li>
-  <li><em>coupling</em> - and why we want weak coupling</li>
+<ul id="markdown-toc">
+  <li><a href="#goals" id="markdown-toc-goals">Goals</a></li>
+  <li><a href="#the-querier" id="markdown-toc-the-querier">the Querier</a></li>
+  <li><a href="#fuzz-testing" id="markdown-toc-fuzz-testing">Fuzz Testing</a></li>
+  <li><a href="#expressions" id="markdown-toc-expressions">Expressions and accumulators</a>    <ul>
+      <li><a href="#arithmetic-expressions" id="markdown-toc-arithmetic-expressions">Arithmetic expressions</a></li>
+      <li><a href="#precedence" id="markdown-toc-precedence">Precedence</a></li>
+    </ul>
+  </li>
+  <li><a href="#activity" id="markdown-toc-activity">Activity</a></li>
 </ul>
 
-<p>The concepts in today’s lecture come from chapter 5 of <em>Code Complete</em> by Steve McConnell. [Microsoft Press, 1993.]</p>
+<h2 id="the-querier">the Querier</h2>
 
-<h2 id="routines">Routines</h2>
+<p>The third component of the Tiny Search Engine is the <em>Querier</em>, which reads the index produced by the Indexer and the page files produced by the Crawler, to interactively answer written queries entered by the user.</p>
 
-<p>We often use the word <em>routine</em> as a general concept, to refer to  a <em>function</em> or a <em>procedure</em>.
-We typically use the word <em>procedure</em> to refer to a function with no return value.
-In other languages, routines might be called <em>subroutines</em> or <em>methods</em>.</p>
+<p>Our Querier loads the index into memory (a data structure we developed for the Indexer) and then prompts the user for queries.
+Queries are comprised of words, with optional <code class="highlighter-rouge">and</code>/<code class="highlighter-rouge">or</code> operators.
+For example,</p>
 
-<p>There are many reasons to break a program into <em>routines</em>:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>computer science
+computer and science
+computer or science
+baseball or basketball or ultimate frisbee
+</code></pre></div></div>
 
-<ul>
-  <li>Reduce complexity</li>
-  <li>Avoid duplicate code</li>
-  <li>Limit effects of changes (narrow scope of change to a routine)</li>
-  <li>Hide sequences (a form of information hiding)</li>
-  <li>Improve performance (optimize in one place)</li>
-  <li>Centralize control (e.g., controlling devices, files, data structures… more information hiding)</li>
-  <li>Hide data structures (ADTs)</li>
-  <li>Hide global data (access routines centralize control of globals)</li>
-  <li>Hide pointer operations (makes it easier to read)</li>
-  <li>Promote code reuse (easier to reuse code in a routine)</li>
-  <li>Plan for a family of programs (isolate parts that may change in a few routines)</li>
-  <li>Improve readability (named routine is more readable; avoid deep nesting, etc)</li>
-  <li>Improve portability (isolate nonportable features)</li>
-  <li>Isolate complex operations (algorithm, protocols, etc)</li>
-  <li>Isolate use of nonstandard language functions (isolate nonportable features)</li>
-  <li>Simplify complicated boolean tests (inlines are great here)</li>
-</ul>
+<p>The first two examples are treated identically, matching only documents that have <em>both</em> words - not necessarily together (as in the phrase “computer science”).
+The third picks up documents that have <em>either</em> word.
+The fourth matches documents that mention baseball, or basketball, or both “ultimate” and the word “frisbee” (not necessarily together).</p>
 
-<p>Routines should be well named:</p>
+<p>Here’s an example run, with the output truncated a bit:</p>
 
-<ul>
-  <li>a <em>procedure</em> name should be a strong verb followed by object (like <em>printCalendar()</em>).</li>
-  <li>a <em>function</em> name should describe its return value (like <em>numberOfNonzeros()</em>).</li>
-  <li>a <em>boolean function</em> name should sound like a question (like <em>IsInternalURL()</em>).</li>
-</ul>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$  querier/querier data/cs50-3 data/cs50-index3
+KEY WORDs:&gt; computer and science
+Query: computer and science 
+Matches 139 documents (ranked):
+score 141 doc  19: http://old-www.cs.dartmouth.edu/~dfk/papers/index.html
+score 135 doc 349: http://old-www.cs.dartmouth.edu/~dfk/papers/index-t.html
+score 135 doc 348: http://old-www.cs.dartmouth.edu/~dfk/papers/index-a.html
+score 135 doc 347: http://old-www.cs.dartmouth.edu/~dfk/papers/index-c.html
+score  10 doc  11: http://old-www.cs.dartmouth.edu/~dfk/armada/
+score   4 doc   9: http://old-www.cs.dartmouth.edu/~dfk/people.html
+score   4 doc   7: http://old-www.cs.dartmouth.edu/~dfk/teaching.html
+score   3 doc 206: http://old-www.cs.dartmouth.edu/~dfk/papers/abstracts/deshpande-thesis.html
+score   3 doc 167: http://old-www.cs.dartmouth.edu/~dfk/papers/abstracts/nanda-thesis.html
+score   3 doc  18: http://old-www.cs.dartmouth.edu/~dfk/index.html
+...
+KEY WORDs:&gt; tiny search engine
+Query: tiny search engine 
+No documents match.
+-----------------------------------------------
+KEY WORDs:&gt; TSE
+Query: tse 
+No documents match.
+-----------------------------------------------
+KEY WORDs:&gt; NOTE we LOWERcase the query first
+Query: note we lowercase the query first 
+No documents match.
+-----------------------------------------------
+KEY WORDs:&gt;  spaces      do    not    mattter
+Query: spaces do not mattter 
+No documents match.
+-----------------------------------------------
+KEY WORDs:&gt; non-letter characters are disallowed
+Error: bad character '-' in query.
+KEY WORDs:&gt; even digits as in cs50
+Error: bad character '5' in query.
+KEY WORDs:&gt; and
+Query: and 
+Error: 'and' cannot be first
+KEY WORDs:&gt; or
+Query: or 
+Error: 'or' cannot be first
+KEY WORDs:&gt; what about and
+Query: what about and 
+Error: 'and' cannot be last
+KEY WORDs:&gt; friend and foe
+Query: friend and foe 
+No documents match.
+-----------------------------------------------
+KEY WORDs:&gt; quit
+Query: quit 
+No documents match.
+-----------------------------------------------
+KEY WORDs:&gt; exit
+Query: exit 
+Matches 1 documents (ranked):
+score   3 doc   3: http://old-www.cs.dartmouth.edu/~dfk/visit-dartmouth.html
+-----------------------------------------------
+KEY WORDs:&gt; ^D
+</code></pre></div></div>
 
-<p>A good routine name</p>
+<p>Let’s study the <a href="/engs50/Labs/Lab6/REQUIREMENTS.html">Requirements Spec</a> for the Querier, and run some demos.</p>
 
-<ul>
-  <li>avoids meaningless verbs (like <em>do</em>, <em>perform</em>)</li>
-  <li>describes everything the routine does</li>
-  <li>is as long as necessary</li>
-  <li>follows naming conventions!</li>
-</ul>
+<p>Today’s demo scripts are here: <a href="/engs50/Notes/querier/script1.txt">script1</a> and <a href="/engs50/Notes/querier/script2.txt">script2</a>.</p>
 
-<p>A routine’s body should not be <strong>too long</strong>.
-If you find your routine approaching 200 lines, you should break it up - or have a darn good reason you should not break it up.</p>
+<h2 id="fuzz-testing">Fuzz Testing</h2>
 
-<h3 id="cohesion">Cohesion</h3>
+<p>In a recent lecture we talked about <em>unit testing</em>, and the difference between <em>glass-box testing</em> and <em>black-box testing</em>.
+Usually, these tests are based on a carefully constructed series of test cases, devised to test all code sequences and push on the “edge cases”.</p>
 
-<blockquote>
-  <p>“Cohesion refers to how closely [or strongly] the operations in a routine are related.” – McConnell</p>
-</blockquote>
+<p>However, such tests are only as good as the test writer - who must logically study the code (for glass-box testing) or the specs (for black-box testing) to think of the suitable test cases.
+It’s possible they will miss some important cases.</p>
 
-<p>One study found that 50% of high-cohesion routines were fault-free, while 18% of low-cohesion routines were fault-free.</p>
+<p>Another solution, therefore, is <strong><em>fuzz testing</em></strong>, a form of black-box testing in which you fire thousands of random inputs at the program to see how it reacts.
+The chances of triggering an unconsidered test case is far greater if you try a lot of cases!</p>
 
-<p>Good routines have <strong><em>strong cohesion</em></strong>.</p>
+<p>Here is a fuzz-testing program for our <em>querier</em>.
+It generates a series of random queries on stdout, which it then pipes to the querier on stdin.
+Here’s the core of the fuzz tester:</p>
 
-<p><strong>Acceptable cohesion</strong>:</p>
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/**************** generate_query ****************/</span>
+<span class="cm">/* generate one random query and print to stdout.
+ * pull random words from the wordlist and from the dictionary.
+ */</span>
+<span class="k">static</span> <span class="kt">void</span>
+<span class="nf">generate_query</span><span class="p">(</span><span class="k">const</span> <span class="n">wordlist_t</span> <span class="o">*</span><span class="n">wordlist</span><span class="p">,</span> <span class="k">const</span> <span class="n">wordlist_t</span> <span class="o">*</span><span class="n">dictionary</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="c1">// some parameters that affect query generation
+</span>  <span class="k">const</span> <span class="kt">int</span> <span class="n">max_words</span> <span class="o">=</span> <span class="mi">6</span><span class="p">;</span>        <span class="c1">// generate 1..max_words
+</span>  <span class="k">const</span> <span class="kt">float</span> <span class="n">or_probability</span> <span class="o">=</span> <span class="mi">0</span><span class="p">.</span><span class="mi">3</span><span class="p">;</span>   <span class="c1">// P(OR between two words)
+</span>  <span class="k">const</span> <span class="kt">float</span> <span class="n">and_probability</span> <span class="o">=</span> <span class="mi">0</span><span class="p">.</span><span class="mi">2</span><span class="p">;</span>  <span class="c1">// P(AND between two words)
+</span>  <span class="k">const</span> <span class="kt">float</span> <span class="n">dict_probability</span> <span class="o">=</span> <span class="mi">0</span><span class="p">.</span><span class="mi">2</span><span class="p">;</span> <span class="c1">// P(draw from dict instead of wordlist)
+</span>
+  <span class="kt">int</span> <span class="n">qwords</span> <span class="o">=</span> <span class="n">random</span><span class="p">()</span> <span class="o">%</span> <span class="n">max_words</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span> <span class="c1">// number of words in query
+</span>  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">qw</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">qw</span> <span class="o">&lt;</span> <span class="n">qwords</span><span class="p">;</span> <span class="n">qw</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// draw a word either dictionary or wordlist
+</span>    <span class="k">if</span> <span class="p">((</span><span class="n">random</span><span class="p">()</span> <span class="o">%</span> <span class="mi">100</span><span class="p">)</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">dict_probability</span> <span class="o">*</span> <span class="mi">100</span><span class="p">))</span> <span class="p">{</span>
+      <span class="n">printf</span><span class="p">(</span><span class="s">"%s "</span><span class="p">,</span> <span class="n">dictionary</span><span class="o">-&gt;</span><span class="n">words</span><span class="p">[</span><span class="n">random</span><span class="p">()</span> <span class="o">%</span> <span class="n">dictionary</span><span class="o">-&gt;</span><span class="n">nwords</span><span class="p">]);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="n">printf</span><span class="p">(</span><span class="s">"%s "</span><span class="p">,</span> <span class="n">wordlist</span><span class="o">-&gt;</span><span class="n">words</span><span class="p">[</span><span class="n">random</span><span class="p">()</span> <span class="o">%</span> <span class="n">wordlist</span><span class="o">-&gt;</span><span class="n">nwords</span><span class="p">]);</span>
+    <span class="p">}</span>
 
-<ul>
-  <li><strong>Functional cohesion</strong> (strongest and best kind): performs one and only one operation.</li>
-  <li><strong>Sequential cohesion</strong>: contains operations that must be performed in a sequential order.</li>
-  <li><strong>Communicational cohesion</strong>: contains operations that make use of the same data, but are not otherwise related.</li>
-  <li><strong>Temporal cohesion</strong>: contains operations that do several things, because all are done at the same time.</li>
-</ul>
+    <span class="c1">// last word?
+</span>    <span class="k">if</span> <span class="p">(</span><span class="n">qw</span> <span class="o">&lt;</span> <span class="n">qwords</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+      <span class="c1">// which operator to print?
+</span>      <span class="kt">int</span> <span class="n">op</span> <span class="o">=</span> <span class="n">random</span><span class="p">()</span> <span class="o">%</span> <span class="mi">100</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">op</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">and_probability</span> <span class="o">*</span> <span class="mi">100</span><span class="p">))</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"AND "</span><span class="p">);</span>
+      <span class="p">}</span>
+      <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">op</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">and_probability</span> <span class="o">*</span> <span class="mi">100</span> <span class="o">+</span> <span class="n">or_probability</span> <span class="o">*</span> <span class="mi">100</span><span class="p">))</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"OR "</span><span class="p">);</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
 
-<p><strong>Unacceptable cohesion</strong>:</p>
+<p>With the following setup,</p>
 
-<ul>
-  <li><strong>Procedural cohesion</strong>: contains operations that must be performed in a sequential order, but don’t share the same data.</li>
-  <li><strong>Logical cohesion</strong>: several things in a routine, only one executed, depending on a flag parameter.
-(Exception - it can be  ok if using a <code class="highlighter-rouge">switch</code> statement to call one of many other (cohesive) functions.)</li>
-  <li><strong>Coincidental cohesion</strong>: no apparent reason for things to be together in a routine!</li>
-</ul>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span><span class="nb">cd </span>tse
+<span class="nv">$ </span>mkdir data/cs50-3
+<span class="nv">$ </span>crawler/crawler http://old-www.cs.dartmouth.edu/~cs50/ data/cs50-3 3
+<span class="nv">$ </span>indexer/indexer data/cs50-3 data/cs50-index3
+</code></pre></div></div>
 
-<h3 id="coupling">Coupling</h3>
+<p>And here’s the output of 10 random queries:</p>
 
-<blockquote>
-  <p>“The degree of coupling refers to the strength of a connection between two routines. Coupling is a complement to cohesion.” – McConnell</p>
-</blockquote>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>querier/fuzzquery 
+usage: querier/fuzzquery indexFile numQueries randomSeed
+<span class="nv">$ </span>querier/fuzzquery data/cs50-index3 10 0
+querier/fuzzquery: generating 10 queries from 5586 words
+captured AND despite
+pcs OR frontiers activityaware OR relay tour 
+unix downloading OR pre 
+triactine pieces colgate OR aspects OR wine-wise OR direx 
+uncompressed OR early taxonomy austrian AND jewelry OR manages 
+once forced odame localization OR marsch 
+comparison 
+suffer desires OR workflow 
+facilitated 
+garth OR yang OR cardiac AND ruslan AND synthetic 
+</code></pre></div></div>
 
-<p>Good code has <strong><em>loose coupling</em></strong> among routines.</p>
+<p>And here’s what happens when we pipe it to our querier (output abbreviated a little):</p>
 
-<blockquote>
-  <p>“Make the coupling of routines as simple as possible.”</p>
-</blockquote>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ querier/fuzzquery data/cs50-index3 10 0 | querier/querier data/cs50-3 data/cs50-index3
+querier/fuzzquery: generating 10 queries from 5586 words
+KEY WORDs:&gt; Query: captured and despite 
+No documents match.
+-----------------------------------------------
+KEY WORDs:&gt; Query: pcs or frontiers activityaware or relay tour 
+Matches 39 documents (ranked):
+score  37 doc 349: http://old-www.cs.dartmouth.edu/~dfk/papers/index-t.html
+score  37 doc 348: http://old-www.cs.dartmouth.edu/~dfk/papers/index-a.html
+score  37 doc 347: http://old-www.cs.dartmouth.edu/~dfk/papers/index-c.html
+score  37 doc  19: http://old-www.cs.dartmouth.edu/~dfk/papers/index.html
+score   2 doc  53: http://old-www.cs.dartmouth.edu/~dfk/papers/abstracts/oldfield-app-pario.html
+...
+-----------------------------------------------
+KEY WORDs:&gt; Query: unix downloading or pre 
+Matches 1 documents (ranked):
+score   1 doc 104: http://old-www.cs.dartmouth.edu/~dfk/papers/abstracts/khanna-group.html
+-----------------------------------------------
+KEY WORDs:&gt; Error: bad character '-' in query.
+KEY WORDs:&gt; Query: uncompressed or early taxonomy austrian and jewelry or manages 
+Matches 3 documents (ranked):
+score   2 doc  19: http://old-www.cs.dartmouth.edu/~dfk/papers/index.html
+score   1 doc  81: http://old-www.cs.dartmouth.edu/~dfk/STARFISH/
+score   1 doc  67: http://old-www.cs.dartmouth.edu/~dfk/RAPID-Transit.html
+-----------------------------------------------
+KEY WORDs:&gt; Query: once forced odame localization or marsch 
+Matches 5 documents (ranked):
+score   2 doc  19: http://old-www.cs.dartmouth.edu/~dfk/papers/index.html
+score   1 doc 316: http://old-www.cs.dartmouth.edu/~dfk/papers/abstracts/anthony-sith3.html
+score   1 doc 349: http://old-www.cs.dartmouth.edu/~dfk/papers/index-t.html
+score   1 doc 348: http://old-www.cs.dartmouth.edu/~dfk/papers/index-a.html
+score   1 doc 347: http://old-www.cs.dartmouth.edu/~dfk/papers/index-c.html
+-----------------------------------------------
+KEY WORDs:&gt; Query: comparison 
+Matches 11 documents (ranked):
+score   3 doc 349: http://old-www.cs.dartmouth.edu/~dfk/papers/index-t.html
+score   3 doc 348: http://old-www.cs.dartmouth.edu/~dfk/papers/index-a.html
+score   3 doc 347: http://old-www.cs.dartmouth.edu/~dfk/papers/index-c.html
+...
+-----------------------------------------------
+KEY WORDs:&gt; Query: suffer desires or workflow 
+Matches 1 documents (ranked):
+score   1 doc 336: http://old-www.cs.dartmouth.edu/~dfk/papers/abstracts/mare-thesis.html
+-----------------------------------------------
+KEY WORDs:&gt; Query: facilitated 
+Matches 2 documents (ranked):
+score   1 doc 260: http://old-www.cs.dartmouth.edu/~dfk/papers/abstracts/chen-fusenet.html
+score   1 doc 180: http://old-www.cs.dartmouth.edu/~dfk/papers/abstracts/tan-crf-s3.html
+-----------------------------------------------
+KEY WORDs:&gt; Query: garth or yang or cardiac and ruslan and synthetic 
+Matches 3 documents (ranked):
+score   1 doc  19: http://old-www.cs.dartmouth.edu/~dfk/papers/index.html
+score   1 doc  90: http://old-www.cs.dartmouth.edu/~dfk/charisma/
+score   1 doc   9: http://old-www.cs.dartmouth.edu/~dfk/people.html
+-----------------------------------------------
+</code></pre></div></div>
 
-<p><strong>Criteria</strong> for evaluating coupling between routines:</p>
+<p>We could generate a different series of random queries by changing the random seed, and we can run a lot more queries, too!</p>
 
-<ul>
-  <li><strong>size</strong> (number of connections)</li>
-  <li><strong>intimacy</strong> (directness of connection; better to use direct parameter passing than indirect global variables)</li>
-  <li><strong>visibility</strong> (best if connection is obvious)</li>
-  <li><strong>flexibility</strong> (how easily you can change connections)</li>
-</ul>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ querier/fuzzquery data/cs50-index3 10 999 | querier/querier data/cs50-3 data/cs50-index3 &gt; /dev/null
+querier/fuzzquery: generating 10 queries from 5586 words
+$ querier/fuzzquery data/cs50-index3 10000 999 | querier/querier data/cs50-3 data/cs50-index3
+querier/fuzzquery: generating 10000 queries from 5586 words
+</code></pre></div></div>
 
-<p>Go for minimal interconnectedness, and make what interconnections you have simple and obvious.
-“If a program were a piece of wood, you’d try to split it with the grain.”</p>
+<p>The fuzz tester does not test <em>all</em> aspects of the querier; in particular, it will not generate syntactically incorrect inputs.
+Those should be tested by another program, perhaps another fuzz tester.
+Furthermore, it does not verify whether the querier actually produces the right answers!</p>
 
-<h4 id="kinds-of-coupling">Kinds of coupling</h4>
+<p>For regression testing, we might save the querier output in a file, and then compare the output of a fresh test run against the saved results from earlier runs.
+If we had earlier believed those results to be correct, then seeing unchanged output would presumably indicate the results (and thus the new code) are still correct.</p>
 
-<ul>
-  <li><strong>Simple-data coupling</strong>: the only data passed from one routine to another is through parameters, and is nonstructured.</li>
-  <li><strong>Data-structure coupling</strong>: one routine passes a data structure to another; best if it really needs the whole data structure.</li>
-  <li><strong>Control coupling</strong>: one routine tells the other what to do.</li>
-  <li><strong>Global-data coupling</strong>: two routines use the same global data; may be tolerable if read-only.</li>
-  <li><strong>Pathological coupling</strong>: one routine uses the data inside the other routine. (Somewhat hard to do in C and C++.)</li>
-</ul>
+<h2 id="expressions">Expressions and accumulators</h2>
 
-<blockquote>
-  <p>“Try to create routines that depend little on other routines.”</p>
-</blockquote>
+<p>Thinking ahead to the querier, let’s think about how one evaluates an expression involving operators.
+We’ll work with an arithmetic analogy.</p>
 
-<h4 id="defensive-programming">Defensive programming</h4>
+<h3 id="arithmetic-expressions">Arithmetic expressions</h3>
 
-<p>Best practices:</p>
+<p>Consider the following arithmetic expression:</p>
 
-<ul>
-  <li>Use assert() or other tests to insert sanity checks into your code.</li>
-  <li>Be particularly suspicious of parameters and input values that come from another module (including the user!), i.e., data that crosses a module interface.</li>
-</ul>
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">sum</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span> <span class="o">+</span> <span class="n">c</span> <span class="o">+</span> <span class="n">d</span>
+</code></pre></div></div>
 
-<h4 id="routine-parameters">Routine parameters</h4>
+<p>Since addition is a <em>left-associative</em> operator, this means the same thing as</p>
 
-<p>Best practices:</p>
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">sum</span> <span class="o">=</span> <span class="p">(((</span><span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">)</span> <span class="o">+</span> <span class="n">c</span><span class="p">)</span> <span class="o">+</span> <span class="n">d</span><span class="p">)</span>
+</code></pre></div></div>
 
-<ul>
-  <li>Put parameters in input-modify-output order; put “status” or “error” variables last.</li>
-  <li>Use all the parameters.</li>
-  <li>Use a consistent order among similar routines.</li>
-  <li>Document assumptions about parameters: <em>Preconditions</em> are assumptions about the parameters (or internal data-structure state) before the routine executes, and <em>postconditions</em> are assumptions about the parameters, data structure, and return value after the routine exits.</li>
-</ul>
+<p>This means we can scan the expression from left to right, accumulating a sum as we go, effectively like this:</p>
 
-<h4 id="macros">Macros</h4>
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">sum</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">a</span>
+<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">b</span>
+<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">c</span>
+<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">d</span>
+</code></pre></div></div>
 
-<p>You can write <em>macros</em> in C with #define - these are handled by the C preprocessor.
-Macros can be handy, on occasion, but it is usually better to use <code class="highlighter-rouge">inline</code> functions or <code class="highlighter-rouge">const</code> variables for these purposes.
-You get better syntax, type checking, and better debugger support.</p>
+<p>Here, the <code class="highlighter-rouge">sum</code> acts as an <em>accumulator</em>.
+(Indeed, many early hardware architectures include an explicit register called an ‘accumulator’.)</p>
 
-<h2 id="modules">Modules</h2>
+<p>We often see this approach generalized in code:</p>
 
-<p>A <em>module</em> is a collection of related routines that, together, encapsulate a data structure, subsystem, or task.
-In object-oriented programming, a module is typically called a <em>class</em>.</p>
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="n">n</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">array</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">42</span><span class="p">,</span> <span class="mi">34</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">19</span><span class="p">};</span>
+<span class="kt">int</span> <span class="n">sum</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+	<span class="n">sum</span> <span class="o">+=</span> <span class="n">array</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<span class="n">printf</span><span class="p">(</span><span class="s">"sum = %d; average = %f</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">sum</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">sum</span> <span class="o">/</span> <span class="n">n</span><span class="p">);</span>
+</code></pre></div></div>
 
-<p>Why modules?</p>
+<h3 id="precedence">Precedence</h3>
 
-<ul>
-  <li>It is sometimes necessary to have strong coupling between routines.</li>
-  <li>In that case you should group those routines into a <em>module</em>; the module has strong cohesion.</li>
-  <li>Strive for strong intra-module cohesion and loose inter-module coupling.</li>
-  <li>A well-designed module (in C) or class (in C++ or Java) encourages <em>information hiding</em>.</li>
-</ul>
+<p>What if you have a mixture of operators, with precedence?</p>
 
-<h4 id="information-hiding">Information hiding</h4>
+<p>Consider the following arithmetic expression:</p>
 
-<p>A good module serves to “hide” implementation details inside the module, providing a clean abstraction and clear interface to other modules.</p>
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">sum</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span> <span class="o">*</span> <span class="n">c</span> <span class="o">+</span> <span class="n">d</span>
+</code></pre></div></div>
 
-<p>Each module programmer makes many implementation decisions, which should largely be unknown to code outside the module.
-Thus the module is</p>
+<p>Both addition and multiplication are <em>left-associative</em> operators, but multiplication has precedence over addition.
+Thus, we implicitly rewrite the above expression as follows:</p>
 
-<ul>
-  <li>less coupled to others,</li>
-  <li>more maintainable,</li>
-  <li>more self-testable,</li>
-  <li>more replacable,</li>
-  <li>more debuggable (can insert debugging code easily),</li>
-  <li>more reliable (can insert checks in a few places),</li>
-  <li>more understandable (hides complexity).</li>
-</ul>
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">sum</span> <span class="o">=</span> <span class="p">((</span><span class="n">a</span> <span class="o">+</span> <span class="p">(</span><span class="n">b</span> <span class="o">*</span> <span class="n">c</span><span class="p">))</span> <span class="o">+</span> <span class="n">d</span><span class="p">)</span>
+</code></pre></div></div>
 
-<h4 id="collaborative-work">Collaborative work</h4>
+<p>or, in sequence,</p>
 
-<p>Modules (classes) are an excellent mechanism for dividing work among programmers, because module boundaries and interfaces are clear, and there is otherwise little coupling.
-Thus, the module programmer has wide flexibility and authority on the implementation details of her module, as long as she sticks to the agreed-upon interface for the module and clearly documents the interface.</p>
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">sum</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">a</span> 
+<span class="n">prod</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">b</span>
+<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">c</span>
+<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">prod</span>
+<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">d</span>
+</code></pre></div></div>
+
+<p>Notice how we ‘step aside’ from the sum for a moment while we compute the product <code class="highlighter-rouge">b * c</code> … using an exactly analogous process.  <code class="highlighter-rouge">prod</code> is an accumulator for the product; it is initialized to the <em>multiplicative identity</em> (1) instead of the <em>additive identity</em> (0), for reasons I hope are obvious.
+But then we just multiply in each of the successive items, one at a time.</p>
+
+<p>This generalizes to longer expressions like</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">sum</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="n">b</span> <span class="o">+</span> <span class="n">c</span> <span class="o">*</span> <span class="n">d</span> <span class="o">*</span> <span class="n">e</span> <span class="o">+</span> <span class="n">f</span> <span class="o">+</span> <span class="n">g</span> <span class="o">*</span> <span class="n">h</span> <span class="o">*</span> <span class="n">i</span>
+</code></pre></div></div>
+
+<p>becomes</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">sum</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">prod</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">a</span>
+<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">b</span>
+<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">prod</span>
+<span class="n">prod</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">c</span>
+<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">d</span>
+<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">e</span>
+<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">prod</span>
+<span class="n">prod</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">f</span>
+<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">prod</span>
+<span class="n">prod</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">g</span>
+<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">h</span>
+<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">i</span>
+<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">prod</span>
+</code></pre></div></div>
+
+<p>Let’s add some indentation to make this a little easier to read:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">sum</span> <span class="o">=</span> <span class="mi">0</span>
+	<span class="n">prod</span> <span class="o">=</span> <span class="mi">1</span>
+	<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">a</span>
+	<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">b</span>
+<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">prod</span>
+	<span class="n">prod</span> <span class="o">=</span> <span class="mi">1</span>
+	<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">c</span>
+	<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">d</span>
+	<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">e</span>
+<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">prod</span>
+	<span class="n">prod</span> <span class="o">=</span> <span class="mi">1</span>
+	<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">f</span>
+<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">prod</span>
+	<span class="n">prod</span> <span class="o">=</span> <span class="mi">1</span>
+	<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">g</span>
+	<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">h</span>
+	<span class="n">prod</span> <span class="o">=</span> <span class="n">prod</span> <span class="o">*</span> <span class="n">i</span>
+<span class="n">sum</span> <span class="o">=</span> <span class="n">sum</span> <span class="o">+</span> <span class="n">prod</span>
+</code></pre></div></div>
+
+<p>Notice what I did with <code class="highlighter-rouge">f</code>, and that I <em>never add anything to <code class="highlighter-rouge">sum</code> other than <code class="highlighter-rouge">prod</code></em>.</p>
+
+<p>This structure should give you a hint about how you might write code to evaluate such expressions…
+if you have a <code class="highlighter-rouge">product</code> function to scan the expression left to right from a given starting point, accumulating a product of individual items until it sees a <code class="highlighter-rouge">+</code> or the end of the expression, you can then write a function <code class="highlighter-rouge">sum</code> that scans the expression left to right from the start, accumulating a sum of products by calling <code class="highlighter-rouge">product</code> at the start and after each <code class="highlighter-rouge">+</code>.</p>
 
 <h2 id="activity">Activity</h2>
 
-<p>In today’s <a href="activity.html">activity</a> your group will look at some <a href="/engs50/Notes/cohesion/example.c">example</a> code and comment on its naming, cohesion, and coupling.</p>
+<p>In today’s <a href="activity.html">activity</a> your group will discuss how the above ideas relate to <code class="highlighter-rouge">and</code> an <code class="highlighter-rouge">or</code> operators in a query expression.</p>
 
   </div>
 
