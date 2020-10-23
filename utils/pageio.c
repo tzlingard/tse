@@ -45,8 +45,7 @@ int32_t pagesave(webpage_t *pagep, int id, char *dirname) {
 webpage_t *pageload(int id, char *dirnm) {
   char file[80];                     /*location of page to load*/
   sprintf(file, "%s/%d", dirnm, id); /*pass the file from the directory*/
-  printf("Trying to access %s\n", file);
-  if (access(file, R_OK) == 0) { /*if the file is readable*/
+  if (access(file, R_OK) == 0) {     /*if the file is readable*/
     FILE *fp;
     char url[80];
     int depth;
@@ -58,15 +57,13 @@ webpage_t *pageload(int id, char *dirnm) {
     char *html = malloc((sizeof(char) * htmlLen) + 1);
     /*get one character at a time, move pointer to next character*/
     char ch;
-    do { /*continue to read file until the end*/
+    int i;
+    for (i = 0; i < htmlLen; i++) { /*continue to read file until the end*/
       ch = fgetc(fp);
-      if (feof(fp)) break;
-      sprintf(html, "%c", ch); /*pass one char at a time to the html*/
-      printf("%c", ch);
-    } while (true);
-    printf("\nHTML string is now: %s", html);
+      if (ch == EOF) break;
+      sprintf(html + i, "%c", ch); /*pass one char at a time to the html*/
+    }
     webpage_t *newpage = webpage_new(url, depth, html);
-    free(html);
     fclose(fp);
     /*create the new webpage with the file info*/
     return newpage; /*return non-Null for success*/
