@@ -27,14 +27,14 @@ void normalizeWord(char* word) {
       word[count] = c;
       count++;
     } else {  // delete non-alphabetic characters
-      word[count] = 0;
+      word = "";
+			break;
     }
   }
   if (count < 3) {
     word = "";
-    // printf("word should be null. word is %s\n", word);
   }
-  // printf("count = %d\n",count);
+
 }
 
 int main(void) {
