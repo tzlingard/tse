@@ -1,4 +1,4 @@
-#Not ignored: .c, .h, Makefile
+#Not ignored: .c, .h, .a, Makefile
 # Object files and libraries
 *.o
 

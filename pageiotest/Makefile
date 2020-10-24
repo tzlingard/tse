@@ -5,6 +5,6 @@ all: pageiotest
 
 pageiotest:	
 	gcc $(CFLAGS) pageiotest.c $(LIBS) -o $@
-	
+
 clean:
-	rm pageiotest
+	rm pageiotest 1

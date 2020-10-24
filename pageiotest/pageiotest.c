@@ -4,10 +4,27 @@
 #include "webpage.h"
 
 int main(void) {
-  webpage_t* page = pageload(2, "../pages");
-  printf("URL: %s\n", webpage_getURL(page));
-  printf("Depth: %d\n", webpage_getDepth(page));
-  printf("HTML:\n%s\n", webpage_getHTML(page));
-  webpage_delete(page);
+	//	FILE *fp = fopen("../pages/1", "r");
+  webpage_t* originalPage = pageload(1, "../pages");
+	printf("Page Save: %d\n", pagesave(originalPage, 1, "."));
+	webpage_t* savedPage = pageload(1, ".");
+	
+	char* originalURL = webpage_getURL(originalPage);
+	int originalDepth = webpage_getDepth(originalPage);
+	char* originalHTML = webpage_getHTML(originalPage);
+	int originalHTMLlen = webpage_getHTMLlen(originalPage);
+	char* savedURL = webpage_getURL(savedPage);
+	int savedDepth = webpage_getDepth(savedPage);
+	char* savedHTML = webpage_getHTML(savedPage);
+	int savedHTMLlen = webpage_getHTMLlen(savedPage);
+	printf("Difference in URLs: %d\n", strcmp(originalURL, savedURL));
+	printf("Difference in Depths: %d\n", (originalDepth-savedDepth));
+	printf("Difference in HTMLs: %d\n", strcmp(originalHTML, savedHTML));
+	printf("Difference in HTML Lenghts: %d\n", (originalHTMLlen-savedHTMLlen));
+	
+
+
+  webpage_delete(originalPage);
+  webpage_delete(savedPage);
   return 0;
 }

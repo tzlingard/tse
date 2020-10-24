@@ -25,7 +25,7 @@ int32_t pagesave(webpage_t *pagep, int id, char *dirname) {
   if (access(dest, F_OK)) {  // if the file doesn't exist yet
     FILE *fp;
     fp = fopen(dest, "w");
-    fprintf(fp, "%s\n%d\n%d\n%s", webpage_getURL(pagep),
+    fprintf(fp, "%s\n%d\n%d\n%s\n", webpage_getURL(pagep),
             webpage_getDepth(pagep), webpage_getHTMLlen(pagep),
             webpage_getHTML(pagep));
     fclose(fp);
@@ -51,18 +51,21 @@ webpage_t *pageload(int id, char *dirnm) {
     int depth;
     int htmlLen;
     fp = fopen(file, "r"); /*set up reading of file*/
-    fscanf(fp, "%s", url);
-    fscanf(fp, "%d", &depth);
-    fscanf(fp, "%d", &htmlLen);
-    char *html = malloc((sizeof(char) * htmlLen) + 1);
+    fscanf(fp, "%s\n", url);
+    fscanf(fp, "%d\n", &depth);
+    fscanf(fp, "%d\n", &htmlLen);
+    char *html = malloc((sizeof(char) * (htmlLen+1)));
     /*get one character at a time, move pointer to next character*/
     char ch;
     int i;
     for (i = 0; i < htmlLen; i++) { /*continue to read file until the end*/
       ch = fgetc(fp);
       if (ch == EOF) break;
-      sprintf(html + i, "%c", ch); /*pass one char at a time to the html*/
-    }
+			// sprintf(html + i, "%c", ch); /*pass one char at a time to the html*/
+			html[i] = ch;
+		}
+	
+		html[i] = '\0';
     webpage_t *newpage = webpage_new(url, depth, html);
     fclose(fp);
     /*create the new webpage with the file info*/
