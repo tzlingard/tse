@@ -38,6 +38,7 @@ void normalizeWord(char* word) {
 }
 
 int main(void) {
+	/*
   printf("non alphabetic words test:\n\n");
 
   char* alpha = (char*)malloc(10);
@@ -53,19 +54,20 @@ int main(void) {
   normalizeWord(nonalpha);
   printf("%s\n\n", nonalpha);
   free(nonalpha);
-
+	*/
   webpage_t* top = pageload(1, "../pages");
-  hashtable_t* index = hopen(20);
-  printf("%s\n", webpage_getURL(top));
+	  hashtable_t* index = hopen(20);
+		//printf("%s\n", webpage_getURL(top));
   char* word;
   int pos = 0;
-  word_t* w;
+	//  word_t* w;
   while ((pos = webpage_getNextWord(top, pos, &word)) > 0) {
     // loop over each word in the page
     normalizeWord(word);  // convert to alphabetic and lowercase
     if (strlen(word) > 0) {
-      // printf("%s\n", word);
-      if ((w = (word_t*)hsearch(index, wordUsed, word, strlen(word))) != NULL) {
+      printf("%s\n", word);
+			/*
+			if ((w = (word_t*)hsearch(index, wordUsed, word, strlen(word))) != NULL) {
         // if word has already been used and placed in the index
         (w->freq)++;
         printf("%s - %d\n", w->word, w->freq);
@@ -76,10 +78,12 @@ int main(void) {
         w->freq = 1;
         // printf("%s - %d\n", w->word, w->freq);
         hput(index, (void*)w, w->word, strlen(w->word));
-      }
-    }
-    free(word);
-  }
+			*/      
+		}
+			free(word);
+	}
+
+	
   hclose(index);
   webpage_delete(top);
   return 0;
