@@ -6,11 +6,20 @@
 #include "../utils/pageio.h"
 #include "../utils/queue.h"
 #include "../utils/webpage.h"
+int sum = 0;
 
 typedef struct {  // structure to hold each word of a webpage and its frequency
   char* word;
   int freq;
+  // queue_t documents;
+  // TODO: change freq to a queue filled with struct: (documents and
+  // frequencies)
 } word_t;
+
+typedef struct {
+  int id;
+  int freq;
+} docs_t;
 
 /* returns true if the given word has already been used */
 bool wordUsed(void* word, const void* key) {
@@ -22,6 +31,8 @@ void printWord(void* word) {
 }
 
 void closeWord(void* word) { free(((word_t*)word)->word); }
+
+void sumWords(void* word) { sum += ((word_t*)word)->freq; }
 
 /*  Takes in a word and normalizes it by making all letters lowercase and
  * getting rid of non-alphabetic characters */
@@ -76,11 +87,11 @@ free(nonalpha);
       if ((w = (word_t*)hsearch(index, wordUsed, word, strlen(word))) != NULL) {
         // if word has already been used and placed in the index
         (w->freq)++;
-        printf("Word %s now has frequency %d\n", w->word, w->freq);
+        // printf("Word %s now has frequency %d\n", w->word, w->freq);
       } else {  // if the word hasn't been used, add it with frequency of 1
-        printf("First appearance of word %s\n", word);
+        printf("%s\n", word);
         w = (word_t*)malloc(sizeof(word_t));
-        w->word = (char*)malloc(strlen(word) * sizeof(char));
+        w->word = (char*)malloc(strlen(word) * sizeof(char) + 1);
         strcpy(w->word, word);
         w->freq = 1;
         // printf("%s - %d\n", w->word, w->freq);
@@ -90,6 +101,8 @@ free(nonalpha);
     }
     free(word);
   }
+  happly(index, sumWords);
+  printf("Sum = %d\n", sum);
   happly(index, closeWord);
   hclose(index);
   webpage_delete(top);
