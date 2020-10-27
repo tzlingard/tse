@@ -9,5 +9,5 @@ fi
 
 make clean
 make all
-valgrind --leak-check=full ./indexer
+valgrind --leak-check=full --track-origins=yes ./indexer 3
 
