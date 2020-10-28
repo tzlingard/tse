@@ -23,6 +23,28 @@ typedef struct {
 
 
 
+void printDoc(void* d){
+	docs_t* doc = (docs_t*)d;
+	printf("In doc %d, frequency = %d\n",doc->id, doc->freq);
+}
+
+void printWord(void* w){
+	word_t* word = (word_t*)w;
+	printf("%s\n",word->word);
+	qapply(word->freq, printDoc);
+}
+
+
+void closeWordT(void* word){
+	free(((word_t*)word)->word);
+	qclose(((word_t*)word)->freq);
+}
+
+void closeIndex(hashtable_t* htp){
+	happly(htp, closeWordT);
+	hclose(htp);
+}
+
 int main(void) {
 	hashtable_t* htp = hopen(20);
 
@@ -72,23 +94,12 @@ int main(void) {
 	qclose(w2->freq);
 	free(w2->word);
 	hclose(htp);
-	
-	/*
-	char* originalURL = webpage_getURL(originalPage);
-	int originalDepth = webpage_getDepth(originalPage);
-	char* originalHTML = webpage_getHTML(originalPage);
-	int originalHTMLlen = webpage_getHTMLlen(originalPage);
-	char* savedURL = webpage_getURL(savedPage);
-	int savedDepth = webpage_getDepth(savedPage);
-	char* savedHTML = webpage_getHTML(savedPage);
-	int savedHTMLlen = webpage_getHTMLlen(savedPage);
-	printf("Difference in URLs: %d\n", strcmp(originalURL, savedURL));
-	printf("Difference in Depths: %d\n", (originalDepth-savedDepth));
-	printf("Difference in HTMLs: %d\n", strcmp(originalHTML, savedHTML));
-	printf("Difference in HTML Lenghts: %d\n", (originalHTMLlen-savedHTMLlen));
-	*/
 
 
+
+	hashtable_t* loaded_htp = indexload(".", "test_index");
+	happly(loaded_htp, printWord);
+	closeIndex(loaded_htp);
 
 
   return 0;
