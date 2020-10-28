@@ -8,7 +8,7 @@
 #include "../utils/webpage.h"
 int sum = 0;
 int finId = 0;
-
+ 
 typedef struct {  // structure to hold each word of a webpage and its frequency
   char* word;
   queue_t* freq;
