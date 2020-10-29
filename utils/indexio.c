@@ -41,11 +41,9 @@ void printWordToFile(void* w) {
 void indexsave(hashtable_t* htp, char* dirname, char* indexnm) {
   char dest[80];
   sprintf(dest, "%s/%s", dirname, indexnm);
-  if (access(dest, F_OK) == 0) {
-    fp_global = fopen(dest, "w");
-    happly(htp, printWordToFile);
-    fclose(fp_global);
-  }
+  fp_global = fopen(dest, "w");
+  happly(htp, printWordToFile);
+  fclose(fp_global);
 }
 /*
 hashtable_t* indexload(char* dirname, char* indexnm) {
