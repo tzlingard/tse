@@ -89,12 +89,11 @@ int main(void) {
 	//save the index to the file test_index
 	indexsave(htp, ".", "test_index");
 	  
-	qclose(w1->freq);
-	free(w1->word);
-	qclose(w2->freq);
-	free(w2->word);
-	hclose(htp);
-
+	
+	
+	
+	
+	closeIndex(htp);
 
 
 	hashtable_t* loaded_htp = indexload(".", "test_index");
