@@ -5,6 +5,6 @@ all: indexer
 
 indexer:
 	gcc $(CFLAGS) indexer.c $(LIBS) -o $@
-	
+
 clean:
 	rm indexer

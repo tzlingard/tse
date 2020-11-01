@@ -12,9 +12,9 @@ int finId = 0;
 typedef struct {  // structure to hold each word of a webpage and its frequency
   char* word;
   queue_t* freq;
-  // queue_t documents;
-  // TODO: change freq to a queue filled with struct: (documents and
-  // frequencies)
+              // queue_t documents;
+              // TODO: change freq to a queue filled with struct: (documents and
+              // frequencies)
 } word_t;
 
 typedef struct {
@@ -27,12 +27,12 @@ bool wordUsed(void* word, const void* key) {
   return (!strcmp(((word_t*)word)->word, (const char*)key));
 }
 
-// Needs to be fixed since freq is now a queue
-// void printWord(void* word) {
-//  printf("%s - %d\n", ((word_t*)word)->word, ((word_t*)word)->freq);
-//}
+             // Needs to be fixed since freq is now a queue
+             // void printWord(void* word) {
+             //  printf("%s - %d\n", ((word_t*)word)->word, ((word_t*)word)->freq);
+             //}
 
-void closeWord(void* word) { free(((word_t*)word)->word); }
+void closeWord(void* word) {free(((word_t*)word)->word); }
 
 // returns true if two pages have the same id
 bool pageCompare(void* doc, const void* id) {
@@ -136,21 +136,24 @@ int main(int argc, char* argv[]) {
       if (strlen(word) > 0) {
         // printf("%s\n", word);
         word_t* w;
-        if ((w = (word_t*)hsearch(index, wordUsed, word, strlen(word))) !=
-            NULL) {
-          // if word has already been used and placed in the index
-          //      (w->freq)++;
-          // printf("Word %s now has frequency %d\n", w->word, w->freq);
-        } else {  // if the word hasn't been used, add it with frequency of 1
+        if ((w = (word_t*)hsearch(index, wordUsed, word, strlen(word))) == NULL) {
+                                // if word has already been used and placed in the index
+                                //      (w->freq)++;
+                                // printf("Word %s now has frequency %d\n", w->word, w->freq);
+                                // if the word hasn't been used, add it with frequency of 1
           printf("%s\n", word);
-          w = (word_t*)malloc(sizeof(word_t));
+				  w = (word_t*)malloc(sizeof(word_t));
           w->word = (char*)malloc(strlen(word) * sizeof(char) + 1);
           strcpy(w->word, word);
-          // w->freq = 1;
-          // printf("%s - %d\n", w->word, w->freq);
+                                // w->freq = 1;
+                                // printf("%s - %d\n", w->word, w->freq);
           hput(index, w, w->word, strlen(w->word));
-          // happly(index, printWord);
-        }
+                                // happly(index, printWord);
+        }else{
+					 printf("%removed extra: s\n", word);
+					hremove(index, w, w->word, strlen(w->word));   
+				}
+				
       }
       free(word);
     }
