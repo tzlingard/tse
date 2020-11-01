@@ -55,6 +55,7 @@ int main(int argc, char *argv[]) {
 		//break if the input is CTRL D
 		if((int)(*input)==0){
 			free(input);
+			printf("\n");
 			break;
 		}
 		
@@ -64,7 +65,6 @@ int main(int argc, char *argv[]) {
 			printf("[invalid query]");
 			cont = false;
 		}
-		
 		
 		currchar=input;//
 		while(cont){
