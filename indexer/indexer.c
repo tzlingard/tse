@@ -99,7 +99,7 @@ int wordCount(webpage_t* page, char* target) {
 // creates a queue of type doc_t for a given word_t
 void makeDocQueue(void* word) {
   iteration++;
-  printf("%d\n", iteration);
+  //printf("%d\n", iteration);
   word_t* w = (word_t*)word;
   webpage_t* page;
   int id = 1;
@@ -134,7 +134,7 @@ int main(int argc, char* argv[]) {
   }
   sscanf(argv[2], "%s", indexnm);
   // printf("%d\n", finId);
-  hashtable_t* index = hopen(20);
+  hashtable_t* index = hopen(100);
   int id = 1;
   char loc[35];
   sprintf(loc, "%s/%d", dirname, id);

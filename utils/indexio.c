@@ -61,7 +61,7 @@ hashtable_t* indexload(char* dirname, char* indexnm) {
     fp = fopen(loc, "r");
 
     char nextWord[80];
-    hashtable_t* index = hopen(20);
+    hashtable_t* index = hopen(100);
 
     while (fscanf(fp, "%s", nextWord) == 1) {
       word_t* w = (word_t*)malloc(sizeof(word_t*));
