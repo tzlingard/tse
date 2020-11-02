@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
 		if (i > 0) {
 			printf("-- %d\n", rank);
 		}
-		else {
+		else if (isValid(input)){
 			printf("[Invalid query]\n");
 		}
 		free(input);
