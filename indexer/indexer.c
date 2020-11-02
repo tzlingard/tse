@@ -3,11 +3,14 @@
 #include <string.h>
 
 #include "../utils/hash.h"
+#include "../utils/indexio.h"
 #include "../utils/pageio.h"
 #include "../utils/queue.h"
 #include "../utils/webpage.h"
 int sum = 0;
 int finId = 0;
+int iteration = 0;
+char dirname[30];
 
 typedef struct {  // structure to hold each word of a webpage and its frequency
   char* word;
@@ -95,11 +98,11 @@ int wordCount(webpage_t* page, char* target) {
 
 // creates a queue of type doc_t for a given word_t
 void makeDocQueue(void* word) {
+  iteration++;
+  printf("%d\n", iteration);
   word_t* w = (word_t*)word;
   webpage_t* page;
   int id = 1;
-  char dirname[10];
-  strcpy(dirname, "../pages");
   w->freq = qopen();
   while (id <= finId) {
     if ((page = pageload(id, dirname)) != NULL) {
@@ -110,6 +113,8 @@ void makeDocQueue(void* word) {
       qput(w->freq, d);
       id++;
       webpage_delete(page);
+    } else {
+      id = finId + 1;  // break loop
     }
   }
 }
@@ -120,12 +125,21 @@ void deleteDocQueue(void* word) {
 }
 
 int main(int argc, char* argv[]) {
-  sscanf(argv[1], "%d", &finId);
-  printf("%d\n", finId);
+  char indexnm[30];
+  int words = 0;
+  sscanf(argv[1], "%s", dirname);
+  printf("dirname = %s\n", dirname);
+  if (access(dirname, R_OK) != 0) {  // if directory cannot be read
+    exit(EXIT_FAILURE);
+  }
+  sscanf(argv[2], "%s", indexnm);
+  // printf("%d\n", finId);
   hashtable_t* index = hopen(20);
   int id = 1;
-  while (id <= finId) {
-    webpage_t* top = pageload(id, "../pages");
+  char loc[35];
+  sprintf(loc, "%s/%d", dirname, id);
+  while (access(loc, R_OK) == 0) {  // while the id exists in the directory
+    webpage_t* top = pageload(id, dirname);
     // printf("%s\n", webpage_getURL(top));
     char* word;
     int pos = 0;
@@ -148,22 +162,34 @@ int main(int argc, char* argv[]) {
                                 // w->freq = 1;
                                 // printf("%s - %d\n", w->word, w->freq);
           hput(index, w, w->word, strlen(w->word));
+<<<<<<< HEAD
                                 // happly(index, printWord);
         }else{
 					 printf("%removed extra: s\n", word);
 					hremove(index, w, w->word, strlen(w->word));   
 				}
 				
+=======
+          words++;
+          // happly(index, printWord);
+        }
+>>>>>>> ea2d7661f1362f1c79777f14b7766c8eaf509be7
       }
       free(word);
     }
     webpage_delete(top);
     id++;
+    memset(loc, 0, 35);                  // clear the string
+    sprintf(loc, "%s/%d", dirname, id);  // set the new id location
   }
+  finId = id - 1;
+  printf("Num words = %d\n", words);
+  printf("finId = %d\n", finId);
   printf("Making doc queue...\n");
   happly(index, makeDocQueue);
   happly(index, sumWords);
   printf("Sum = %d\n", sum);
+  indexsave(index, ".", indexnm);
   happly(index, deleteDocQueue);
   happly(index, closeWord);
   hclose(index);
