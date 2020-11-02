@@ -116,7 +116,9 @@ int main(int argc, char *argv[]) {
 		if (i > 0) {
 			printf("-- %d\n", rank);
 		}
-		else if (isValid(input)){
+		else if (isValid(input) && strlen(input) > 1) { 
+			//prints invalid query if the input doesn't have any words with 3+ letters
+			//an empty query (1 for "\n") returns blank
 			printf("[Invalid query]\n");
 		}
 		free(input);
