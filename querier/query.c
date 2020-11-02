@@ -58,12 +58,14 @@ int main(int argc, char *argv[]) {
 		//skip the loop if the input has non numeric characters
 		cont = true;
 		if(!isValid(input)){
-			printf("[invalid query]");
+			printf("[invalid query]\n");
 			cont = false;
 		}
 		currchar = input;//
-		int occurences[34]; //33 is the max number of 3+ letter words in 100 chars
+		int occurrences[34]; //33 is the max number of 3+ letter words in 100 chars
 		int i = 0;
+		int rank = 1000;
+		FILE *fp;
 		while(cont) {
 			//skip past spaces and tabs, if any
 			while( ((int)(*currchar))==9 || ((int)(*currchar))==32) {	
@@ -75,25 +77,48 @@ int main(int argc, char *argv[]) {
 				normalizeWord(word);
 				if(strcmp(word, "and") != 0 && strcmp(word, "or") != 0 && strlen(word) >= 3) {
 					//skip the reserved words "and" and "or" and words less than 3 letters long
-					
-					printf("%s:%d ", word, occurrence); //TODO: occurrence = first num in index after the given word
-					occurences[i] = occurence;
-					i++;
+					char indexWord[30];
+					int occurrence = 0;
+					int docID;
+					bool found = false;
+					fp = fopen("../indexer/index", "r"); //open the index for reading
+					while (fscanf(fp, "%s %d %d", indexWord, &docID, &occurrence) != EOF) {
+						// scan through the index file
+						if (strcmp(indexWord, word) == 0) {
+							//if the word is found in the index, print it and add it
+							printf("%s:%d ", word, occurrence);
+							occurrences[i] = occurrence;
+							i++;
+							found = true;
+						}
+					}
+					if (!found) {
+						//if the word isn't found in the index, print it and add it to the list
+						printf("%s:0 ", word);
+						occurrences[i] = 0;
+						i++;
+						rank = 0;
+					}
+					fclose(fp);
 				}
 			}
 			else {
 				cont=false;
 			}
 		}
-		int rank = 10000;
-		int i;
-		for (i=0; i<34; i++) {
+		int j;
+		for (j=0; j<i; j++) {
 			//find the minimum number of occurrences and set this as the rank
-			if (occurences[i] < rank) {
-				rank = occurences[i];
+			if (occurrences[j] < rank) {
+				rank = occurrences[j];
 			}
 		}
-		printf("-- %d\n", rank);
+		if (i > 0) {
+			printf("-- %d\n", rank);
+		}
+		else {
+			printf("[Invalid query]\n");
+		}
 		free(input);
 	}
 	return 0;
