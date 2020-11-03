@@ -146,59 +146,70 @@ int main(int argc, char *argv[]) {
 		}
 
 
-
+		bool wordNotFound = false; //true when a word in query is not in index at all
 		queue_t* docs = qopen();
-
-
 
 		//add documents for first word (if word exists) to docs queue
 
-
+		
 		char* currWord;
 		if((currWord = (char*)(qget(words)))!=NULL){
 			word_t* indexWord = hsearch(index, findWord, currWord, sizeof(currWord));
-			queue_t* temp = qopen();
-			docs_t* doc;
-			while((doc  = (docs_t*)qget(indexWord->freq))!=NULL){
-				if(doc->freq > 0){
-					query_docs_t* d = malloc(sizeof(query_docs_t));
-					d->rank = doc->freq;
-					d->id = doc->id;
-					qput(docs, d);
+			if(indexWord != NULL){
+				queue_t* temp = qopen();
+				docs_t* doc;
+				while((doc  = (docs_t*)qget(indexWord->freq))!=NULL){
+					if(doc->freq > 0){
+						query_docs_t* d = malloc(sizeof(query_docs_t));
+						d->rank = doc->freq;
+						d->id = doc->id;
+						qput(docs, d);
+					}
+					qput(temp, doc);
 				}
-				qput(temp, doc);
+				indexWord->freq = temp;
 			}
-			indexWord->freq = temp;
+			else{
+				wordNotFound = true;
+			}
 		}
 
 		//scan through rest of words
 		//remove from queue of "surviving" docs and only re-add if document also has current word
-
-
-		while((currWord = (char*)(qget(words)))!=NULL){
-			word_t* indexWord = hsearch(index, findWord, currWord, sizeof(currWord));
-			query_docs_t* d;
-			queue_t* temp_docs = qopen();
-			while( (d = (query_docs_t*)(qget(docs))) != NULL){
-				int freq = (((docs_t*)qsearch(indexWord->freq, findID, &(d->id))))->freq;
-				if(freq > 0){
-					if(freq<d->rank){
-						d->rank = freq;
-					}
-					qput(temp_docs, d);
-				}
-			}
-			docs = temp_docs;
-		}
 		
-		qapply(docs, printRank);
+		
+		while((currWord = (char*)(qget(words)))!=NULL && wordNotFound == false){
+			word_t* indexWord = hsearch(index, findWord, currWord, sizeof(currWord));
+			if(indexWord != NULL){
+				query_docs_t* d;
+				queue_t* temp_docs = qopen();
+				while( (d = (query_docs_t*)(qget(docs))) != NULL){
+					int freq = (((docs_t*)qsearch(indexWord->freq, findID, &(d->id))))->freq;
+					if(freq > 0){
+						if(freq<d->rank){
+							d->rank = freq;
+						}
+						qput(temp_docs, d);
+					}
+				}
+				docs = temp_docs;
+			}
+			else{
+				wordNotFound = true;
+			}
+		}
+			
+		if(wordNotFound==false){
+			qapply(docs, printRank);
+		}
 		
 
 		
 		qclose(docs);
-			qclose(words);		
+		qclose(words);		
 		free(input);
 	}
+	hclose(index);
 	return 0;
 	
 }
