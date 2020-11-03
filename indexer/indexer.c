@@ -162,18 +162,9 @@ int main(int argc, char* argv[]) {
                                 // w->freq = 1;
                                 // printf("%s - %d\n", w->word, w->freq);
           hput(index, w, w->word, strlen(w->word));
-<<<<<<< HEAD
-                                // happly(index, printWord);
-        }else{
-					 printf("%removed extra: s\n", word);
-					hremove(index, w, w->word, strlen(w->word));   
-				}
-				
-=======
           words++;
           // happly(index, printWord);
         }
->>>>>>> ea2d7661f1362f1c79777f14b7766c8eaf509be7
       }
       free(word);
     }
