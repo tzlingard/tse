@@ -22,14 +22,10 @@ typedef struct{ //structure to hold data for every page in index
 	int occurences[34];
 } query_docs_t;
 
-
-
-
 typedef struct{
 	char* word;
 	queue_t* freq;
 }word_t;
-
 
 typedef struct{
 	int id;
@@ -70,13 +66,10 @@ bool findID(void* doc, const void* id){
 	return ((docs_t*)doc)->id  == *((int*)id);
 }
 
-
 //true if the given query_docs_t has given rank
 bool findRank(void* doc, const void* rank){
 	return ((query_docs_t*)doc)->rank  == *((int*)rank);
 }
-
-
 
 bool findWord(void* indexWord, const void* word){
 	return strcmp( ((word_t*)indexWord)->word, (char*)word)==0;
@@ -105,6 +98,7 @@ void closeWordT(void* word){
 	qclose(((word_t*)word)->freq);
 }
 
+//deallocate all memory for an index
 void closeIndex(hashtable_t* htp){
 	happly(htp, closeWordT);
 	hclose(htp);
@@ -133,12 +127,14 @@ queue_t* getDocs(queue_t* words){
 					}
 					qput(temp, doc);
 				}
+			
 				qclose(indexWord->freq);
 				indexWord->freq = temp;
 			}
 			else{
 				wordNotFound = true;
 			}
+			free(currWord);
 		}
 
 		//scan through rest of words
@@ -162,11 +158,13 @@ queue_t* getDocs(queue_t* words){
 						free(d);
 					}
 				}
+				qclose(docs);
 				docs = temp_docs;
 			}
 			else{
 				wordNotFound = true;
 			}
+			free(currWord);
 		}
 
 		if(wordNotFound == true){
@@ -174,9 +172,9 @@ queue_t* getDocs(queue_t* words){
 			docs = qopen();
 		}
 		return docs;
-
 }
 
+//sort the given queue of type query_docs_t by decreasing rank
 void sortDocs(queue_t* docs){
 	int i = 1;
 	queue_t* temp = qopen();
@@ -196,6 +194,7 @@ void sortDocs(queue_t* docs){
 		}
 		i--;
 	}
+	qclose(temp);
 }
 
 int main(int argc, char *argv[]) {
@@ -248,14 +247,10 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-
 		queue_t* docs = getDocs(words);
 	  sortDocs(docs);
 		qapply(docs, printRank);
-		
-
-
-		
+	 
 		qclose(docs);
 		qclose(words);		
 		free(input);
