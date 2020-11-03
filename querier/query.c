@@ -163,6 +163,7 @@ int main(int argc, char *argv[]) {
 				if(doc->freq > 0){
 					query_docs_t* d = malloc(sizeof(query_docs_t));
 					d->rank = doc->freq;
+					d->id = doc->id;
 					qput(docs, d);
 				}
 				qput(temp, doc);
