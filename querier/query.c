@@ -1,37 +1,36 @@
 #include <ctype.h>
+#include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <math.h>
 
 #include "../utils/hash.h"
+#include "../utils/indexio.h"
+#include "../utils/pageio.h"
 #include "../utils/queue.h"
 #include "../utils/webpage.h"
-#include "../utils/pageio.h"
-#include "../utils/indexio.h"
+#define MAX 81
 
+int ranks[MAX];
+int i = 0;
 
-typedef struct{ //structure to hold data for every page in index
-	int rank;
-	int id;
-	int occurences[34];
+typedef struct {  // structure to hold data for every page in index
+  int rank;
+  int id;
+  int occurences[34];
 } query_docs_t;
 
+typedef struct {
+  char* word;
+  queue_t* freq;
+} word_t;
 
-
-
-typedef struct{
-	char* word;
-	queue_t* freq;
-}word_t;
-
-
-typedef struct{
-	int id;
-	int freq;
+typedef struct {
+  int id;
+  int freq;
 } docs_t;
 
 /*  Takes in a word and normalizes it by making all letters lowercase and
@@ -50,166 +49,186 @@ void normalizeWord(char* word) {
   }
 }
 
-bool isValid(char* c){
-	char* curr = c;
-	while((int)(*curr)!=10){ //10 is line feed
-		if(!isalpha(*curr)){
-			if( ! (((int)(*curr))==9 || ((int)(*curr))==32)){
-				return false;
-			}
-		}
-		curr+=1;
-	}
-	return true;
+bool isValid(char* c) {
+  char* curr = c;
+  while ((int)(*curr) != 10) {  // 10 is line feed
+    if (!isalpha(*curr)) {
+      if (!(((int)(*curr)) == 9 || ((int)(*curr)) == 32)) {
+        return false;
+      }
+    }
+    curr += 1;
+  }
+  return true;
 }
 
-//true if the given query_docs_t has given id
+// true if the given query_docs_t has given id
 
-
-bool findID(void* doc, const void* id){
-	return ((docs_t*)doc)->id  == *((int*)id);
+bool findID(void* doc, const void* id) {
+  return ((docs_t*)doc)->id == *((int*)id);
 }
 
-
-
-bool findWord(void* indexWord, const void* word){
-	return strcmp( ((word_t*)indexWord)->word, (char*)word)==0;
+bool findWord(void* indexWord, const void* word) {
+  return strcmp(((word_t*)indexWord)->word, (char*)word) == 0;
 }
 
-bool stringCompare(void* word1, const void* word2){
-	return strcmp((char*)word1, (char*)word2)==0;
+bool stringCompare(void* word1, const void* word2) {
+  return strcmp((char*)word1, (char*)word2) == 0;
 }
 
+void printWord(void* word) { printf("%s ", ((char*)word)); }
 
-void printWord(void* word){
-	printf("%s ", ((char*)word));
+void makeRanks(void* doc) {
+  ranks[i] = ((query_docs_t*)doc)->rank;
+  i++;
 }
 
+int sortRanks(const void* a, const void* b) { return (*(int*)b - *(int*)a); }
 
-void printRank(void* doc){
-	query_docs_t* d = (query_docs_t*)doc;
-	webpage_t* p = pageload(d->id, "../pages");
-	printf("rank: %d doc: %d URL: %s\n", d->rank, d->id, webpage_getURL(p));
-	webpage_delete(p);
+bool reorder(void* doc, const void* currRank) {
+  if (((query_docs_t*)doc)->rank == *(int*)currRank) {
+    return true;
+  } else
+    return false;
 }
 
+void printRank(void* doc) {
+  query_docs_t* d = (query_docs_t*)doc;
+  webpage_t* p = pageload(d->id, "../pages");
+  printf("rank: %d doc: %d URL: %s\n", d->rank, d->id, webpage_getURL(p));
+  webpage_delete(p);
+}
 
+int main(int argc, char* argv[]) {
+  char* input;
+  char* currchar;
+  char word[20];
+  bool cont = true;
+  int count;
+  hashtable_t* index = indexload("../indexer", "index");
+  while (true) {
+    input = (char*)malloc(sizeof(char*) * 101);
+    printf("> ");
+    fgets(input, 100, stdin);
 
-int main(int argc, char *argv[]) {
-	char* input;
-	char* currchar;
-	char  word[20];
-	bool cont = true;
+    // break if the input is CTRL D
+    if ((int)(*input) == 0) {
+      free(input);
+      printf("\n");
+      break;
+    }
 
-	hashtable_t* index = indexload("../indexer", "index.txt");
-	while(true) {
-		input = (char*)malloc(sizeof(char*)*101);
-		printf("> ");
-		fgets(input, 100, stdin);
+    // skip the loop if the input has non numeric characters
+    cont = true;
+    if (!isValid(input)) {
+      printf("[invalid query]\n");
+      cont = false;
+    }
 
-		//break if the input is CTRL D
-		if((int)(*input)==0){
-			free(input);
-			printf("\n");
-			break;
-		}
-		
-		//skip the loop if the input has non numeric characters
-		cont = true;		
-		if(!isValid(input)){
-			printf("[invalid query]\n");
-			cont = false;
-		}
-		
-		currchar = input; 
-		queue_t* words = qopen(); 
+    currchar = input;
+    queue_t* words = qopen();
 
-		while(cont) {
-			//skip past spaces and tabs, if any
-			while( ((int)(*currchar))==9 || ((int)(*currchar))==32) {	
-				currchar+=sizeof(char);
-			}
-			//print and save current word
-			if(sscanf(currchar, "%s", word)==1) {
-				currchar+=strlen(word);
-				normalizeWord(word);
-				if(strcmp(word, "and") != 0 && strcmp(word, "or") != 0 && strlen(word) >= 3) {
-					//skip the reserved words "and" and "or" and words less than 3 letters long
-					char* w = malloc(sizeof(char*)*30);
-					strcpy(w, word);
-					qput(words, w); //add the query word to the queue
-				}
-			}
-			else {
-				cont=false;
-			}
-		}
+    while (cont) {
+      // skip past spaces and tabs, if any
+      while (((int)(*currchar)) == 9 || ((int)(*currchar)) == 32) {
+        currchar += sizeof(char);
+      }
+      // print and save current word
+      if (sscanf(currchar, "%s", word) == 1) {
+        currchar += strlen(word);
+        normalizeWord(word);
+        if (strcmp(word, "and") != 0 && strcmp(word, "or") != 0 &&
+            strlen(word) >= 3) {
+          // skip the reserved words "and" and "or" and words less than 3
+          // letters long
+          char* w = malloc(sizeof(char*) * 30);
+          strcpy(w, word);
+          qput(words, w);  // add the query word to the queue
+        }
+      } else {
+        cont = false;
+      }
+    }
 
+    bool wordNotFound =
+        false;  // true when a word in query is not in index at all
+    queue_t* docs = qopen();
 
-		bool wordNotFound = false; //true when a word in query is not in index at all
-		queue_t* docs = qopen();
+    // add documents for first word (if word exists) to docs queue
 
-		//add documents for first word (if word exists) to docs queue
+    char* currWord;
+    if ((currWord = (char*)(qget(words))) != NULL) {
+      word_t* indexWord = hsearch(index, findWord, currWord, sizeof(currWord));
+      if (indexWord != NULL) {
+        queue_t* temp = qopen();
+        docs_t* doc;
+        while ((doc = (docs_t*)qget(indexWord->freq)) != NULL) {
+          if (doc->freq > 0) {
+            query_docs_t* d = malloc(sizeof(query_docs_t));
+            d->rank = doc->freq;
+            d->id = doc->id;
+            qput(docs, d);
+          }
+          qput(temp, doc);
+        }
+        indexWord->freq = temp;
+      } else {
+        wordNotFound = true;
+      }
+    }
 
-		
-		char* currWord;
-		if((currWord = (char*)(qget(words)))!=NULL){
-			word_t* indexWord = hsearch(index, findWord, currWord, sizeof(currWord));
-			if(indexWord != NULL){
-				queue_t* temp = qopen();
-				docs_t* doc;
-				while((doc  = (docs_t*)qget(indexWord->freq))!=NULL){
-					if(doc->freq > 0){
-						query_docs_t* d = malloc(sizeof(query_docs_t));
-						d->rank = doc->freq;
-						d->id = doc->id;
-						qput(docs, d);
-					}
-					qput(temp, doc);
-				}
-				indexWord->freq = temp;
-			}
-			else{
-				wordNotFound = true;
-			}
-		}
+    // scan through rest of words
+    // remove from queue of "surviving" docs and only re-add if document also
+    // has current word
+    count = 0;
+    while ((currWord = (char*)(qget(words))) != NULL && !wordNotFound) {
+      word_t* indexWord = hsearch(index, findWord, currWord, sizeof(currWord));
+      if (indexWord != NULL) {
+        query_docs_t* d;
+        queue_t* temp_docs = qopen();
+        while ((d = (query_docs_t*)(qget(docs))) != NULL) {
+          int freq =
+              (((docs_t*)qsearch(indexWord->freq, findID, &(d->id))))->freq;
+          if (freq > 0) {
+            if (freq < d->rank) {
+              d->rank = freq;
+            }
+            qput(temp_docs, d);
+          }
+        }
+        docs = temp_docs;
+      } else {
+        wordNotFound = true;
+      }
+    }
+    int i;
+    for (i = 0; i < MAX; i++) {  // reset ranks
+      ranks[i] = 0;
+    }
+    qapply(docs, makeRanks);
+    for (i = 0; i < MAX; i++) {  // count ranks
+      if (ranks[i] != 0) {
+        count++;
+      }
+    }
+    if (!wordNotFound && count > 1) {
+      qsort(ranks, MAX, sizeof(int), sortRanks);  // sort ranks
+      int i;
+      i = 0;
+      while (ranks[i] > 0) {  // print the non-zero ranks in order
+        printRank(qsearch(docs, reorder, (const void*)&ranks[i]));
+        i++;
+      }
+      // qapply(docs, printRank);
+    } else if (!wordNotFound && count == 1) {  // if the count is 1
+      printf("in else\n");
+      printRank(qget(docs));
+    }
 
-		//scan through rest of words
-		//remove from queue of "surviving" docs and only re-add if document also has current word
-		
-		
-		while((currWord = (char*)(qget(words)))!=NULL && wordNotFound == false){
-			word_t* indexWord = hsearch(index, findWord, currWord, sizeof(currWord));
-			if(indexWord != NULL){
-				query_docs_t* d;
-				queue_t* temp_docs = qopen();
-				while( (d = (query_docs_t*)(qget(docs))) != NULL){
-					int freq = (((docs_t*)qsearch(indexWord->freq, findID, &(d->id))))->freq;
-					if(freq > 0){
-						if(freq<d->rank){
-							d->rank = freq;
-						}
-						qput(temp_docs, d);
-					}
-				}
-				docs = temp_docs;
-			}
-			else{
-				wordNotFound = true;
-			}
-		}
-			
-		if(wordNotFound==false){
-			qapply(docs, printRank);
-		}
-		
-
-		
-		qclose(docs);
-		qclose(words);		
-		free(input);
-	}
-	hclose(index);
-	return 0;
-	
+    qclose(docs);
+    qclose(words);
+    free(input);
+  }
+  hclose(index);
+  return 0;
 }
