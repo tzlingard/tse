@@ -14,6 +14,8 @@
 #include "../utils/indexio.h"
 
 
+hashtable_t* index;
+
 typedef struct{ //structure to hold data for every page in index
 	int rank;
 	int id;
@@ -105,6 +107,73 @@ void closeIndex(hashtable_t* htp){
 }
 
 
+//given a queue of words, returns a queue of type query_doc_t for the docs containing all of those words
+queue_t* getDocs(queue_t* words){
+		bool wordNotFound = false; //true when a word in query is not in index at all
+		queue_t* docs = qopen();
+
+		//add documents for first word (if word exists) to docs queue
+
+		char* currWord;
+		if((currWord = (char*)(qget(words)))!=NULL){
+			word_t* indexWord = hsearch(index, findWord, currWord, sizeof(currWord));
+			if(indexWord != NULL){
+				queue_t* temp = qopen();
+				docs_t* doc;
+				while((doc  = (docs_t*)qget(indexWord->freq))!=NULL){
+					if(doc->freq > 0){
+						query_docs_t* d = malloc(sizeof(query_docs_t));
+						d->rank = doc->freq;
+						d->id = doc->id;
+						qput(docs, d);
+					}
+					qput(temp, doc);
+				}
+				qclose(indexWord->freq);
+				indexWord->freq = temp;
+			}
+			else{
+				wordNotFound = true;
+			}
+		}
+
+		//scan through rest of words
+		//remove from queue of "surviving" docs and only re-add if document also has current word
+		
+		
+		while((currWord = (char*)(qget(words)))!=NULL && wordNotFound == false){
+			word_t* indexWord = hsearch(index, findWord, currWord, sizeof(currWord));
+			if(indexWord != NULL){
+				query_docs_t* d;
+				queue_t* temp_docs = qopen();
+				while( (d = (query_docs_t*)(qget(docs))) != NULL){
+					int freq = (((docs_t*)qsearch(indexWord->freq, findID, &(d->id))))->freq;
+					if(freq > 0){
+						if(freq<d->rank){
+							d->rank = freq;
+						}
+						qput(temp_docs, d);
+					}
+					else{
+						free(d);
+					}
+				}
+				docs = temp_docs;
+			}
+			else{
+				wordNotFound = true;
+			}
+		}
+
+		if(wordNotFound == true){
+			qclose(docs);
+			docs = qopen();
+		}
+		return docs;
+
+}
+
+
 
 int main(int argc, char *argv[]) {
 	char* input;
@@ -112,7 +181,7 @@ int main(int argc, char *argv[]) {
 	char  word[20];
 	bool cont = true;
 
-	hashtable_t* index = indexload("../indexer", "index.txt");
+	index = indexload("../indexer", "index.txt");
 	while(true) {
 		input = (char*)malloc(sizeof(char*)*101);
 		printf("> ");
@@ -157,68 +226,9 @@ int main(int argc, char *argv[]) {
 		}
 
 
-		bool wordNotFound = false; //true when a word in query is not in index at all
-		queue_t* docs = qopen();
-
-		//add documents for first word (if word exists) to docs queue
-
+		queue_t* docs = getDocs(words);
+		qapply(docs, printRank);
 		
-		char* currWord;
-		if((currWord = (char*)(qget(words)))!=NULL){
-			word_t* indexWord = hsearch(index, findWord, currWord, sizeof(currWord));
-			if(indexWord != NULL){
-				queue_t* temp = qopen();
-				docs_t* doc;
-				while((doc  = (docs_t*)qget(indexWord->freq))!=NULL){
-					if(doc->freq > 0){
-						query_docs_t* d = malloc(sizeof(query_docs_t));
-						d->rank = doc->freq;
-						d->id = doc->id;
-						qput(docs, d);
-					}
-					qput(temp, doc);
-				}
-				indexWord->freq = temp;
-			}
-			else{
-				wordNotFound = true;
-			}
-		}
-
-		//scan through rest of words
-		//remove from queue of "surviving" docs and only re-add if document also has current word
-		
-		
-		while((currWord = (char*)(qget(words)))!=NULL && wordNotFound == false){
-			word_t* indexWord = hsearch(index, findWord, currWord, sizeof(currWord));
-			if(indexWord != NULL){
-				query_docs_t* d;
-				queue_t* temp_docs = qopen();
-				while( (d = (query_docs_t*)(qget(docs))) != NULL){
-					int freq = (((docs_t*)qsearch(indexWord->freq, findID, &(d->id))))->freq;
-					if(freq > 0){
-						if(freq<d->rank){
-							d->rank = freq;
-						}
-						qput(temp_docs, d);
-					}
-					else{
-						free(d);
-					}
-				}
-				docs = temp_docs;
-			}
-			else{
-				wordNotFound = true;
-			}
-		}
-			
-		if(wordNotFound==false){
-			qapply(docs, printRank);
-		}
-		
-		
-
 		
 		qclose(docs);
 		qclose(words);		
