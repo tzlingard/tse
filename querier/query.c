@@ -159,6 +159,7 @@ int main(int argc, char *argv[]) {
 			found = false;
 		}
 
+		fclose(fp);
 		printf("%s\n", index_of_query);
 
 
@@ -248,16 +249,16 @@ int main(int argc, char *argv[]) {
 			
 			
 
-			qclose(words);
+
 			qclose(docs);
 		}
 
 
 
 		*/
-		
+			qclose(words);		
 		free(input);
-		
+		free(index_of_query);
 	}
 	return 0;
 	
