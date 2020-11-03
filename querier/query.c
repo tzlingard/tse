@@ -94,6 +94,17 @@ void printRank(void* doc){
 }
 
 
+void closeWordT(void* word){
+	free(((word_t*)word)->word);
+	qclose(((word_t*)word)->freq);
+}
+
+void closeIndex(hashtable_t* htp){
+	happly(htp, closeWordT);
+	hclose(htp);
+}
+
+
 
 int main(int argc, char *argv[]) {
 	char* input;
@@ -191,6 +202,9 @@ int main(int argc, char *argv[]) {
 						}
 						qput(temp_docs, d);
 					}
+					else{
+						free(d);
+					}
 				}
 				docs = temp_docs;
 			}
@@ -203,13 +217,14 @@ int main(int argc, char *argv[]) {
 			qapply(docs, printRank);
 		}
 		
+		
 
 		
 		qclose(docs);
 		qclose(words);		
 		free(input);
 	}
-	hclose(index);
+	closeIndex(index);
 	return 0;
 	
 }
