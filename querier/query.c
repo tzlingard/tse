@@ -11,18 +11,28 @@
 #include "../utils/queue.h"
 #include "../utils/webpage.h"
 #include "../utils/pageio.h"
+#include "../utils/indexio.h"
 
 
 typedef struct{ //structure to hold data for every page in index
 	int rank;
 	int id;
-	//	int occurences[34];
+	int occurences[34];
 } query_docs_t;
 
 
 
 
+typedef struct{
+	char* word;
+	queue_t* freq;
+}word_t;
 
+
+typedef struct{
+	int id;
+	int freq;
+} docs_t;
 
 /*  Takes in a word and normalizes it by making all letters lowercase and
  * getting rid of non-alphabetic characters */
@@ -55,12 +65,16 @@ bool isValid(char* c){
 
 //true if the given query_docs_t has given id
 
-/*
-bool getDoc(void* doc, const void* id){
-	return ((query_docs_t*)doc)->id  == *((int*)id);
-}
-*/
 
+bool findID(void* doc, const void* id){
+	return ((docs_t*)doc)->id  == *((int*)id);
+}
+
+
+
+bool findWord(void* indexWord, const void* word){
+	return strcmp( ((word_t*)indexWord)->word, (char*)word)==0;
+}
 
 bool stringCompare(void* word1, const void* word2){
 	return strcmp((char*)word1, (char*)word2)==0;
@@ -80,11 +94,14 @@ void printRank(void* doc){
 }
 
 
+
 int main(int argc, char *argv[]) {
 	char* input;
 	char* currchar;
 	char  word[20];
 	bool cont = true;
+
+	hashtable_t* index = indexload("../indexer", "index.txt");
 	while(true) {
 		input = (char*)malloc(sizeof(char*)*101);
 		printf("> ");
@@ -127,184 +144,59 @@ int main(int argc, char *argv[]) {
 				cont=false;
 			}
 		}
-		
-		//make string of all relevant index lines
-		char* index_of_query = (char*)malloc(sizeof(char*)*1000);
-		char* w = index_of_query; //pointer for writing
-		FILE *fp;
-		fp = fopen("../indexer/index.txt", "r"); //open the index for reading
-		char indexWord[30];
-		bool found = false;
-		int docID;
-		int occurrence;
-		while (fscanf(fp, "%s ", indexWord) == 1 ){
-			//if the index work is in the query, found is true 
-			if(qsearch(words, stringCompare, (void*)indexWord)!=NULL){
-				found = true;
-				strcpy(w, indexWord);
-				w += strlen(indexWord);
-				*w = ' ';
-				w+=sizeof(char);
-			}
-			char* c;;
-			while(fscanf(fp, "%c", c)==1 && *c != '\n'){
-				if(found){
-					sprintf(w, "%c", *c);
-					w+=sizeof(char);
-				}
-			}
-			found = false;	
-		}
 
-		fclose(fp);
-		printf("%s\n", index_of_query);
-			
+
+
 		queue_t* docs = qopen();
-		queue_t* temp_docs = docs;
+
 
 
 		//add documents for first word (if word exists) to docs queue
 
-		if (sscanf(index_of_query, "%s ", indexWord) == 1 ){
-			printf("inside\n");
-			printf("indexWord = %s\n",indexWord);
-			while(sscanf(index_of_query, "%d %d", &docID, &occurrence) == 2) {
-				printf("id: %d\n",docID);
-				if(occurrence>1){
-					printf("id : %d had occurrencee>1\n",docID);
+
+		char* currWord;
+		if((currWord = (char*)(qget(words)))!=NULL){
+			word_t* indexWord = hsearch(index, findWord, currWord, sizeof(currWord));
+			queue_t* temp = qopen();
+			docs_t* doc;
+			while((doc  = (docs_t*)qget(indexWord->freq))!=NULL){
+				if(doc->freq > 0){
 					query_docs_t* d = malloc(sizeof(query_docs_t));
-					d->rank = occurrence;
+					d->rank = doc->freq;
 					qput(docs, d);
 				}
+				qput(temp, doc);
 			}
+			indexWord->freq = temp;
 		}
 
-		
-		qapply(docs, printRank);
-		printf("here\n");
 		//scan through rest of words
 		//remove from queue of "surviving" docs and only re-add if document also has current word
-		
-		while (sscanf(index_of_query, "%s ", indexWord) == 1 ){
+
+
+		while((currWord = (char*)(qget(words)))!=NULL){
+			word_t* indexWord = hsearch(index, findWord, currWord, sizeof(currWord));
 			query_docs_t* d;
+			queue_t* temp_docs = qopen();
 			while( (d = (query_docs_t*)(qget(docs))) != NULL){
-				
-				while(sscanf(index_of_query, "%d %d", &docID, &occurrence) == 2) {
-					if(d->id == docID){
-						if(occurrence>0){
-							if(occurrence<d->rank ){
-								d->rank = occurrence;
-							}
-							qput(temp_docs, d);
-						}
+				int freq = (((docs_t*)qsearch(indexWord->freq, findID, &(d->id))))->freq;
+				if(freq > 0){
+					if(freq<d->rank){
+						d->rank = freq;
 					}
+					qput(temp_docs, d);
 				}
 			}
 			docs = temp_docs;
 		}
-
 		
 		qapply(docs, printRank);
 		
 
 		
-		//vvvv bad step 3 code vvvv
-		
-		/*
-		if(isValid(input)){
-			//find number of docs in index
-			//seearch through index
-			//if word is in queue of words
-			//
-			
-			int numDocs = 0;
-			char indexWord[30];
-			int occurrence = 0;
-			int docID;
-			FILE *fp;
-			
-			
-			//open index first time just to find number of documents
-			fp = fopen("../indexer/index.txt", "r"); //open the index for reading
-			if(fscanf(fp, "%s ", indexWord) == 1){
-				while(fscanf(fp, "%d %d", &docID, &occurrence) == 2){
-					numDocs++;
-				}
-			}
-			fclose(fp);
-		 
-			//make queue of documents, type query_docs_t*
-			queue_t* docs = qopen();
-			
-			for(int i = 1; i<= numDocs; i++){
-				query_docs_t* d = (query_docs_t*)malloc(sizeof(query_docs_t));
-				d->id = i;
-				d->rank = 1000; //start with big number
-				qput(docs, d);
-			}
-			
-			
-			//open index 2nd time to start actual loop
-			fp = fopen("../indexer/index.txt", "r"); //open the index for reading
-			
-			
-			int i = 0;//total number of query words found in index 
-			bool found = false;
-
-			while (fscanf(fp, "%s ", indexWord) == 1 ){
-				//if the index work is in the query, found is true 
-				if(qsearch(words, stringCompare, (void*)indexWord)!=NULL){
-					found = true;
-					i++;
-				}
-				
-				while(fscanf(fp, "%d %d", &docID, &occurrence) == 2) {
-					if(found){
-						query_docs_t* d = (query_docs_t*)(qsearch(docs, getDoc, (void*)(&docID)));
-						d->occurences[i] = occurrence;
-						if(d->rank > occurrence){
-							d->rank = occurrence;
-						}
-					}
-				}
-
-
-
-				found = false;
-			}
-			fclose(fp);
-			
-			//remove all documents that contained rank of zero
-			for(int i = 1; i <= numDocs; i++){
-				query_docs_t* d = (query_docs_t*)(qsearch(docs, getDoc, (&i)));
-				if(d->rank==0){
-					qremove(docs, getDoc, (&i));
-					free(d);
-				}
-			}
-			
-			
-			//only print if query was found in index
-			if(i>0){
-				qapply(docs, printRank); //print information for all remaining docs	
-			}
-			else {
-				printf("No matches found\n");
-			}
-			
-			
-
-
-			qclose(docs);
-		}
-
-
-
-		*/
 		qclose(docs);
 			qclose(words);		
 		free(input);
-		free(index_of_query);
 	}
 	return 0;
 	
