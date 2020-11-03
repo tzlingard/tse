@@ -65,11 +65,15 @@ bool isValid(char* c){
 	return true;
 }
 
-//true if the given query_docs_t has given id
-
-
+//true if the given docs_t has given id
 bool findID(void* doc, const void* id){
 	return ((docs_t*)doc)->id  == *((int*)id);
+}
+
+
+//true if the given query_docs_t has given rank
+bool findRank(void* doc, const void* rank){
+	return ((query_docs_t*)doc)->rank  == *((int*)rank);
 }
 
 
@@ -173,7 +177,26 @@ queue_t* getDocs(queue_t* words){
 
 }
 
-
+void sortDocs(queue_t* docs){
+	int i = 1;
+	queue_t* temp = qopen();
+	query_docs_t* d;
+	void* emptyTester;
+	while((emptyTester = qget(docs)) != NULL){
+		qput(docs,emptyTester);
+		while((d=(query_docs_t*)qremove(docs, findRank, &i))!=NULL){
+			qput(temp,d);
+		}
+		i++;
+	}
+	while((emptyTester = qget(temp)) != NULL){
+		qput(temp,emptyTester);
+		while((d=(query_docs_t*)qremove(temp, findRank, &i))!=NULL){
+			qput(docs,d);
+		}
+		i--;
+	}
+}
 
 int main(int argc, char *argv[]) {
 	char* input;
@@ -227,14 +250,16 @@ int main(int argc, char *argv[]) {
 
 
 		queue_t* docs = getDocs(words);
+	  sortDocs(docs);
 		qapply(docs, printRank);
 		
+
+
 		
 		qclose(docs);
 		qclose(words);		
 		free(input);
 	}
 	closeIndex(index);
-	return 0;
-	
+	return 0;	
 }
