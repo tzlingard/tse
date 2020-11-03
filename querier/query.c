@@ -5,18 +5,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <math.h>
 
 #include "../utils/hash.h"
 #include "../utils/queue.h"
 #include "../utils/webpage.h"
 #include "../utils/pageio.h"
 
-//vv from bad step 3 code
+
 typedef struct{ //structure to hold data for every page in index
 	int rank;
 	int id;
-	int occurences[34];
+	//	int occurences[34];
 } query_docs_t;
+
+
+
+
 
 
 /*  Takes in a word and normalizes it by making all letters lowercase and
@@ -66,14 +71,14 @@ void printWord(void* word){
 	printf("%s ", ((char*)word));
 }
 
-/*
+
 void printRank(void* doc){
 	query_docs_t* d = (query_docs_t*)doc;
 	webpage_t* p = pageload(d->id, "../pages");
 	printf("rank: %d doc: %d URL: %s\n", d->rank, d->id, webpage_getURL(p));
 	webpage_delete(p);
 }
-*/
+
 
 int main(int argc, char *argv[]) {
 	char* input;
@@ -122,8 +127,6 @@ int main(int argc, char *argv[]) {
 				cont=false;
 			}
 		}
-
-
 		
 		//make string of all relevant index lines
 		char* index_of_query = (char*)malloc(sizeof(char*)*1000);
@@ -142,27 +145,69 @@ int main(int argc, char *argv[]) {
 				w += strlen(indexWord);
 				*w = ' ';
 				w+=sizeof(char);
-			}		
-			while(fscanf(fp, "%d %d", &docID, &occurrence) == 2) {
+			}
+			char* c;;
+			while(fscanf(fp, "%c", c)==1 && *c != '\n'){
 				if(found){
-					sprintf(w, "%d", docID);
-					w+=sizeof(char);
-					*w = ' ';
-					w+=sizeof(char);
-					sprintf(w, "%d", occurrence);
-					w+=sizeof(char);
-					*w = ' ';
+					sprintf(w, "%c", *c);
 					w+=sizeof(char);
 				}
 			}
-					
-			found = false;
+			found = false;	
 		}
 
 		fclose(fp);
 		printf("%s\n", index_of_query);
+			
+		queue_t* docs = qopen();
+		queue_t* temp_docs = docs;
 
 
+		//add documents for first word (if word exists) to docs queue
+
+		if (sscanf(index_of_query, "%s ", indexWord) == 1 ){
+			printf("inside\n");
+			printf("indexWord = %s\n",indexWord);
+			while(sscanf(index_of_query, "%d %d", &docID, &occurrence) == 2) {
+				printf("id: %d\n",docID);
+				if(occurrence>1){
+					printf("id : %d had occurrencee>1\n",docID);
+					query_docs_t* d = malloc(sizeof(query_docs_t));
+					d->rank = occurrence;
+					qput(docs, d);
+				}
+			}
+		}
+
+		
+		qapply(docs, printRank);
+		printf("here\n");
+		//scan through rest of words
+		//remove from queue of "surviving" docs and only re-add if document also has current word
+		
+		while (sscanf(index_of_query, "%s ", indexWord) == 1 ){
+			query_docs_t* d;
+			while( (d = (query_docs_t*)(qget(docs))) != NULL){
+				
+				while(sscanf(index_of_query, "%d %d", &docID, &occurrence) == 2) {
+					if(d->id == docID){
+						if(occurrence>0){
+							if(occurrence<d->rank ){
+								d->rank = occurrence;
+							}
+							qput(temp_docs, d);
+						}
+					}
+				}
+			}
+			docs = temp_docs;
+		}
+
+		
+		qapply(docs, printRank);
+		
+
+		
 		//vvvv bad step 3 code vvvv
 		
 		/*
@@ -256,6 +301,7 @@ int main(int argc, char *argv[]) {
 
 
 		*/
+		qclose(docs);
 			qclose(words);		
 		free(input);
 		free(index_of_query);
