@@ -104,10 +104,11 @@ queue_t* getDocs(queue_t* words) {
   bool wordNotFound = false;  // true when a word in query is not in index at
                               // all
   queue_t* docs = qopen();
+
   // add documents for first word (if word exists) to docs queue
+
   char* currWord;
   if ((currWord = (char*)(qget(words))) != NULL) {
-    printf("currWord = %s\n", currWord);
     word_t* indexWord = hsearch(index, findWord, currWord, sizeof(currWord));
     if (indexWord != NULL) {
       queue_t* temp = qopen();
@@ -124,61 +125,47 @@ queue_t* getDocs(queue_t* words) {
 
       qclose(indexWord->freq);
       indexWord->freq = temp;
-    } else {
+    } else if (strcmp(currWord, "or") != 0) {
       wordNotFound = true;
     }
     free(currWord);
   }
+
   // scan through rest of words
-  // remove from queue of "surviving" docs and only re-add if document also
-  // has current word
+  // remove from queue of "surviving" docs and only re-add if document also has
+  // current word
+
   while ((currWord = (char*)(qget(words))) != NULL && wordNotFound == false) {
-    printf("currWord = %s\n", currWord);
     word_t* indexWord = hsearch(index, findWord, currWord, sizeof(currWord));
-    queue_t* temp_docs = qopen();
-    query_docs_t* d;
     if (indexWord != NULL) {
-      printf("indexWord found\n");
+      query_docs_t* d;
+      queue_t* temp_docs = qopen();
       while ((d = (query_docs_t*)(qget(docs))) != NULL) {
         int freq =
             (((docs_t*)qsearch(indexWord->freq, findID, &(d->id))))->freq;
-        printf("freq = %d\n", freq);
         if (freq > 0) {
           if (freq < d->rank) {
             d->rank = freq;
-          }
-          query_docs_t* qD;
-          if ((qD = ((query_docs_t*)qsearch(docs, findID, &(d->id)))) != NULL) {
-            d->rank = d->rank + qD->rank;
-            // add the rank to the rank already in the final queue for that doc
           }
           qput(temp_docs, d);
         } else {
           free(d);
         }
       }
-      /* query_docs_t* qDocs;
-       while ((qDocs = qget(temp_docs)) != NULL) {
-         qDocs->rank = (((docs_t*)qsearch(temp_docs, findID, &(d->id))))->freq;
-         // set the rank in the final queue to the pre-or rank
-         qput(docs, qDocs);
-       }*/
+      qclose(docs);
+      docs = temp_docs;
+    } else if (strcmp(currWord, "or") == 0) {
+      printf("or found\n");
+      // TODO: if this if statement is triggered, add the ranks of the word in
+      // each document to the final queue, and have all the following (temp)
+      // ranks add to this value once the next or is hit or the query is finished
     } else {
-      if (!strcmp(currWord, "or")) {  // if the word is or, add the ranks
-        query_docs_t* qDocs;
-        while ((qDocs = qget(temp_docs)) != NULL) {
-          qDocs->rank = (((docs_t*)qsearch(temp_docs, findID, &(d->id))))->freq;
-          // set the rank in the final queue to the pre-or rank
-          qput(docs, qDocs);
-        }
-      } else {
-        wordNotFound = true;
-        free(currWord);
-      }
+      wordNotFound = true;
     }
+    free(currWord);
   }
+
   if (wordNotFound == true) {
-    printf("Word not found\n");
     qclose(docs);
     docs = qopen();
   }
@@ -248,8 +235,8 @@ int main(int argc, char* argv[]) {
         normalizeWord(word);
         if (strcmp(word, "and") != 0) {
           if (strlen(word) >= 3 || strcmp(word, "or") == 0) {
-            // skip the reserved words "and" and words less than 3 (except
-            // "or") letters long
+            // skip the reserved words "and" and "or" and words less than 3
+            // letters long
             char* w = malloc(sizeof(char*) * 30);
             strcpy(w, word);
             qput(words, w);  // add the query word to the queue
