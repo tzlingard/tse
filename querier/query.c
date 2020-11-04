@@ -191,24 +191,24 @@ void sortDocs(queue_t* docs) {
 }
 
 int main(int argc, char* argv[]) {
-  char* input;
+  char input[100];
   char* currchar;
   char word[20];
   bool cont = true;
 
-  index = indexload("../indexer", "index");
-  while (true) {
-    input = (char*)malloc(sizeof(char*) * 101);
-    printf("> ");
-    fgets(input, 100, stdin);
+  index = indexload("../indexer", "index.txt");
+  printf("> ");
+  while (fgets(input, 100, stdin) != NULL) {
+    // input = (char*)malloc(sizeof(char*)*101);
 
-    // break if the input is CTRL D
-    if ((int)(*input) == 0) {
-      free(input);
-      printf("\n");
-      break;
+    /*
+    //break if the input is CTRL D
+    if((int)(*input)==0){
+            //		free(input);
+            printf("\n");
+            break;
     }
-
+    */
     // skip the loop if the input has non numeric characters
     cont = true;
     if (!isValid(input)) {
@@ -219,27 +219,9 @@ int main(int argc, char* argv[]) {
     currchar = input;
     queue_t* words = qopen();
 
-    while (cont) {
-      // skip past spaces and tabs, if any
-      while (((int)(*currchar)) == 9 || ((int)(*currchar)) == 32) {
-        currchar += sizeof(char);
-      }
-      // print and save current word
-      if (sscanf(currchar, "%s", word) == 1) {
-        currchar += strlen(word);
-        normalizeWord(word);
-        if (strcmp(word, "and") != 0 && strcmp(word, "or") != 0 &&
-            strlen(word) >= 3) {
-          // skip the reserved words "and" and "or" and words less than 3
-          // letters long
-          char* w = malloc(sizeof(char*) * 30);
-          strcpy(w, word);
-          qput(words, w);  // add the query word to the queue
-        }
-      } else {
-        cont = false;
-      }
-    }
+    queue_t* docs = getDocs(words);
+    sortDocs(docs);
+    qapply(docs, printRank);
 
     queue_t* docs = getDocs(words);
     sortDocs(docs);
@@ -247,7 +229,8 @@ int main(int argc, char* argv[]) {
 
     qclose(docs);
     qclose(words);
-    free(input);
+    // free(input);
+    printf("> ");
   }
   closeIndex(index);
   return 0;
