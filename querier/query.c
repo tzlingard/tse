@@ -12,10 +12,6 @@
 #include "../utils/pageio.h"
 #include "../utils/queue.h"
 #include "../utils/webpage.h"
-#define MAX 81
-
-int ranks[MAX];
-int i = 0;
 
 hashtable_t* index;
 
@@ -74,19 +70,15 @@ bool findRank(void* doc, const void* rank) {
   return ((query_docs_t*)doc)->rank == *((int*)rank);
 }
 
-void makeRanks(void* doc) {
-  ranks[i] = ((query_docs_t*)doc)->rank;
-  i++;
+bool findWord(void* indexWord, const void* word) {
+  return strcmp(((word_t*)indexWord)->word, (char*)word) == 0;
 }
 
-int sortRanks(const void* a, const void* b) { return (*(int*)b - *(int*)a); }
-
-bool reorder(void* doc, const void* currRank) {
-  if (((query_docs_t*)doc)->rank == *(int*)currRank) {
-    return true;
-  } else
-    return false;
+bool stringCompare(void* word1, const void* word2) {
+  return strcmp((char*)word1, (char*)word2) == 0;
 }
+
+void printWord(void* word) { printf("%s ", ((char*)word)); }
 
 void printRank(void* doc) {
   query_docs_t* d = (query_docs_t*)doc;
@@ -95,13 +87,116 @@ void printRank(void* doc) {
   webpage_delete(p);
 }
 
+void closeWordT(void* word) {
+  free(((word_t*)word)->word);
+  qclose(((word_t*)word)->freq);
+}
+
+// deallocate all memory for an index
+void closeIndex(hashtable_t* htp) {
+  happly(htp, closeWordT);
+  hclose(htp);
+}
+
+// given a queue of words, returns a queue of type query_doc_t for the docs
+// containing all of those words
+queue_t* getDocs(queue_t* words) {
+  bool wordNotFound = false;  // true when a word in query is not in index at
+                              // all
+  queue_t* docs = qopen();
+
+  // add documents for first word (if word exists) to docs queue
+
+  char* currWord;
+  if ((currWord = (char*)(qget(words))) != NULL) {
+    word_t* indexWord = hsearch(index, findWord, currWord, sizeof(currWord));
+    if (indexWord != NULL) {
+      queue_t* temp = qopen();
+      docs_t* doc;
+      while ((doc = (docs_t*)qget(indexWord->freq)) != NULL) {
+        if (doc->freq > 0) {
+          query_docs_t* d = malloc(sizeof(query_docs_t));
+          d->rank = doc->freq;
+          d->id = doc->id;
+          qput(docs, d);
+        }
+        qput(temp, doc);
+      }
+
+      qclose(indexWord->freq);
+      indexWord->freq = temp;
+    } else {
+      wordNotFound = true;
+    }
+    free(currWord);
+  }
+
+  // scan through rest of words
+  // remove from queue of "surviving" docs and only re-add if document also has
+  // current word
+
+  while ((currWord = (char*)(qget(words))) != NULL && wordNotFound == false) {
+    word_t* indexWord = hsearch(index, findWord, currWord, sizeof(currWord));
+    if (indexWord != NULL) {
+      query_docs_t* d;
+      queue_t* temp_docs = qopen();
+      while ((d = (query_docs_t*)(qget(docs))) != NULL) {
+        int freq =
+            (((docs_t*)qsearch(indexWord->freq, findID, &(d->id))))->freq;
+        if (freq > 0) {
+          if (freq < d->rank) {
+            d->rank = freq;
+          }
+          qput(temp_docs, d);
+        } else {
+          free(d);
+        }
+      }
+      qclose(docs);
+      docs = temp_docs;
+    } else {
+      wordNotFound = true;
+    }
+    free(currWord);
+  }
+
+  if (wordNotFound == true) {
+    qclose(docs);
+    docs = qopen();
+  }
+  return docs;
+}
+
+// sort the given queue of type query_docs_t by decreasing rank
+void sortDocs(queue_t* docs) {
+  int i = 1;
+  queue_t* temp = qopen();
+  query_docs_t* d;
+  void* emptyTester;
+  while ((emptyTester = qget(docs)) != NULL) {
+    qput(docs, emptyTester);
+    while ((d = (query_docs_t*)qremove(docs, findRank, &i)) != NULL) {
+      qput(temp, d);
+    }
+    i++;
+  }
+  while ((emptyTester = qget(temp)) != NULL) {
+    qput(temp, emptyTester);
+    while ((d = (query_docs_t*)qremove(temp, findRank, &i)) != NULL) {
+      qput(docs, d);
+    }
+    i--;
+  }
+  qclose(temp);
+}
+
 int main(int argc, char* argv[]) {
   char* input;
   char* currchar;
   char word[20];
   bool cont = true;
-  int count;
-  hashtable_t* index = indexload("../indexer", "index");
+
+  index = indexload("../indexer", "index");
   while (true) {
     input = (char*)malloc(sizeof(char*) * 101);
     printf("> ");
@@ -146,198 +241,14 @@ int main(int argc, char* argv[]) {
       }
     }
 
-    bool wordNotFound =
-        false;  // true when a word in query is not in index at all
-    queue_t* docs = qopen();
+    queue_t* docs = getDocs(words);
+    sortDocs(docs);
+    qapply(docs, printRank);
 
-    // add documents for first word (if word exists) to docs queue
-
-    char* currWord;
-    if ((currWord = (char*)(qget(words))) != NULL) {
-      word_t* indexWord = hsearch(index, findWord, currWord, sizeof(currWord));
-      if (indexWord != NULL) {
-        queue_t* temp = qopen();
-        docs_t* doc;
-        while ((doc = (docs_t*)qget(indexWord->freq)) != NULL) {
-          if (doc->freq > 0) {
-            query_docs_t* d = malloc(sizeof(query_docs_t));
-            d->rank = doc->freq;
-            d->id = doc->id;
-            qput(docs, d);
-          }
-          qput(temp, doc);
-        }
-        indexWord->freq = temp;
-      } else {
-        wordNotFound = true;
-      }
-    }
-
-    void closeWordT(void* word) {
-      free(((word_t*)word)->word);
-      qclose(((word_t*)word)->freq);
-    }
-
-    // deallocate all memory for an index
-    void closeIndex(hashtable_t * htp) {
-      happly(htp, closeWordT);
-      hclose(htp);
-    }
-
-    // given a queue of words, returns a queue of type query_doc_t for the docs
-    // containing all of those words
-    queue_t* getDocs(queue_t * words) {
-      bool wordNotFound =
-          false;  // true when a word in query is not in index at all
-      queue_t* docs = qopen();
-
-      // add documents for first word (if word exists) to docs queue
-
-      char* currWord;
-      if ((currWord = (char*)(qget(words))) != NULL) {
-        word_t* indexWord =
-            hsearch(index, findWord, currWord, sizeof(currWord));
-        if (indexWord != NULL) {
-          queue_t* temp = qopen();
-          docs_t* doc;
-          while ((doc = (docs_t*)qget(indexWord->freq)) != NULL) {
-            if (doc->freq > 0) {
-              query_docs_t* d = malloc(sizeof(query_docs_t));
-              d->rank = doc->freq;
-              d->id = doc->id;
-              qput(docs, d);
-            }
-            qput(temp, doc);
-          }
-
-          qclose(indexWord->freq);
-          indexWord->freq = temp;
-        } else {
-          wordNotFound = true;
-        }
-        free(currWord);
-      }
-
-      // scan through rest of words
-      // remove from queue of "surviving" docs and only re-add if document also
-      // has current word
-
-      while ((currWord = (char*)(qget(words))) != NULL &&
-             wordNotFound == false) {
-        word_t* indexWord =
-            hsearch(index, findWord, currWord, sizeof(currWord));
-        if (indexWord != NULL) {
-          query_docs_t* d;
-          queue_t* temp_docs = qopen();
-          while ((d = (query_docs_t*)(qget(docs))) != NULL) {
-            int freq =
-                (((docs_t*)qsearch(indexWord->freq, findID, &(d->id))))->freq;
-            if (freq > 0) {
-              if (freq < d->rank) {
-                d->rank = freq;
-              }
-              qput(temp_docs, d);
-            } else {
-              free(d);
-            }
-          }
-          qclose(docs);
-          docs = temp_docs;
-        } else {
-          wordNotFound = true;
-        }
-        free(currWord);
-      }
-
-      if (wordNotFound == true) {
-        qclose(docs);
-        docs = qopen();
-      }
-      return docs;
-    }
-
-    // sort the given queue of type query_docs_t by decreasing rank
-    void sortDocs(queue_t * docs) {
-      int i = 1;
-      queue_t* temp = qopen();
-      query_docs_t* d;
-      void* emptyTester;
-      while ((emptyTester = qget(docs)) != NULL) {
-        qput(docs, emptyTester);
-        while ((d = (query_docs_t*)qremove(docs, findRank, &i)) != NULL) {
-          qput(temp, d);
-        }
-        i++;
-      }
-      while ((emptyTester = qget(temp)) != NULL) {
-        qput(temp, emptyTester);
-        while ((d = (query_docs_t*)qremove(temp, findRank, &i)) != NULL) {
-          qput(docs, d);
-        }
-        i--;
-      }
-      qclose(temp);
-    }
-
-    int main(int argc, char* argv[]) {
-      char* input;
-      char* currchar;
-      char word[20];
-      bool cont = true;
-
-      index = indexload("../indexer", "index.txt");
-      while (true) {
-        input = (char*)malloc(sizeof(char*) * 101);
-        printf("> ");
-        fgets(input, 100, stdin);
-
-        // break if the input is CTRL D
-        if ((int)(*input) == 0) {
-          free(input);
-          printf("\n");
-          break;
-        }
-
-        // skip the loop if the input has non numeric characters
-        cont = true;
-        if (!isValid(input)) {
-          printf("[invalid query]\n");
-          cont = false;
-        }
-
-        currchar = input;
-        queue_t* words = qopen();
-
-        while (cont) {
-          // skip past spaces and tabs, if any
-          while (((int)(*currchar)) == 9 || ((int)(*currchar)) == 32) {
-            currchar += sizeof(char);
-          }
-          // print and save current word
-          if (sscanf(currchar, "%s", word) == 1) {
-            currchar += strlen(word);
-            normalizeWord(word);
-            if (strcmp(word, "and") != 0 && strcmp(word, "or") != 0 &&
-                strlen(word) >= 3) {
-              // skip the reserved words "and" and "or" and words less than 3
-              // letters long
-              char* w = malloc(sizeof(char*) * 30);
-              strcpy(w, word);
-              qput(words, w);  // add the query word to the queue
-            }
-          } else {
-            cont = false;
-          }
-        }
-
-        queue_t* docs = getDocs(words);
-        sortDocs(docs);
-        qapply(docs, printRank);
-
-        qclose(docs);
-        qclose(words);
-        free(input);
-      }
-      closeIndex(index);
-      return 0;
-    }
+    qclose(docs);
+    qclose(words);
+    free(input);
+  }
+  closeIndex(index);
+  return 0;
+}
