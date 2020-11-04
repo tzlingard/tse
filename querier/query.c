@@ -198,24 +198,25 @@ void sortDocs(queue_t* docs){
 }
 
 int main(int argc, char *argv[]) {
-	char* input;
+	char input[100];
 	char* currchar;
 	char  word[20];
 	bool cont = true;
 
 	index = indexload("../indexer", "index.txt");
-	while(true) {
-		input = (char*)malloc(sizeof(char*)*101);
-		printf("> ");
-		fgets(input, 100, stdin);
-
+	printf("> ");
+	while(fgets(input, 100, stdin)!=NULL) {
+		//input = (char*)malloc(sizeof(char*)*101);
+		
+		
+		/*
 		//break if the input is CTRL D
 		if((int)(*input)==0){
-			free(input);
+			//		free(input);
 			printf("\n");
 			break;
 		}
-		
+		*/
 		//skip the loop if the input has non numeric characters
 		cont = true;		
 		if(!isValid(input)){
@@ -253,7 +254,8 @@ int main(int argc, char *argv[]) {
 	 
 		qclose(docs);
 		qclose(words);		
-		free(input);
+		//free(input);
+		printf("> ");
 	}
 	closeIndex(index);
 	return 0;	
