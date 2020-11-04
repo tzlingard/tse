@@ -104,9 +104,7 @@ queue_t* getDocs(queue_t* words) {
   bool wordNotFound = false;  // true when a word in query is not in index at
                               // all
   queue_t* docs = qopen();
-
   // add documents for first word (if word exists) to docs queue
-
   char* currWord;
   if ((currWord = (char*)(qget(words))) != NULL) {
     word_t* indexWord = hsearch(index, findWord, currWord, sizeof(currWord));
@@ -116,7 +114,10 @@ queue_t* getDocs(queue_t* words) {
       while ((doc = (docs_t*)qget(indexWord->freq)) != NULL) {
         if (doc->freq > 0) {
           query_docs_t* d = malloc(sizeof(query_docs_t));
-          d->rank = doc->freq;
+          if (!strcmp(currWord, "or"))  // set the rank to -1 for "or"'s
+            d->rank = -1;
+          else
+            d->rank = doc->freq;
           d->id = doc->id;
           qput(docs, d);
         }
@@ -143,11 +144,22 @@ queue_t* getDocs(queue_t* words) {
       while ((d = (query_docs_t*)(qget(docs))) != NULL) {
         int freq =
             (((docs_t*)qsearch(indexWord->freq, findID, &(d->id))))->freq;
-        if (freq > 0) {
+        if (freq != 0) {
           if (freq < d->rank) {
             d->rank = freq;
           }
+          d->rank =
+              d->rank + (((docs_t*)qsearch(docs, findID, &(d->id))))->freq;
+          // add the rank to the rank already in the final queue for that doc
           qput(temp_docs, d);
+        } else if (freq == -1) {  // if the word is an "or"
+          query_docs_t* qDocs;
+          while ((qDocs = qget(temp_docs)) != NULL) {
+            qDocs->rank =
+                (((docs_t*)qsearch(temp_docs, findID, &(d->id))))->freq;
+            // set the rank in the final queue to the pre-or rank
+            qput(docs, qDocs);
+          }
         } else {
           free(d);
         }
@@ -222,11 +234,6 @@ int main(int argc, char* argv[]) {
     queue_t* docs = getDocs(words);
     sortDocs(docs);
     qapply(docs, printRank);
-
-    queue_t* docs = getDocs(words);
-    sortDocs(docs);
-    qapply(docs, printRank);
-
     qclose(docs);
     qclose(words);
     // free(input);
