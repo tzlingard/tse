@@ -49,23 +49,22 @@ void normalizeWord(char* word) {
 
 bool isValid(char* curr, char* prev, int wordcount) {
   // special cases:
-  // OR is the first word: invalid query --  dealt with here
-  // OR is the last word: invalid query
-  // number is included: invalid query-- dealt with here
+  // OR/AND is the first word: invalid query --  dealt with here
+  // OR/AND is the last word: invalid query
+  // non-alphabetic characters: invalid query-- dealt with here
   // OR & AND follow each other: invalid query-- dealt with here
   // two consecutive ORs or ANDs: invalid query-- dealt with here
   char currWord[30];
   strcpy(currWord, curr);
   char* c = curr;
-  while ((int)(*c) != '\0') {  // 10 is line feed
+  while ((int)(*c) != '\0') {  // check all letters are alphabetic
     if (!isalpha(*c)) {
       return false;
     }
     c += 1;
   }
   if (strcmp(currWord, "and") == 0 || (strcmp(currWord, "or") == 0)) {
-    if (strcmp(prev, "and") == 0 ||
-        (strcmp(prev, "or") == 0 || wordcount == 0)) {
+    if (strcmp(prev, "and") == 0 || strcmp(prev, "or") == 0 || wordcount == 0) {
       // returns false if two reserved words in a row or starting with a
       // reserved word
       return false;
@@ -235,6 +234,7 @@ int main(int argc, char* argv[]) {
     // skip the loop if it does not fulfill the module 6 step 4 requirements
     cont = true;
     valid = true;
+    wordcount = 0;
     currchar = input;
     queue_t* tempwords =
         qopen();  // module 6 step 4- for complex queries we need a temp query
@@ -245,38 +245,42 @@ int main(int argc, char* argv[]) {
       while (((int)(*currchar)) == 9 || ((int)(*currchar)) == 32) {
         currchar += sizeof(char);
       }
-
       // print and save current word
-           // print and save current word                                                                                                                
-       if (sscanf(currchar, "%s", word) == 1) {                                                                                                             
-        currchar += strlen(word);                                                                                                                           
-        normalizeWord(word);                                                                                                                                
-        if (strcmp(word, "and") != 0) {                                                                                                                     
-          if (strlen(word) >= 3 || strcmp(word, "or")!=0){                                                                                                  
-            char* w = malloc(sizeof(char*) * 30);                                                                                                           
-            strcpy(w, word);                                                                                                                                
-            qput(tempwords, w);  // add the query word to the tempqueue                                                                                     
-          } else if(strcmp(word, "or")==0){// if we find the word OR                                                                                        
-            //take the words in the temp queue and put it in the finalqueue                                                                                 
-            while(qget(tempwords)!=NULL){                                                                                                                   
-              qput(finalwords, qget(tempwords));                                                                                                            
-            }                                                                                                                                               
-            queue_t* phraseDocs= getDocs(finalwords); //get documents related to this phrase of words (before the OR)                                       
-            sortDocs(docs);                                                                                                                                 
-                                                                                                                                                            
-          }                                                                                                                                                 
-        }                                                                                                                                                   
-                                                                                                                                                            
-      } else {                                                                                                                                              
-        cont = false;                                                                                                                                       
-        }*/                                                                                                                                                
-    }      
+      if (sscanf(currchar, "%s", word) == 1) {
+        if (!isValid(word, prevWord, wordcount)) {
+          printf("[invalid query]\n");
+          cont = false;
+          valid = false;
+        } else {
+          currchar += strlen(word);
+          normalizeWord(word);
+          if (strcmp(word, "and") != 0) {
+            if (strlen(word) >= 3 || strcmp(word, "or") != 0) {
+              char* w = malloc(sizeof(char*) * 30);
+              strcpy(w, word);
+              qput(finalwords, w);  // add the query word to the tempqueue
+            } /*else if (strcmp(word, "or") == 0) {  // if we find the word OR
+              // take the words in the temp queue and put it in the finalqueue
+              while (qget(tempwords) != NULL) {
+                qput(finalwords, qget(tempwords));
+              }
+              queue_t* phraseDocs =
+                  getDocs(finalwords);  // get documents related to this phrase
+                                        // of words (before the OR)
+              sortDocs(phraseDocs);
+            }*/
+          }
         }
       } else {
         cont = false;
       }
       strcpy(prevWord, word);
       wordcount++;
+    }
+    if (!isValid("or", prevWord, wordcount) && valid) {
+      // returns false if last word is a reserved word
+      printf("[invalid query]\n");
+      valid = false;
     }
     if (valid) {
       queue_t* docs = getDocs(finalwords);
