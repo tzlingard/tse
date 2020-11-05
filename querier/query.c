@@ -54,10 +54,16 @@ bool isValid(char* curr, char* prev, int wordcount) {
   // number is included: invalid query-- dealt with here
   // OR & AND follow each other: invalid query-- dealt with here
   // two consecutive ORs or ANDs: invalid query-- dealt with here
-  if (!isalpha(*curr)) {
-    // returns false if word is not fully alphabetic
-    return false;
-  } else if (strcmp(curr, "and") == 0 || (strcmp(curr, "or") == 0)) {
+  char currWord[30];
+  strcpy(currWord, curr);
+  char* c = curr;
+  while ((int)(*c) != '\0') {  // 10 is line feed
+    if (!isalpha(*c)) {
+      return false;
+    }
+    c += 1;
+  }
+  if (strcmp(currWord, "and") == 0 || (strcmp(currWord, "or") == 0)) {
     if (strcmp(prev, "and") == 0 ||
         (strcmp(prev, "or") == 0 || wordcount == 0)) {
       // returns false if two reserved words in a row or starting with a
@@ -228,6 +234,7 @@ int main(int argc, char* argv[]) {
     */
     // skip the loop if it does not fulfill the module 6 step 4 requirements
     cont = true;
+    valid = true;
     currchar = input;
     queue_t* tempwords =
         qopen();  // module 6 step 4- for complex queries we need a temp query
@@ -263,7 +270,6 @@ int main(int argc, char* argv[]) {
       strcpy(prevWord, word);
       wordcount++;
     }
-
     if (valid) {
       queue_t* docs = getDocs(finalwords);
       sortDocs(docs);
