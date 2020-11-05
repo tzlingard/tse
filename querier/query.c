@@ -343,7 +343,7 @@ int main(int argc, char* argv[]) {
     printf("The specified index file does not exist.\n");
     return -1;
   }
-  char input[100];
+  char input[500];
   index = indexload(pagedir, indexnm);
   char flag[3];
   if (argc > 3) {
@@ -354,6 +354,7 @@ int main(int argc, char* argv[]) {
       if (argc != 6) {
         // check all the outputs are entered for quiet loading
         printf("%s", usage);
+        closeIndex(index);
         return -1;
       }
       char filename[100];
@@ -363,6 +364,7 @@ int main(int argc, char* argv[]) {
       if (access(filename, R_OK) != 0) {
         // check the query file is readable
         printf("File %s does not exist.\n", filename);
+        closeIndex(index);
         return -1;
       } else {
         // query from file
