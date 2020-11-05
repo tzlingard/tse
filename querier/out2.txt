@@ -1,0 +1,37 @@
+modularity reuse or couple or cohesion
+
+rank: 2 doc: 7 URL: https://thayer.github.io/engs50/Resources/CodingStyle.html
+rank: 1 doc: 3 URL: https://thayer.github.io/engs50/Notes/
+git or gitlab or version control or clearcase or torvalds
+
+rank: 14 doc: 5 URL: https://thayer.github.io/engs50/Resources/
+rank: 2 doc: 3 URL: https://thayer.github.io/engs50/Notes/
+rank: 1 doc: 1 URL: https://thayer.github.io/engs50/
+rank: 1 doc: 4 URL: https://thayer.github.io/engs50/Reading/
+testing and fuzz
+
+rank: 1 doc: 3 URL: https://thayer.github.io/engs50/Notes/
+crawl update
+
+professor
+
+rank: 1 doc: 4 URL: https://thayer.github.io/engs50/Reading/
+professor and taylor
+
+rank: 1 doc: 4 URL: https://thayer.github.io/engs50/Reading/
+professor and taylor or date
+
+rank: 1 doc: 7 URL: https://thayer.github.io/engs50/Resources/CodingStyle.html
+rank: 1 doc: 4 URL: https://thayer.github.io/engs50/Reading/
+professor and taylor bibaswan
+
+bugs riot or testing trawler
+
+bugs riot mandelbugs and compiler or policies or motivational or cohesion or linux
+
+rank: 10 doc: 5 URL: https://thayer.github.io/engs50/Resources/
+rank: 2 doc: 7 URL: https://thayer.github.io/engs50/Resources/CodingStyle.html
+rank: 1 doc: 4 URL: https://thayer.github.io/engs50/Reading/
+rank: 1 doc: 3 URL: https://thayer.github.io/engs50/Notes/
+
+

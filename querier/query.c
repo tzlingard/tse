@@ -15,6 +15,8 @@
 
 hashtable_t* index;
 char pagedir[100];
+FILE* out;
+
 typedef struct {  // structure to hold data for every page in index
   int rank;
   int id;
@@ -102,6 +104,13 @@ void printRank(void* doc) {
   query_docs_t* d = (query_docs_t*)doc;
   webpage_t* p = pageload(d->id, pagedir);
   printf("rank: %d doc: %d URL: %s\n", d->rank, d->id, webpage_getURL(p));
+  webpage_delete(p);
+}
+
+void printRankToFile(void* doc) {
+  query_docs_t* d = (query_docs_t*)doc;
+  webpage_t* p = pageload(d->id, pagedir);
+  fprintf(out, "rank: %d doc: %d URL: %s\n", d->rank, d->id, webpage_getURL(p));
   webpage_delete(p);
 }
 
@@ -232,7 +241,7 @@ void sortDocs(queue_t* docs) {
   qclose(temp);
 }
 
-void query(char* input) {
+void query(char* input, bool quiet) {
   // input = (char*)malloc(sizeof(char*)*101);
   /*
   //break if the input is CTRL D
@@ -306,7 +315,10 @@ void query(char* input) {
     qclose(tempwords);
 
     sortDocs(finaldocs);
-    qapply(finaldocs, printRank);
+    if (quiet)
+      qapply(finaldocs, printRankToFile);
+    else
+      qapply(finaldocs, printRank);
     qclose(finaldocs);
   }
   printf("> ");
@@ -357,20 +369,22 @@ int main(int argc, char* argv[]) {
         // query from file
         FILE* fp;
         fp = fopen(filename, "r");
+        out = fopen(outnm, "w");
         while (fgets(input, 100, fp) != NULL) {
-          query(input);
+          fprintf(out, "%s", input);
+          query(input, true);
         }
         fclose(fp);
+        fclose(out);
       }
     }
   } else {
     // query from input
     printf("> ");
     while (fgets(input, 100, stdin) != NULL) {
-      query(input);
+      query(input, false);
     }
   }
-  // indexsave(index, ".", outnm);
   closeIndex(index);
   return 0;
 }
