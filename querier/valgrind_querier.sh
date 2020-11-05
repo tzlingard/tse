@@ -9,5 +9,5 @@ fi
 
 make clean
 make all
-valgrind --leak-check=full --track-origins=yes ./querier
+valgrind --leak-check=full --track-origins=yes ./query ../pages ../trueIndex
 
