@@ -238,46 +238,32 @@ int main(int argc, char* argv[]) {
       while (((int)(*currchar)) == 9 || ((int)(*currchar)) == 32) {
         currchar += sizeof(char);
       }
-<<<<<<< HEAD
-		
+
       // print and save current word
-			 if (sscanf(currchar, "%s", word) == 1) {
-        currchar += strlen(word);
-        normalizeWord(word);
-        if (strcmp(word, "and") != 0) {	
-          if (strlen(word) >= 3 || strcmp(word, "or")!=0){
-            char* w = malloc(sizeof(char*) * 30);
-            strcpy(w, word);
-            qput(tempwords, w);  // add the query word to the tempqueue
-					} else if(strcmp(word, "or")==0){// if we find the word OR
-						//take the words in the temp queue and put it in the finalqueue
-						while(qget(tempwords)!=NULL){
-							qput(finalwords, qget(tempwords)); 
-						}
-						queue_t* phraseDocs= getDocs(finalwords); //get documents related to this phrase of words (before the OR)
-						sortDocs(docs);
-						
-					}
-=======
-      // print and save current word
-      if (sscanf(currchar, "%s", word) == 1) {
-        if (!isValid(word, prevWord, wordcount)) {
-          printf("[invalid query]\n");
-          cont = false;
-          valid = false;
-        } else {
-          currchar += strlen(word);
-          normalizeWord(word);
-          if (strcmp(word, "and") != 0) {
-            if (strlen(word) >= 3 || strcmp(word, "or") == 0) {
-              // skip the reserved words "and" and words less than 3 (except
-              // "or") letters long
-              char* w = malloc(sizeof(char*) * 30);
-              strcpy(w, word);
-              qput(finalwords, w);  // add the query word to the queue
-            }
-          }
->>>>>>> 14651630b9d9b595b0443e6e2615892aeceef522
+           // print and save current word                                                                                                                
+       if (sscanf(currchar, "%s", word) == 1) {                                                                                                             
+        currchar += strlen(word);                                                                                                                           
+        normalizeWord(word);                                                                                                                                
+        if (strcmp(word, "and") != 0) {                                                                                                                     
+          if (strlen(word) >= 3 || strcmp(word, "or")!=0){                                                                                                  
+            char* w = malloc(sizeof(char*) * 30);                                                                                                           
+            strcpy(w, word);                                                                                                                                
+            qput(tempwords, w);  // add the query word to the tempqueue                                                                                     
+          } else if(strcmp(word, "or")==0){// if we find the word OR                                                                                        
+            //take the words in the temp queue and put it in the finalqueue                                                                                 
+            while(qget(tempwords)!=NULL){                                                                                                                   
+              qput(finalwords, qget(tempwords));                                                                                                            
+            }                                                                                                                                               
+            queue_t* phraseDocs= getDocs(finalwords); //get documents related to this phrase of words (before the OR)                                       
+            sortDocs(docs);                                                                                                                                 
+                                                                                                                                                            
+          }                                                                                                                                                 
+        }                                                                                                                                                   
+                                                                                                                                                            
+      } else {                                                                                                                                              
+        cont = false;                                                                                                                                       
+        }*/                                                                                                                                                
+    }      
         }
       } else {
         cont = false;
