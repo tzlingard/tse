@@ -47,17 +47,34 @@ void normalizeWord(char* word) {
   }
 }
 
-bool isValid(char* c) {
+bool isValid(char* c, char* cprev, int* wordcount) {
   char* curr = c;
-  while ((int)(*curr) != 10) {  // 10 is line feed
-    if (!isalpha(*curr)) {
-      if (!(((int)(*curr)) == 9 || ((int)(*curr)) == 32)) {
-        return false;
-      }
-    }
+  char* prev = cprev;
+	int*  cnt= wordcount;
+      //special cases:                                                                                                                      
+      // OR is the first word: invalid query --  dealt with here                                                                           
+      // OR is the last word: invalid query                                                                                                 
+      // number is included: invalid query-- dealt with here                                                                                                
+      // OR & AND follow each other: invalid query-- dealt with here                                                                                        
+      //two consecutive ORs or ANDs: invalid query-- dealt with here
+		while ((int)(*curr) != 10) {  // 10 is line feed
+			if(isdigit(*curr){
+					return false;
+			}	
+			else if (!isalpha(*curr)) {
+				if (!(((int)(*curr)) == 9 || ((int)(*curr)) == 32)) {
+					return false;
+        }
+			}
+			else if( strcmp(*curr, "and")== 0  || (strcmp(*curr, "or")==0  ){
+				if( strcmp(*prev, "and")== 0  || (strcmp(*prev, "or")==0 || cnt==0 ){
+								return false;
+				}
+			}
+	 
     curr += 1;
-  }
-  return true;
+		}
+			return true;		
 }
 
 // true if the given docs_t has given id
@@ -211,9 +228,10 @@ void sortDocs(queue_t* docs) {
 int main(int argc, char* argv[]) {
   char input[100];
   char* currchar;
-  char word[20];
+	char* pastchar= NULL;
+	char word[20];
   bool cont = true;
-
+  int wordcount= 0;
   index = indexload("../indexer", "index");
   printf("> ");
   while (fgets(input, 100, stdin) != NULL) {
@@ -227,26 +245,32 @@ int main(int argc, char* argv[]) {
             break;
     }
     */
-    // skip the loop if the input has non numeric characters
+    // skip the loop if it does not fulfill the module 6 step 4 requirements
     cont = true;
-    if (!isValid(input)) {
+    if (!isValid(input,*pastchar,wordcount)) {
       printf("[invalid query]\n");
       cont = false;
     }
-
+    pastchar = input;
     currchar = input;
-    queue_t* words = qopen();
-
+    queue_t* tempwords = qopen(); //module 6 step 4- for complex queries we need a temp query to seperate phrases seperated by "or."  
+		queue_t* finalwords =qopen();
     while (cont) {
       // skip past spaces and tabs, if any
       while (((int)(*currchar)) == 9 || ((int)(*currchar)) == 32) {
         currchar += sizeof(char);
+				wordcount+=1;
       }
+			
+
+
+			
       // print and save current word
-      if (sscanf(currchar, "%s", word) == 1) {
+			/* if (sscanf(currchar, "%s", word) == 1) {
         currchar += strlen(word);
         normalizeWord(word);
         if (strcmp(word, "and") != 0) {
+					
           if (strlen(word) >= 3 || strcmp(word, "or") == 0) {
             // skip the reserved words "and" and words less than 3 (except
             // "or") letters long
@@ -255,9 +279,10 @@ int main(int argc, char* argv[]) {
             qput(words, w);  // add the query word to the queue
           }
         }
+				
       } else {
         cont = false;
-      }
+				}*/
     }
 
     queue_t* docs = getDocs(words);
