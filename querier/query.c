@@ -128,7 +128,7 @@ void closeIndex(hashtable_t* htp) {
 // given a queue of words, returns a queue of type query_doc_t for the docs
 // containing all of those words
 queue_t* getDocs(queue_t* words) {
-  // bool wordNotFound = false;  // true when a word in query is not in index at
+  bool wordNotFound = false;  // true when a word in query is not in index at
   // all
   queue_t* docs = qopen();
 
@@ -153,7 +153,7 @@ queue_t* getDocs(queue_t* words) {
       qclose(indexWord->freq);
       indexWord->freq = temp;
     } else if (strcmp(currWord, "or") != 0) {
-      // wordNotFound = true;
+      wordNotFound = true;
     }
     free(currWord);
   }
@@ -162,8 +162,7 @@ queue_t* getDocs(queue_t* words) {
   // remove from queue of "surviving" docs and only re-add if document also has
   // current word
 
-  while ((currWord = (char*)(qget(words))) !=
-         NULL) {  // && wordNotFound == false) {
+  while ((currWord = (char*)(qget(words))) != NULL && wordNotFound == false) {
     word_t* indexWord = hsearch(index, findWord, currWord, sizeof(currWord));
     if (indexWord != NULL) {
       query_docs_t* d;
@@ -186,23 +185,17 @@ queue_t* getDocs(queue_t* words) {
       }
       qclose(docs);
       docs = temp_docs;
-    } else if (strcmp(currWord, "or") == 0) {
-      printf("or found\n");
-
-      // TODO: if this if statement is triggered, add the ranks of the word in
-      // each document to the final queue, and have all the following (temp)
-      // ranks add to this value once the next or is hit or the query is
-      // finished
     } else {
-      //      wordNotFound = true;
+      wordNotFound = true;
     }
     free(currWord);
   }
+  if (wordNotFound) free(currWord);
 
-  //  if (wordNotFound == true) {
-  // qclose(docs);
-  //  docs = qopen();
-  // }
+  if (wordNotFound == true) {
+    qclose(docs);
+    docs = qopen();
+  }
   return docs;
 }
 
