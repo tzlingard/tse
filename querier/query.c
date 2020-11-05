@@ -149,12 +149,15 @@ queue_t* getDocs(queue_t* words) {
         }
         qput(temp, doc);
       }
+
       qclose(indexWord->freq);
       indexWord->freq = temp;
     } else if (strcmp(currWord, "or") != 0) {
       // wordNotFound = true;
     }
+    free(currWord);
   }
+
   // scan through rest of words
   // remove from queue of "surviving" docs and only re-add if document also has
   // current word
@@ -166,11 +169,11 @@ queue_t* getDocs(queue_t* words) {
       query_docs_t* d;
       queue_t* temp_docs = qopen();
       while ((d = (query_docs_t*)(qget(docs))) != NULL) {
-        docs_t* qdoc;
+        docs_t* popDoc;
         int freq = 0;
-        if ((qdoc = (((docs_t*)qsearch(indexWord->freq, findID, &(d->id))))) !=
-            NULL) {
-          freq = qdoc->freq;
+        if ((popDoc = (((docs_t*)qsearch(indexWord->freq, findID,
+                                         &(d->id))))) != NULL) {
+          freq = popDoc->freq;
         }
         if (freq > 0) {
           if (freq < d->rank) {
@@ -183,10 +186,19 @@ queue_t* getDocs(queue_t* words) {
       }
       qclose(docs);
       docs = temp_docs;
+    } else if (strcmp(currWord, "or") == 0) {
+      printf("or found\n");
+
+      // TODO: if this if statement is triggered, add the ranks of the word in
+      // each document to the final queue, and have all the following (temp)
+      // ranks add to this value once the next or is hit or the query is
+      // finished
     } else {
       //      wordNotFound = true;
     }
+    free(currWord);
   }
+
   //  if (wordNotFound == true) {
   // qclose(docs);
   //  docs = qopen();
@@ -246,8 +258,8 @@ void query(char* input, bool quiet) {
   */
   // skip the loop if it does not fulfill the module 6 step 4 requirements
   char* currchar;
-  char word[30];
-  char prevWord[30] = "";
+  char word[20];
+  char prevWord[20] = "";
   bool cont = true;
   bool valid = true;
   int wordcount = 0;
@@ -282,9 +294,9 @@ void query(char* input, bool quiet) {
             qput(tempwords, w);  // add the query word to the tempqueue
           } else if (strcmp(word, "or") == 0) {  // if we find the word OR
             // make queue of docs for words in current queue
-            printf("w = %s\n", w);
+            //			printf("w = %s\n",w);
             queue_t* newdocs = getDocs(tempwords);
-            printf("w = %s\n", w);
+            //		printf("w = %s\n",w);
             docsCombine(finaldocs,
                         newdocs);  // combine latest rankings with old rankings
             qclose(newdocs);
@@ -304,9 +316,9 @@ void query(char* input, bool quiet) {
   }
   if (valid) {
     // add final queue of temp words
-    printf("w = %s\n", w);
+    // printf("w = %s\n",w);
     queue_t* newdocs = getDocs(tempwords);
-    printf("w = %s\n", w);
+    // printf("w = %s\n",w);
     docsCombine(finaldocs,
                 newdocs);  // combine latest rankings with old rankings
     qclose(newdocs);
