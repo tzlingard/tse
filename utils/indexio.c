@@ -64,14 +64,14 @@ hashtable_t* indexload(char* dirname, char* indexnm) {
     hashtable_t* index = hopen(100);
 
     while (fscanf(fp, "%s", nextWord) == 1) {
-      word_t* w = (word_t*)malloc(sizeof(word_t*));
-      w->word = (char*)malloc(strlen(nextWord) * sizeof(char) + 1);
+      word_t* w = (word_t*)malloc(sizeof(word_t));
+      w->word = (char*)malloc((strlen(nextWord)+1) * sizeof(char));
       strcpy(w->word, nextWord);
       w->freq = qopen();
       int docId, count;
 
       while (fscanf(fp, "%d %d", &docId, &count) == 2) {
-        docs_t* d = (docs_t*)malloc(sizeof(docs_t*));
+        docs_t* d = (docs_t*)malloc(sizeof(docs_t));
         d->id = docId;
         d->freq = count;
         qput(w->freq, d);
