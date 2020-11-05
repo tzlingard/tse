@@ -210,87 +210,127 @@ void sortDocs(queue_t* docs) {
   qclose(temp);
 }
 
-int main(int argc, char* argv[]) {
-  char input[100];
+void query(char* input) {
+  // input = (char*)malloc(sizeof(char*)*101);
+  /*
+  //break if the input is CTRL D
+  if((int)(*input)==0){
+          //		free(input);
+          printf("\n");
+          break;
+  }
+  */
+  // skip the loop if it does not fulfill the module 6 step 4 requirements
   char* currchar;
   char word[20];
   char prevWord[20] = "";
   bool cont = true;
   bool valid = true;
   int wordcount = 0;
-  index = indexload("../indexer", "index");
+  cont = true;
+  valid = true;
+  wordcount = 0;
+  currchar = input;
+  queue_t* tempwords =
+      qopen();  // module 6 step 4- for complex queries we need a temp query
+                // to seperate phrases seperated by "or."
+  queue_t* finalwords = qopen();
+  while (cont) {
+    // skip past spaces and tabs, if any
+    while (((int)(*currchar)) == 9 || ((int)(*currchar)) == 32) {
+      currchar += sizeof(char);
+    }
+    // print and save current word
+    if (sscanf(currchar, "%s", word) == 1) {
+      if (!isValid(word, prevWord, wordcount)) {
+        printf("[invalid query]\n");
+        cont = false;
+        valid = false;
+      } else {
+        currchar += strlen(word);
+        normalizeWord(word);
+        if (strcmp(word, "and") != 0) {
+          if (strlen(word) >= 3 || strcmp(word, "or") != 0) {
+            char* w = malloc(sizeof(char*) * 30);
+            strcpy(w, word);
+            qput(finalwords, w);  // add the query word to the tempqueue
+          } /*else if (strcmp(word, "or") == 0) {  // if we find the word OR
+            // take the words in the temp queue and put it in the finalqueue
+            while (qget(tempwords) != NULL) {
+              qput(finalwords, qget(tempwords));
+            }
+            queue_t* phraseDocs =
+                getDocs(finalwords);  // get documents related to this phrase
+                                      // of words (before the OR)
+            sortDocs(phraseDocs);
+          }*/
+        }
+      }
+    } else {
+      cont = false;
+    }
+    strcpy(prevWord, word);
+    wordcount++;
+  }
+  if (!isValid("or", prevWord, wordcount) && valid) {
+    // returns false if last word is a reserved word
+    printf("[invalid query]\n");
+    valid = false;
+  }
+  if (valid) {
+    queue_t* docs = getDocs(finalwords);
+    sortDocs(docs);
+    qapply(docs, printRank);
+    qclose(docs);
+  }
+  qclose(finalwords);
+  // free(input);
+  printf("> ");
+}
+
+int main(int argc, char* argv[]) {
+  const char* usage = "usage: query <pageDirectory> <indexFile> [-q]\n";
+  if (argc < 3 || argc > 6) {
+    // check that the acceptable number of arguments are inputted
+    printf("%s", usage);
+    return -1;
+  }
+  char pagedir[100];
+  sscanf(argv[1], "%s", pagedir);
+  if (access(pagedir, R_OK) != 0) {
+    // check the entered directory is readable
+    printf("The specified page directory does not exist.\n");
+    return -1;
+  }
+  char indexnm[100];
+  sscanf(argv[2], "%s", indexnm);
+  char flag[3];
+  if (argc > 3) {
+    sscanf(argv[3], "%s", flag);
+    if (strcmp(flag, "-q") != 0) {
+      print(usage);
+    } else {
+      if (argc != 6) {
+        // check all the outputs are entered for quiet loading
+        printf("%s", usage);
+        return -1;
+      }
+      char filename[100];
+      char outnm[100];
+      sscanf(argv[4], "%s", filename);
+      sscanf(argv[5], "%s", outnm);
+      if (access(filename, R_OK) != 0) {
+        printf("File %s does not exist", filename);
+        return -1;
+      }
+    }
+  }
+  char input[100];
+  index = indexload(pagedir, indexnm);
+  // indexsave(index, ".", indexnm);
   printf("> ");
   while (fgets(input, 100, stdin) != NULL) {
-    // input = (char*)malloc(sizeof(char*)*101);
-
-    /*
-    //break if the input is CTRL D
-    if((int)(*input)==0){
-            //		free(input);
-            printf("\n");
-            break;
-    }
-    */
-    // skip the loop if it does not fulfill the module 6 step 4 requirements
-    cont = true;
-    valid = true;
-    wordcount = 0;
-    currchar = input;
-    queue_t* tempwords =
-        qopen();  // module 6 step 4- for complex queries we need a temp query
-                  // to seperate phrases seperated by "or."
-    queue_t* finalwords = qopen();
-    while (cont) {
-      // skip past spaces and tabs, if any
-      while (((int)(*currchar)) == 9 || ((int)(*currchar)) == 32) {
-        currchar += sizeof(char);
-      }
-      // print and save current word
-      if (sscanf(currchar, "%s", word) == 1) {
-        if (!isValid(word, prevWord, wordcount)) {
-          printf("[invalid query]\n");
-          cont = false;
-          valid = false;
-        } else {
-          currchar += strlen(word);
-          normalizeWord(word);
-          if (strcmp(word, "and") != 0) {
-            if (strlen(word) >= 3 || strcmp(word, "or") != 0) {
-              char* w = malloc(sizeof(char*) * 30);
-              strcpy(w, word);
-              qput(finalwords, w);  // add the query word to the tempqueue
-            } /*else if (strcmp(word, "or") == 0) {  // if we find the word OR
-              // take the words in the temp queue and put it in the finalqueue
-              while (qget(tempwords) != NULL) {
-                qput(finalwords, qget(tempwords));
-              }
-              queue_t* phraseDocs =
-                  getDocs(finalwords);  // get documents related to this phrase
-                                        // of words (before the OR)
-              sortDocs(phraseDocs);
-            }*/
-          }
-        }
-      } else {
-        cont = false;
-      }
-      strcpy(prevWord, word);
-      wordcount++;
-    }
-    if (!isValid("or", prevWord, wordcount) && valid) {
-      // returns false if last word is a reserved word
-      printf("[invalid query]\n");
-      valid = false;
-    }
-    if (valid) {
-      queue_t* docs = getDocs(finalwords);
-      sortDocs(docs);
-      qapply(docs, printRank);
-      qclose(docs);
-    }
-    qclose(finalwords);
-    // free(input);
-    printf("> ");
+    query(input);
   }
   closeIndex(index);
   return 0;
