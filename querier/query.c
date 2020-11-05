@@ -257,7 +257,7 @@ void query(char* input, bool quiet) {
   */
   // skip the loop if it does not fulfill the module 6 step 4 requirements
   char* currchar;
-  char word[20];
+  char word[20] = "";
   char prevWord[20] = "";
   bool cont = true;
   bool valid = true;
