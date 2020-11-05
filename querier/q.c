@@ -158,7 +158,8 @@ queue_t* getDocs(queue_t* words) {
       printf("or found\n");
       // TODO: if this if statement is triggered, add the ranks of the word in
       // each document to the final queue, and have all the following (temp)
-      // ranks add to this value once the next or is hit or the query is finished
+      // ranks add to this value once the next or is hit or the query is
+      // finished
     } else {
       wordNotFound = true;
     }
@@ -215,12 +216,6 @@ int main(int argc, char* argv[]) {
     }
     */
     // skip the loop if the input has non numeric characters
-    cont = true;
-    if (!isValid(input)) {
-      printf("[invalid query]\n");
-      cont = false;
-    }
-
     currchar = input;
     queue_t* words = qopen();
 
@@ -231,6 +226,11 @@ int main(int argc, char* argv[]) {
       }
       // print and save current word
       if (sscanf(currchar, "%s", word) == 1) {
+        cont = true;
+        if (!isValid(input)) {
+          printf("[invalid query]\n");
+          cont = false;
+        }
         currchar += strlen(word);
         normalizeWord(word);
         if (strcmp(word, "and") != 0) {
