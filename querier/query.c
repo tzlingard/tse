@@ -168,8 +168,12 @@ queue_t* getDocs(queue_t* words) {
       query_docs_t* d;
       queue_t* temp_docs = qopen();
       while ((d = (query_docs_t*)(qget(docs))) != NULL) {
-        int freq =
-            (((docs_t*)qsearch(indexWord->freq, findID, &(d->id))))->freq;
+        docs_t* popDoc;
+        int freq = 0;
+        if ((popDoc = (((docs_t*)qsearch(indexWord->freq, findID,
+                                         &(d->id))))) != NULL) {
+          freq = popDoc->freq;
+        }
         if (freq > 0) {
           if (freq < d->rank) {
             d->rank = freq;
