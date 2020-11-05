@@ -14,7 +14,7 @@
 #include "../utils/webpage.h"
 
 hashtable_t* index;
-
+char pagedir[100];
 typedef struct {  // structure to hold data for every page in index
   int rank;
   int id;
@@ -100,7 +100,7 @@ void printWord(void* word) { printf("%s ", ((char*)word)); }
 
 void printRank(void* doc) {
   query_docs_t* d = (query_docs_t*)doc;
-  webpage_t* p = pageload(d->id, "../pages");
+  webpage_t* p = pageload(d->id, pagedir);
   printf("rank: %d doc: %d URL: %s\n", d->rank, d->id, webpage_getURL(p));
   webpage_delete(p);
 }
@@ -319,7 +319,6 @@ int main(int argc, char* argv[]) {
     printf("%s", usage);
     return -1;
   }
-  char pagedir[100];
   sscanf(argv[1], "%s", pagedir);
   if (access(pagedir, R_OK) != 0) {
     // check the entered directory is readable
@@ -328,6 +327,13 @@ int main(int argc, char* argv[]) {
   }
   char indexnm[100];
   sscanf(argv[2], "%s", indexnm);
+  if (access(indexnm, R_OK) != 0) {
+    // check the entered index file is readable
+    printf("The specified index file does not exist.\n");
+    return -1;
+  }
+  char input[100];
+  index = indexload(pagedir, indexnm);
   char flag[3];
   if (argc > 3) {
     sscanf(argv[3], "%s", flag);
@@ -344,18 +350,27 @@ int main(int argc, char* argv[]) {
       sscanf(argv[4], "%s", filename);
       sscanf(argv[5], "%s", outnm);
       if (access(filename, R_OK) != 0) {
-        printf("File %s does not exist", filename);
+        // check the query file is readable
+        printf("File %s does not exist.\n", filename);
         return -1;
+      } else {
+        // query from file
+        FILE* fp;
+        fp = fopen(filename, "r");
+        while (fgets(input, 100, fp) != NULL) {
+          query(input);
+        }
+        fclose(fp);
       }
     }
+  } else {
+    // query from input
+    printf("> ");
+    while (fgets(input, 100, stdin) != NULL) {
+      query(input);
+    }
   }
-  char input[100];
-  index = indexload(pagedir, indexnm);
-  // indexsave(index, ".", indexnm);
-  printf("> ");
-  while (fgets(input, 100, stdin) != NULL) {
-    query(input);
-  }
+  // indexsave(index, ".", outnm);
   closeIndex(index);
   return 0;
 }
