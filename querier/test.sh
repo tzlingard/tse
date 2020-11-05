@@ -10,7 +10,7 @@
 
 valgrind ./query ../pages ../trueIndex < error-queries   # prof's error tests
 
-valgrind query ../pages ../trueIndex -q good-queries.txt myoutput  # run quietly test with professor's queries 
+valgrind ./query ../pages ../trueIndex -q good-queries.txt myoutput  # run quietly test with professor's queries 
 
 
 
