@@ -78,6 +78,11 @@ bool findID(void* doc, const void* id) {
   return ((docs_t*)doc)->id == *((int*)id);
 }
 
+// true if the given docs_t has given id
+bool findQueryID(void* doc, const void* id) {
+  return ((query_docs_t*)doc)->id == *((int*)id);
+}
+
 // true if the given query_docs_t has given rank
 bool findRank(void* doc, const void* rank) {
   return ((query_docs_t*)doc)->rank == *((int*)rank);
@@ -187,6 +192,23 @@ queue_t* getDocs(queue_t* words) {
   return docs;
 }
 
+
+void docsCombine(queue_t* finaldocs, queue_t* tempdocs){
+	query_docs_t* dtemp;
+	//continuously remove from temp docs
+	while((dtemp = (query_docs_t*)qget(tempdocs))!=NULL){
+				//if the current doc is not in the final docs, just add it
+				if(qsearch(finaldocs ,findQueryID, &(dtemp->id))==NULL){
+					qput(finaldocs, dtemp);
+				}
+				//if the current doc is in the final docs, add the rankings
+				else{
+					(	(query_docs_t*)(qsearch(finaldocs ,findQueryID, &(dtemp->id))) )->rank += dtemp->rank;
+					free(dtemp);
+				}
+			}
+}
+
 // sort the given queue of type query_docs_t by decreasing rank
 void sortDocs(queue_t* docs) {
   int i = 1;
@@ -239,7 +261,7 @@ int main(int argc, char* argv[]) {
     queue_t* tempwords =
         qopen();  // module 6 step 4- for complex queries we need a temp query
                   // to seperate phrases seperated by "or."
-    queue_t* finalwords = qopen();
+    queue_t* finaldocs = qopen();
     while (cont) {
       // skip past spaces and tabs, if any
       while (((int)(*currchar)) == 9 || ((int)(*currchar)) == 32) {
@@ -258,17 +280,25 @@ int main(int argc, char* argv[]) {
             if (strlen(word) >= 3 || strcmp(word, "or") != 0) {
               char* w = malloc(sizeof(char*) * 30);
               strcpy(w, word);
-              qput(finalwords, w);  // add the query word to the tempqueue
-            } /*else if (strcmp(word, "or") == 0) {  // if we find the word OR
-              // take the words in the temp queue and put it in the finalqueue
-              while (qget(tempwords) != NULL) {
-                qput(finalwords, qget(tempwords));
+              qput(tempwords, w);  // add the query word to the tempqueue
+            } else if (strcmp(word, "or") == 0) {  // if we find the word OR
+							//make queue of docs for words in current queue
+							queue_t* newdocs = getDocs(tempwords);
+							docsCombine(finaldocs, newdocs); // combine latest rankings with old rankings
+							free(newdocs);
+
+
+							//not sure if we need this
+							/*
+							while ((wp=qget(tempwords)) != NULL) {
+                qput(finalwords, wp);
               }
               queue_t* phraseDocs =
                   getDocs(finalwords);  // get documents related to this phrase
                                         // of words (before the OR)
               sortDocs(phraseDocs);
-            }*/
+							*/
+            }
           }
         }
       } else {
@@ -283,13 +313,17 @@ int main(int argc, char* argv[]) {
       valid = false;
     }
     if (valid) {
-      queue_t* docs = getDocs(finalwords);
-      sortDocs(docs);
-      qapply(docs, printRank);
-      qclose(docs);
+			//add final queue of temp words
+			queue_t* newdocs = getDocs(tempwords);
+			docsCombine(finaldocs, newdocs); // combine latest rankings with old rankings
+			qclose(newdocs);
+			qclose(tempwords);
+			
+      sortDocs(finaldocs);
+      qapply(finaldocs, printRank);
+      qclose(finaldocs);
     }
-    qclose(finalwords);
-    // free(input);
+
     printf("> ");
   }
   closeIndex(index);
