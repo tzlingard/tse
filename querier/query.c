@@ -128,7 +128,7 @@ void closeIndex(hashtable_t* htp) {
 // given a queue of words, returns a queue of type query_doc_t for the docs
 // containing all of those words
 queue_t* getDocs(queue_t* words) {
-  bool wordNotFound = false;  // true when a word in query is not in index at
+  //bool wordNotFound = false;  // true when a word in query is not in index at
                               // all
   queue_t* docs = qopen();
 
@@ -153,7 +153,7 @@ queue_t* getDocs(queue_t* words) {
       qclose(indexWord->freq);
       indexWord->freq = temp;
     } else if (strcmp(currWord, "or") != 0) {
-      wordNotFound = true;
+			// wordNotFound = true;
     }
     free(currWord);
   }
@@ -162,7 +162,7 @@ queue_t* getDocs(queue_t* words) {
   // remove from queue of "surviving" docs and only re-add if document also has
   // current word
 
-  while ((currWord = (char*)(qget(words))) != NULL && wordNotFound == false) {
+  while ((currWord = (char*)(qget(words))) != NULL){// && wordNotFound == false) {
     word_t* indexWord = hsearch(index, findWord, currWord, sizeof(currWord));
     if (indexWord != NULL) {
       query_docs_t* d;
@@ -193,15 +193,15 @@ queue_t* getDocs(queue_t* words) {
       // ranks add to this value once the next or is hit or the query is
       // finished
     } else {
-      wordNotFound = true;
+			//      wordNotFound = true;
     }
     free(currWord);
   }
 
-  if (wordNotFound == true) {
-    qclose(docs);
-    docs = qopen();
-  }
+	//  if (wordNotFound == true) {
+	// qclose(docs); 
+  //  docs = qopen();
+	// }
   return docs;
 }
 
@@ -262,6 +262,7 @@ void query(char* input, bool quiet) {
   bool cont = true;
   bool valid = true;
   int wordcount = 0;
+	char* w;
   // skip the loop if it does not fulfill the module 6 step 4 requirements
   cont = true;
   valid = true;
@@ -287,15 +288,17 @@ void query(char* input, bool quiet) {
         normalizeWord(word);
         if (strcmp(word, "and") != 0) {
           if (strlen(word) >= 3 || strcmp(word, "or") != 0) {
-            char* w = malloc(sizeof(char*) * 30);
+            w = malloc(sizeof(char*) * 30);
             strcpy(w, word);
             qput(tempwords, w);  // add the query word to the tempqueue
           } else if (strcmp(word, "or") == 0) {  // if we find the word OR
             // make queue of docs for words in current queue
-            queue_t* newdocs = getDocs(tempwords);
+						printf("w = %s\n",w);
+						queue_t* newdocs = getDocs(tempwords);
+						printf("w = %s\n",w);
             docsCombine(finaldocs,
                         newdocs);  // combine latest rankings with old rankings
-            free(newdocs);
+            qclose(newdocs);
           }
         }
       }
@@ -312,10 +315,14 @@ void query(char* input, bool quiet) {
   }
   if (valid) {
     // add final queue of temp words
+		printf("w = %s\n",w);
     queue_t* newdocs = getDocs(tempwords);
+		printf("w = %s\n",w);
     docsCombine(finaldocs,
                 newdocs);  // combine latest rankings with old rankings
     qclose(newdocs);
+		
+		
     sortDocs(finaldocs);
     if (quiet)
       qapply(finaldocs, printRankToFile);
