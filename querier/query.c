@@ -312,16 +312,15 @@ void query(char* input, bool quiet) {
     docsCombine(finaldocs,
                 newdocs);  // combine latest rankings with old rankings
     qclose(newdocs);
-    qclose(tempwords);
-
     sortDocs(finaldocs);
     if (quiet)
       qapply(finaldocs, printRankToFile);
     else
       qapply(finaldocs, printRank);
-    qclose(finaldocs);
   }
   printf("> ");
+  qclose(finaldocs);
+  qclose(tempwords);
 }
 
 int main(int argc, char* argv[]) {
