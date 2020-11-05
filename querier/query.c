@@ -149,30 +149,26 @@ queue_t* getDocs(queue_t* words) {
         }
         qput(temp, doc);
       }
-
       qclose(indexWord->freq);
       indexWord->freq = temp;
     } else if (strcmp(currWord, "or") != 0) {
       wordNotFound = true;
     }
-    free(currWord);
   }
-
   // scan through rest of words
   // remove from queue of "surviving" docs and only re-add if document also has
   // current word
-
   while ((currWord = (char*)(qget(words))) != NULL && wordNotFound == false) {
     word_t* indexWord = hsearch(index, findWord, currWord, sizeof(currWord));
     if (indexWord != NULL) {
       query_docs_t* d;
       queue_t* temp_docs = qopen();
       while ((d = (query_docs_t*)(qget(docs))) != NULL) {
-        docs_t* popDoc;
+        docs_t* qdoc;
         int freq = 0;
-        if ((popDoc = (((docs_t*)qsearch(indexWord->freq, findID,
-                                         &(d->id))))) != NULL) {
-          freq = popDoc->freq;
+        if ((qdoc = (((docs_t*)qsearch(indexWord->freq, findID, &(d->id))))) !=
+            NULL) {
+          freq = qdoc->freq;
         }
         if (freq > 0) {
           if (freq < d->rank) {
@@ -185,19 +181,11 @@ queue_t* getDocs(queue_t* words) {
       }
       qclose(docs);
       docs = temp_docs;
-    } else if (strcmp(currWord, "or") == 0) {
-      printf("or found\n");
-
-      // TODO: if this if statement is triggered, add the ranks of the word in
-      // each document to the final queue, and have all the following (temp)
-      // ranks add to this value once the next or is hit or the query is
-      // finished
     } else {
       wordNotFound = true;
     }
-    free(currWord);
   }
-
+  free(currWord);
   if (wordNotFound == true) {
     qclose(docs);
     docs = qopen();
@@ -257,8 +245,8 @@ void query(char* input, bool quiet) {
   */
   // skip the loop if it does not fulfill the module 6 step 4 requirements
   char* currchar;
-  char word[20];
-  char prevWord[20] = "";
+  char word[30];
+  char prevWord[30] = "";
   bool cont = true;
   bool valid = true;
   int wordcount = 0;
@@ -271,6 +259,7 @@ void query(char* input, bool quiet) {
       qopen();  // module 6 step 4- for complex queries we need a temp query
                 // to seperate phrases seperated by "or."
   queue_t* finaldocs = qopen();
+  char* w;
   while (cont) {
     // skip past spaces and tabs, if any
     while (((int)(*currchar)) == 9 || ((int)(*currchar)) == 32) {
@@ -287,7 +276,7 @@ void query(char* input, bool quiet) {
         normalizeWord(word);
         if (strcmp(word, "and") != 0) {
           if (strlen(word) >= 3 || strcmp(word, "or") != 0) {
-            char* w = malloc(sizeof(char*) * 30);
+            w = malloc(sizeof(char*) * 30);
             strcpy(w, word);
             qput(tempwords, w);  // add the query word to the tempqueue
           } else if (strcmp(word, "or") == 0) {  // if we find the word OR
