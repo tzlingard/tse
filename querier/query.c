@@ -47,34 +47,25 @@ void normalizeWord(char* word) {
   }
 }
 
-bool isValid(char* c, char* cprev, int* wordcount) {
-  char* curr = c;
-  char* prev = cprev;
-	int*  cnt= wordcount;
-      //special cases:                                                                                                                      
-      // OR is the first word: invalid query --  dealt with here                                                                           
-      // OR is the last word: invalid query                                                                                                 
-      // number is included: invalid query-- dealt with here                                                                                                
-      // OR & AND follow each other: invalid query-- dealt with here                                                                                        
-      //two consecutive ORs or ANDs: invalid query-- dealt with here
-		while ((int)(*curr) != 10) {  // 10 is line feed
-			if(isdigit(*curr){
-					return false;
-			}	
-			else if (!isalpha(*curr)) {
-				if (!(((int)(*curr)) == 9 || ((int)(*curr)) == 32)) {
-					return false;
-        }
-			}
-			else if( strcmp(*curr, "and")== 0  || (strcmp(*curr, "or")==0  ){
-				if( strcmp(*prev, "and")== 0  || (strcmp(*prev, "or")==0 || cnt==0 ){
-								return false;
-				}
-			}
-	 
-    curr += 1;
-		}
-			return true;		
+bool isValid(char* curr, char* prev, int wordcount) {
+  // special cases:
+  // OR is the first word: invalid query --  dealt with here
+  // OR is the last word: invalid query
+  // number is included: invalid query-- dealt with here
+  // OR & AND follow each other: invalid query-- dealt with here
+  // two consecutive ORs or ANDs: invalid query-- dealt with here
+  if (!isalpha(*curr)) {
+    // returns false if word is not fully alphabetic
+    return false;
+  } else if (strcmp(curr, "and") == 0 || (strcmp(curr, "or") == 0)) {
+    if (strcmp(prev, "and") == 0 ||
+        (strcmp(prev, "or") == 0 || wordcount == 0)) {
+      // returns false if two reserved words in a row or starting with a
+      // reserved word
+      return false;
+    }
+  }
+  return true;
 }
 
 // true if the given docs_t has given id
@@ -121,10 +112,11 @@ queue_t* getDocs(queue_t* words) {
   bool wordNotFound = false;  // true when a word in query is not in index at
                               // all
   queue_t* docs = qopen();
+
   // add documents for first word (if word exists) to docs queue
+
   char* currWord;
   if ((currWord = (char*)(qget(words))) != NULL) {
-    printf("currWord = %s\n", currWord);
     word_t* indexWord = hsearch(index, findWord, currWord, sizeof(currWord));
     if (indexWord != NULL) {
       queue_t* temp = qopen();
@@ -141,61 +133,49 @@ queue_t* getDocs(queue_t* words) {
 
       qclose(indexWord->freq);
       indexWord->freq = temp;
-    } else {
+    } else if (strcmp(currWord, "or") != 0) {
       wordNotFound = true;
     }
     free(currWord);
   }
+
   // scan through rest of words
-  // remove from queue of "surviving" docs and only re-add if document also
-  // has current word
+  // remove from queue of "surviving" docs and only re-add if document also has
+  // current word
+
   while ((currWord = (char*)(qget(words))) != NULL && wordNotFound == false) {
-    printf("currWord = %s\n", currWord);
     word_t* indexWord = hsearch(index, findWord, currWord, sizeof(currWord));
-    queue_t* temp_docs = qopen();
-    query_docs_t* d;
     if (indexWord != NULL) {
-      printf("indexWord found\n");
+      query_docs_t* d;
+      queue_t* temp_docs = qopen();
       while ((d = (query_docs_t*)(qget(docs))) != NULL) {
         int freq =
             (((docs_t*)qsearch(indexWord->freq, findID, &(d->id))))->freq;
-        printf("freq = %d\n", freq);
         if (freq > 0) {
           if (freq < d->rank) {
             d->rank = freq;
-          }
-          query_docs_t* qD;
-          if ((qD = ((query_docs_t*)qsearch(docs, findID, &(d->id)))) != NULL) {
-            d->rank = d->rank + qD->rank;
-            // add the rank to the rank already in the final queue for that doc
           }
           qput(temp_docs, d);
         } else {
           free(d);
         }
       }
-      /* query_docs_t* qDocs;
-       while ((qDocs = qget(temp_docs)) != NULL) {
-         qDocs->rank = (((docs_t*)qsearch(temp_docs, findID, &(d->id))))->freq;
-         // set the rank in the final queue to the pre-or rank
-         qput(docs, qDocs);
-       }*/
+      qclose(docs);
+      docs = temp_docs;
+    } else if (strcmp(currWord, "or") == 0) {
+      printf("or found\n");
+
+      // TODO: if this if statement is triggered, add the ranks of the word in
+      // each document to the final queue, and have all the following (temp)
+      // ranks add to this value once the next or is hit or the query is
+      // finished
     } else {
-      if (!strcmp(currWord, "or")) {  // if the word is or, add the ranks
-        query_docs_t* qDocs;
-        while ((qDocs = qget(temp_docs)) != NULL) {
-          qDocs->rank = (((docs_t*)qsearch(temp_docs, findID, &(d->id))))->freq;
-          // set the rank in the final queue to the pre-or rank
-          qput(docs, qDocs);
-        }
-      } else {
-        wordNotFound = true;
-        free(currWord);
-      }
+      wordNotFound = true;
     }
+    free(currWord);
   }
+
   if (wordNotFound == true) {
-    printf("Word not found\n");
     qclose(docs);
     docs = qopen();
   }
@@ -228,10 +208,11 @@ void sortDocs(queue_t* docs) {
 int main(int argc, char* argv[]) {
   char input[100];
   char* currchar;
-	char* pastchar= NULL;
-	char word[20];
+  char word[20];
+  char prevWord[20] = "";
   bool cont = true;
-  int wordcount= 0;
+  bool valid = true;
+  int wordcount = 0;
   index = indexload("../indexer", "index");
   printf("> ");
   while (fgets(input, 100, stdin) != NULL) {
@@ -247,50 +228,49 @@ int main(int argc, char* argv[]) {
     */
     // skip the loop if it does not fulfill the module 6 step 4 requirements
     cont = true;
-    if (!isValid(input,*pastchar,wordcount)) {
-      printf("[invalid query]\n");
-      cont = false;
-    }
-    pastchar = input;
     currchar = input;
-    queue_t* tempwords = qopen(); //module 6 step 4- for complex queries we need a temp query to seperate phrases seperated by "or."  
-		queue_t* finalwords =qopen();
+    queue_t* tempwords =
+        qopen();  // module 6 step 4- for complex queries we need a temp query
+                  // to seperate phrases seperated by "or."
+    queue_t* finalwords = qopen();
     while (cont) {
       // skip past spaces and tabs, if any
       while (((int)(*currchar)) == 9 || ((int)(*currchar)) == 32) {
         currchar += sizeof(char);
-				wordcount+=1;
       }
-			
-
-
-			
       // print and save current word
-			/* if (sscanf(currchar, "%s", word) == 1) {
-        currchar += strlen(word);
-        normalizeWord(word);
-        if (strcmp(word, "and") != 0) {
-					
-          if (strlen(word) >= 3 || strcmp(word, "or") == 0) {
-            // skip the reserved words "and" and words less than 3 (except
-            // "or") letters long
-            char* w = malloc(sizeof(char*) * 30);
-            strcpy(w, word);
-            qput(words, w);  // add the query word to the queue
+      if (sscanf(currchar, "%s", word) == 1) {
+        if (!isValid(word, prevWord, wordcount)) {
+          printf("[invalid query]\n");
+          cont = false;
+          valid = false;
+        } else {
+          currchar += strlen(word);
+          normalizeWord(word);
+          if (strcmp(word, "and") != 0) {
+            if (strlen(word) >= 3 || strcmp(word, "or") == 0) {
+              // skip the reserved words "and" and words less than 3 (except
+              // "or") letters long
+              char* w = malloc(sizeof(char*) * 30);
+              strcpy(w, word);
+              qput(finalwords, w);  // add the query word to the queue
+            }
           }
         }
-				
       } else {
         cont = false;
-				}*/
+      }
+      strcpy(prevWord, word);
+      wordcount++;
     }
 
-    queue_t* docs = getDocs(words);
-    sortDocs(docs);
-    qapply(docs, printRank);
-
-    qclose(docs);
-    qclose(words);
+    if (valid) {
+      queue_t* docs = getDocs(finalwords);
+      sortDocs(docs);
+      qapply(docs, printRank);
+      qclose(docs);
+    }
+    qclose(finalwords);
     // free(input);
     printf("> ");
   }
