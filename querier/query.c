@@ -293,9 +293,9 @@ void query(char* input, bool quiet) {
             qput(tempwords, w);  // add the query word to the tempqueue
           } else if (strcmp(word, "or") == 0) {  // if we find the word OR
             // make queue of docs for words in current queue
-						printf("w = %s\n",w);
+						//			printf("w = %s\n",w);
 						queue_t* newdocs = getDocs(tempwords);
-						printf("w = %s\n",w);
+						//		printf("w = %s\n",w);
             docsCombine(finaldocs,
                         newdocs);  // combine latest rankings with old rankings
             qclose(newdocs);
@@ -315,9 +315,9 @@ void query(char* input, bool quiet) {
   }
   if (valid) {
     // add final queue of temp words
-		printf("w = %s\n",w);
+		//printf("w = %s\n",w);
     queue_t* newdocs = getDocs(tempwords);
-		printf("w = %s\n",w);
+		//printf("w = %s\n",w);
     docsCombine(finaldocs,
                 newdocs);  // combine latest rankings with old rankings
     qclose(newdocs);
