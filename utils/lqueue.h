@@ -37,3 +37,6 @@ void lqapply(lqueue_t* qp, void (*fn)(void* elementp));
  */
 void* lqsearch(lqueue_t* qp, bool (*searchfn)(void* elementp, const void* keyp),
                const void* skeyp);
+
+void* lqremove(lqueue_t* qp, bool (*searchfn)(void* elementp, const void* keyp),
+               const void* skeyp);

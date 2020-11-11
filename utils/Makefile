@@ -1,5 +1,5 @@
 CFLAGS=-Wall -pedantic -std=c11 -I. -g
-OFILES=queue.o hash.o webpage.o pageio.o indexio.o
+OFILES=queue.o hash.o webpage.o pageio.o indexio.o lqueue.o
 all: $(OFILES)
 	ar cr ~/ENGS50/tse/lib/libutils.a $(OFILES)
 
@@ -11,6 +11,9 @@ hashtest.o:	hashtest.c hash.h queue.h
 
 queue.o:	queue.c queue.h
 	gcc $(CFLAGS) -c queue.c
+
+lqueue.o:	lqueue.c lqueue.h queue.h
+	gcc $(CFLAGS) -c lqueue.c
 
 webpage.o:	webpage.c webpage.h
 	gcc $(CFLAGS) -c webpage.c

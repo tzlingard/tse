@@ -26,7 +26,7 @@ void lqclose(lqueue_t* qp) {
 
 int32_t lqput(lqueue_t* qp, void* elementp) {
   pthread_mutex_lock(&m);
-  int v = qput((queue_t*)qp, elementp);
+  int32_t v = qput((queue_t*)qp, elementp);
   pthread_mutex_unlock(&m);
   return (v);
 }
@@ -50,4 +50,12 @@ void* lqsearch(lqueue_t* qp, bool (*searchfn)(void* elementp, const void* keyp),
   void* returnp = qsearch(qp, searchfn, skeyp);
   pthread_mutex_unlock(&m);
   return (returnp);
+}
+
+void* lqremove(lqueue_t* qp, bool (*searchfn)(void* elementp, const void* keyp),
+               const void* skeyp) {
+  pthread_mutex_lock(&m);
+  void* v = qremove(qp, searchfn, skeyp);
+  pthread_mutex_unlock(&m);
+  return (v);
 }
