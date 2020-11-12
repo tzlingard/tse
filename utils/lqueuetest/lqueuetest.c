@@ -46,7 +46,7 @@ bool platecheck(void *c, const void *p) {
   return (!strcmp(car->plate, plate));
 }
 
-void qtest(void *q) {
+void *qtest(void *q) {
   lqueue_t *q1 = q;
   car_t *c1 = make_car("123456", 9999.99, 2014);
   car_t *c2 = make_car("Darty1", 120000, 2019);
@@ -59,7 +59,7 @@ void qtest(void *q) {
   print_car(cc1);
   printf("\n\n");
 
-  printf("Test 3 : Put to queue (Adds 4 cars)\n");
+  printf("Test 3 : Put to queue (Adds 6 cars)\n");
   lqput(q1, (void *)c1);
   lqput(q1, (void *)c2);
   lqput(q1, (void *)c3);
@@ -130,6 +130,7 @@ void qtest(void *q) {
   free(c4);
   free(c6);
   printf("Tests complete\n");
+	return NULL;
 }
 
 int main(void) {
@@ -137,7 +138,7 @@ int main(void) {
   lqueue_t *q1 = lqopen();
   printf("\n\n");
   pthread_t tid1, tid2;
-  if (pthread_create(&tid1, NULL, qtest, q1)) {
+  if (pthread_create(&tid1, NULL, qtest, q1)!=0) {
     exit(EXIT_FAILURE);
   }
   sleep(10);
