@@ -9,10 +9,10 @@ lqueuetest:
 lqueuetest_multi:	
 	gcc $(CFLAGS) lqueuetest_multi.c $(LIBS) -o $@
 
-testH: ../queue.o ../lqueue.o
+testH: ../queue.o ../lqueue.o ../hash.o ../lhash.o
 	gcc $(CFLAGS) testH.o -o testH
 
-testQ: ../queue.o ../lqueue.o
+testQ: ../queue.o ../lqueue.o ../hash.o ../lash.o
 	gcc $(CFLAGS) testH.o -o testH
 
 clean:
