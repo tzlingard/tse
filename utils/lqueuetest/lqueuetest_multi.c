@@ -138,16 +138,16 @@ int main(void) {
   printf("Test 1: Open a new queue\n");
   lqueue_t *q1 = lqopen();
   printf("\n\n");
-  pthread_t tid1;
+  pthread_t tid1, tid2;
   if (pthread_create(&tid1, NULL, qtest, q1)!=0) {
 		printf("Thread 1 failed\n");
     exit(EXIT_FAILURE);
   }
-	if (pthread_join(tid1, NULL)!=0) {
-		printf("Thread 1 failed\n");
-    exit(EXIT_FAILURE);
+	if (pthread_create(&tid2, NULL, qtest, q1)!=0) {
+		printf("Thread 2 failed\n");
+	  exit(EXIT_FAILURE);
   }
 	
-	sleep(5);
+	sleep(10);
   exit(EXIT_SUCCESS);
 }
