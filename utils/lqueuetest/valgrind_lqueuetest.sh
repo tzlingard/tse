@@ -9,4 +9,4 @@ fi
 
 make clean
 make all
-valgrind --leak-check=full ./lqueuetest
+valgrind --leak-check=full --track-origins=yes ./lqueuetest

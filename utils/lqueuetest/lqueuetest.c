@@ -76,7 +76,7 @@ void *qtest(void *q) {
   cc1 = (car_t *)lqget(q1);
   print_car(cc1);
   printf("\n\n");
-
+  free(cc1);
   printf("Test 6: Search for plate 'SUNGOD' from nonempty queue\n");
   char *plate1 = "SUNGOD";
   car_t *find_car1 = lqsearch(q1, platecheck, (void *)plate1);
@@ -98,40 +98,36 @@ void *qtest(void *q) {
 
   printf("Test 8: Remove plate from front of nonempty queue\n");
   printf("(Removing plate Darty1)\n");
-  lqremove(q1, platecheck, (void *)plate3);
+  free(lqremove(q1, platecheck, (void *)plate3));
   printf("Queue after removal:\n");
   lqapply(q1, print_car);
   printf("\n\n");
 
   printf("Test 9: Remove plate from middle of nonempty queue\n");
   printf("(Removing plate DARTXC)\n");
-  lqremove(q1, platecheck, (void *)plate4);
+  free(lqremove(q1, platecheck, (void *)plate4));
   printf("Queue after removal:\n");
   lqapply(q1, print_car);
   printf("\n\n");
 
   printf("Test 10: Remove plate from end of nonempty queue\n");
   printf("(Removing plate ENGS50)\n");
-  lqremove(q1, platecheck, (void *)plate5);
+  free(lqremove(q1, platecheck, (void *)plate5));
   printf("Queue after removal:\n");
   lqapply(q1, print_car);
   printf("\n\n");
 
   printf("Test 11: Remove plate 'THIS SHOULD FAIL' from nonempty queue\n");
-  lqremove(q1, platecheck, (void *)plate2);
+  free(lqremove(q1, platecheck, (void *)plate2));
   printf("Queue after removal:\n");
   lqapply(q1, print_car);
   printf("\n\n");
   printf("Test 13: Close queue\n");
   printf("\n\n");
   lqclose(q1);
-  free(c1);
-  free(c2);
-  free(c4);
-  free(c6);
   printf("Tests complete\n");
-	printf("exiting\n");
-	return NULL;
+  printf("exiting\n");
+  return NULL;
 }
 
 int main(void) {
@@ -139,15 +135,14 @@ int main(void) {
   lqueue_t *q1 = lqopen();
   printf("\n\n");
   pthread_t tid1;
-  if (pthread_create(&tid1, NULL, qtest, q1)!=0) {
-		printf("Thread 1 failed\n");
+  if (pthread_create(&tid1, NULL, qtest, q1) != 0) {
+    printf("Thread 1 failed\n");
     exit(EXIT_FAILURE);
   }
-	if (pthread_join(tid1, NULL)!=0) {
-		printf("Thread 1 failed\n");
+  if (pthread_join(tid1, NULL) != 0) {
+    printf("Thread 1 failed\n");
     exit(EXIT_FAILURE);
   }
-	
-	sleep(5);
+  sleep(5);
   exit(EXIT_SUCCESS);
 }
