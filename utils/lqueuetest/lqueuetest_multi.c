@@ -46,108 +46,191 @@ bool platecheck(void *c, const void *p) {
   return (!strcmp(car->plate, plate));
 }
 
-void *qtest(void *q) {
+void *qtestA(void *q) {
   lqueue_t *q1 = q;
-  car_t *c1 = make_car("123456", 9999.99, 2014);
-  car_t *c2 = make_car("Darty1", 120000, 2019);
-  car_t *c3 = make_car("SUNGOD", 80080.42, 2020);
-  car_t *c4 = make_car("DARTXC", 1769.99, 1769);
-  car_t *c5 = make_car("CS5050", 5050.50, 1950);
-  car_t *c6 = make_car("ENGS50", 5050.50, 1950);
-  printf("Test 2: Get and print from empty queue\n");
-  car_t *cc1 = (car_t *)lqget(q1);
-  print_car(cc1);
-  printf("\n\n");
+  car_t *c1 = make_car("123123", 9999.99, 2014);
+  car_t *c2 = make_car("ABCDEF", 120000, 2019);
 
-  printf("Test 3 : Put to queue (Adds 6 cars)\n");
+  printf("Test 2A : Put to queue (Adds cars 123123 and ABCDEF)\n");
   lqput(q1, (void *)c1);
   lqput(q1, (void *)c2);
-  lqput(q1, (void *)c3);
-  lqput(q1, (void *)c4);
-  lqput(q1, (void *)c5);
-  lqput(q1, (void *)c6);
   printf("\n\n");
 
-  printf("Test 4 : Apply print to nonempty queue\n");
+  printf("Test 3A : Apply print to nonempty queue\n");
   lqapply(q1, print_car);
   printf("\n\n");
 
-  printf("Test 5: Get and print from nonempty queue\n");
-  cc1 = (car_t *)lqget(q1);
+  printf("Test 4A: Get and print from nonempty queue\n");
+  car_t* cc1 = (car_t *)lqget(q1);
   print_car(cc1);
   printf("\n\n");
 
-  printf("Test 6: Search for plate 'SUNGOD' from nonempty queue\n");
-  char *plate1 = "SUNGOD";
+  printf("Test 5A: Search for plate 'ABCDEF' from nonempty queue\n");
+  char *plate1 = "ABCDEF";
   car_t *find_car1 = lqsearch(q1, platecheck, (void *)plate1);
   print_car(find_car1);
   printf("\n\n");
 
-  printf("Test 7: Search for plate 'THIS_SHOULD_FAIL' from nonempty queue\n");
+  printf("Test 6A: Search for plate 'THIS_SHOULD_FAIL' from nonempty queue\n");
   char *plate2 = "THIS_SHOULD_FAIL";
   car_t *find_car2 = lqsearch(q1, platecheck, (void *)plate2);
   print_car(find_car2);
   printf("\n\n");
 
-  char *plate3 = "Darty1";
-  char *plate4 = "DARTXC";
-  char *plate5 = "ENGS50";
 
   printf("Current queue:\n");
   lqapply(q1, print_car);
 
-  printf("Test 8: Remove plate from front of nonempty queue\n");
-  printf("(Removing plate Darty1)\n");
-  lqremove(q1, platecheck, (void *)plate3);
+  printf("Test 7A: Remove plate from  nonempty queue\n");
+  printf("(Removing plate ABCDEF)\n");
+  lqremove(q1, platecheck, (void *)plate1);
   printf("Queue after removal:\n");
   lqapply(q1, print_car);
   printf("\n\n");
-
-  printf("Test 9: Remove plate from middle of nonempty queue\n");
-  printf("(Removing plate DARTXC)\n");
-  lqremove(q1, platecheck, (void *)plate4);
-  printf("Queue after removal:\n");
-  lqapply(q1, print_car);
-  printf("\n\n");
-
-  printf("Test 10: Remove plate from end of nonempty queue\n");
-  printf("(Removing plate ENGS50)\n");
-  lqremove(q1, platecheck, (void *)plate5);
-  printf("Queue after removal:\n");
-  lqapply(q1, print_car);
-  printf("\n\n");
-
-  printf("Test 11: Remove plate 'THIS SHOULD FAIL' from nonempty queue\n");
-  lqremove(q1, platecheck, (void *)plate2);
-  printf("Queue after removal:\n");
-  lqapply(q1, print_car);
-  printf("\n\n");
-  printf("Test 13: Close queue\n");
+  
+  printf("Test 8A: Close queue\n");
   printf("\n\n");
   lqclose(q1);
-  free(c1);
-  free(c2);
-  free(c4);
-  free(c6);
-  printf("Tests complete\n");
-	printf("exiting\n");
+  printf("Tests A  complete\n");
 	return NULL;
 }
+
+
+void *qtestB(void *q) {
+  lqueue_t *q1 = q;
+  car_t *c1 = make_car("456456", 9999.99, 2014);
+  car_t *c2 = make_car("GHIJKL", 120000, 2019);
+
+  printf("Test 2B : Put to queue (Adds cars 456456 and GHIJKL)\n");
+  lqput(q1, (void *)c1);
+  lqput(q1, (void *)c2);
+  printf("\n\n");
+
+  printf("Test 3B : Apply print to nonempty queue\n");
+  lqapply(q1, print_car);
+  printf("\n\n");
+
+  printf("Test 4B: Get and print from nonempty queue\n");
+  car_t* cc1 = (car_t *)lqget(q1);
+  print_car(cc1);
+  printf("\n\n");
+
+  printf("Test 5B: Search for plate 'GHIJKL' from nonempty queue\n");
+  char *plate1 = "GHIJKL";
+  car_t *find_car1 = lqsearch(q1, platecheck, (void *)plate1);
+  print_car(find_car1);
+  printf("\n\n");
+
+  printf("Test 6B: Search for plate 'THIS_SHOULD_FAIL' from nonempty queue\n");
+  char *plate2 = "THIS_SHOULD_FAIL";
+  car_t *find_car2 = lqsearch(q1, platecheck, (void *)plate2);
+  print_car(find_car2);
+  printf("\n\n");
+
+
+  printf("Current queue:\n");
+  lqapply(q1, print_car);
+
+  printf("Test 7B: Remove plate from  nonempty queue\n");
+  printf("(Removing plate GHIJKL)\n");
+  lqremove(q1, platecheck, (void *)plate1);
+  printf("Queue after removal:\n");
+  lqapply(q1, print_car);
+  printf("\n\n");
+  
+	//  printf("Test 8B: Close queue\n");
+  //printf("\n\n");
+  //lqclose(q1);
+  printf("Tests B complete\n");
+
+	return NULL;
+}
+
+
+void *qtestC(void *q) {
+  lqueue_t *q1 = q;
+  car_t *c1 = make_car("789789", 9999.99, 2014);
+  car_t *c2 = make_car("MNOPQR", 120000, 2019);
+
+  printf("Test 2C : Put to queue (Adds cars 789789 and MNOPQR)\n");
+  lqput(q1, (void *)c1);
+  lqput(q1, (void *)c2);
+  printf("\n\n");
+
+  printf("Test 3C : Apply print to nonempty queue\n");
+  lqapply(q1, print_car);
+  printf("\n\n");
+
+  printf("Test 4C: Get and print from nonempty queue\n");
+  car_t* cc1 = (car_t *)lqget(q1);
+  print_car(cc1);
+  printf("\n\n");
+
+  printf("Test 5C: Search for plate 'MNOPQR' from nonempty queue\n");
+  char *plate1 = "MNOPQR";
+  car_t *find_car1 = lqsearch(q1, platecheck, (void *)plate1);
+  print_car(find_car1);
+  printf("\n\n");
+
+  printf("Test 6C: Search for plate 'THIS_SHOULD_FAIL' from nonempty queue\n");
+  char *plate2 = "THIS_SHOULD_FAIL";
+  car_t *find_car2 = lqsearch(q1, platecheck, (void *)plate2);
+  print_car(find_car2);
+  printf("\n\n");
+
+
+  printf("Current queue:\n");
+  lqapply(q1, print_car);
+
+  printf("Test 7C: Remove plate from  nonempty queue\n");
+  printf("(Removing plate MNOPQR)\n");
+  lqremove(q1, platecheck, (void *)plate1);
+  printf("Queue after removal:\n");
+  lqapply(q1, print_car);
+  printf("\n\n");
+  
+	//  printf("Test 8C: Close queue\n");
+  //printf("\n\n");
+  //lqclose(q1);
+  printf("Tests C complete\n");
+	return NULL;
+}
+
+
 
 int main(void) {
   printf("Test 1: Open a new queue\n");
   lqueue_t *q1 = lqopen();
   printf("\n\n");
-  pthread_t tid1, tid2;
-  if (pthread_create(&tid1, NULL, qtest, q1)!=0) {
+  pthread_t tid1, tid2, tid3;
+  if (pthread_create(&tid1, NULL, qtestA, q1)!=0) {
 		printf("Thread 1 failed\n");
     exit(EXIT_FAILURE);
   }
-	if (pthread_create(&tid2, NULL, qtest, q1)!=0) {
+  if (pthread_create(&tid2, NULL, qtestB, q1)!=0) {
 		printf("Thread 2 failed\n");
-	  exit(EXIT_FAILURE);
+    exit(EXIT_FAILURE);
+	}
+	if (pthread_create(&tid3, NULL, qtestC, q1)!=0) {
+		printf("Thread 3 failed\n");
+    exit(EXIT_FAILURE);
+  }
+
+	
+	if (pthread_join(tid1, NULL)!=0) {
+		printf("Thread 1 failed\n");
+    exit(EXIT_FAILURE);
   }
 	
+	if (pthread_join(tid2, NULL)!=0) {
+		printf("Thread 2 failed\n");
+    exit(EXIT_FAILURE);
+  }
+	
+	if (pthread_join(tid3, NULL)!=0) {
+		printf("Thread 3 failed\n");
+    exit(EXIT_FAILURE);
+  }
 	sleep(10);
   exit(EXIT_SUCCESS);
 }
