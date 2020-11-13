@@ -10,7 +10,7 @@
 typedef void lhashtable_t; /* representation of a locked hashtable hidden */
 
 /* lhopen -- opens a locked hash table with initial size hsize */
-lhashtable_t *hopen(uint32_t hsize);
+lhashtable_t *lhopen(uint32_t hsize);
 
 /* lhclose -- closes a locked hash table */
 void lhclose(lhashtable_t *htp);

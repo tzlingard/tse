@@ -1,3 +1,4 @@
+#include <pthread.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -5,16 +6,20 @@
 #include <unistd.h>
 
 #include "../utils/hash.h"
+#include "../utils/lhash.h"
+#include "../utils/lqueue.h"
 #include "../utils/pageio.h"
 #include "../utils/queue.h"
 #include "../utils/webpage.h"
 
-/*bool checkURLs(void* url1, const void* url2) {
-        if (strcmp((char*)url1, (char*) url2)) {
-                return false;
-        }
-        else return true;
-}*/
+lqueue_t *internals;
+lhashtable_t *table;
+
+typedef struct {
+  char seedurl[80];
+  char pagedir[80];
+  int maxDepth;
+} pageData_t;
 
 void printURL(void *page) {
   if (page == NULL) {
@@ -29,55 +34,34 @@ bool urlcheck(void *elementp, const void *searchkeyp) {
   return (!strcmp(p, url));
 }
 
-int main(int argc, char *argv[]) {
-  const char *usage = "usage: crawler <seedurl> <pagedir> <maxdepth>";
-  char seedurl[80], pagedir[80];
-  int maxdepth;
-  if (argc != 4) {  // ensure 3 arguments after crawler
-    printf("%s\n", usage);
-    return -1;
-  }
-  sscanf(argv[1], "%s",
-         seedurl);  // scan the arguments into their respective variables
-  sscanf(argv[2], "%s", pagedir);
-  sscanf(argv[3], "%d", &maxdepth);
-  if (access(pagedir, R_OK) != 0) {  // fail if page directory cannot be read
-    printf("Page directory is not valid.\n%s\n", usage);
-    return -1;
-  }
-  if (maxdepth < 0) {  // fail if max depth is negative
-    printf("Enter a non-negative max depth.\n%s\n", usage);
-    return -1;
-  }
-  queue_t *internals = qopen();
-  hashtable_t *table = hopen(20);  // not sure if 20 is a good number to use but
-                                   // i dont think it really matters
-  webpage_t *page = webpage_new(seedurl, 0, NULL);
-  qput(internals, page);
+void *crawlPages(void *p) {
+  pageData_t *data = (pageData_t *)p;
+  webpage_t *page = webpage_new(data->seedurl, 0, NULL);
+  lqput(internals, page);
   webpage_t *new;
   int id = 0;
-  char *pageCopy = (char *)calloc(strlen(seedurl) + 1, sizeof(char));
-  strcpy(pageCopy, seedurl);
+  char *pageCopy = (char *)calloc(strlen(data->seedurl) + 1, sizeof(char));
+  strcpy(pageCopy, data->seedurl);
   hput(table, pageCopy, pageCopy, strlen(pageCopy));
   int depth = 0;
   webpage_t *qp1;
   while ((qp1 = (webpage_t *)qget(internals)) != NULL) {
     depth = webpage_getDepth(qp1);
     if (webpage_fetch(qp1)) {
-      pagesave(qp1, ++id, pagedir);
-      if (depth < maxdepth) {
+      pagesave(qp1, ++id, data->pagedir);
+      if (depth < data->maxDepth) {
         int i = 0;
         char *result = NULL;
         while ((i = webpage_getNextURL(qp1, i, &result)) > 0) {
-          if (hsearch(table, urlcheck, result, strlen(result)) == NULL &&
+          if (lhsearch(table, urlcheck, result, strlen(result)) == NULL &&
               IsInternalURL(result)) {  // if the given URL isn't already in the
                                         // hash table
             printf("depth = %d\n", depth);
             new = webpage_new(result, depth + 1,
                               NULL);  // create a new webpage for the given URL
-            qput(internals, new);
+            lqput(internals, new);
             printf("Added to queue: %s\n", result);
-            hput(table, result, result, strlen(result));
+            lhput(table, result, result, strlen(result));
           } else {  // if URL is already in hash table
             free(result);
           }
@@ -87,27 +71,57 @@ int main(int argc, char *argv[]) {
     }
     webpage_delete(qp1);
   }
-  /*
-  printf("\n");
-  //Ensure that there are 2 stylecounts
-  int i;
-  int styleCount = 0;
-  char* styleURL = "https://thayer.github.io/engs50/Resources/CodingStyle.html";
-  char* currURL;
-  for(i=0; i<len-1; i++){
-          webpage_t* p = (webpage_t*)(qget(internals));
-          currURL = webpage_getURL(p);
-          printf("URL: %s\n", currURL);
-          if (strcmp(currURL, styleURL)==0){
-                  styleCount=styleCount+1;
-          }
-          webpage_delete(p);
-  }
-  //	printf("There are %d CodingStyle.html entries\n", styleCount);
-  */
+  return NULL;
+}
 
-  // free all memory stored in queue
-  hclose(table);
-  qclose(internals);
+int main(int argc, char *argv[]) {
+  const char *usage =
+      "usage: crawler <seedurl> <pagedir> <maxdepth> <numThreads>";
+  char seedurl[80], pagedir[80];
+  int maxdepth, numThreads, i;
+  if (argc != 5) {  // ensure 4 arguments after crawler
+    printf("%s\n", usage);
+    return -1;
+  }
+  sscanf(argv[1], "%s", seedurl);  // scan args into their respective variables
+  sscanf(argv[2], "%s", pagedir);
+  sscanf(argv[3], "%d", &maxdepth);
+  sscanf(argv[4], "%d", &numThreads);
+  if (access(pagedir, R_OK) != 0) {  // fail if page directory cannot be read
+    printf("Page directory is not valid.\n%s\n", usage);
+    return -1;
+  }
+  if (maxdepth < 0) {  // fail if max depth is negative
+    printf("Enter a non-negative max depth.\n%s\n", usage);
+    return -1;
+  }
+  if (numThreads < 0) {  // fail if max depth is negative
+    printf("Enter a non-negative number of threads.\n%s\n", usage);
+    return -1;
+  }
+  pthread_t threads[numThreads];
+  pageData_t *p = (pageData_t *)malloc(sizeof(pageData_t));
+  strcpy(p->seedurl, seedurl);
+  strcpy(p->pagedir, pagedir);
+  p->maxDepth = maxdepth;
+  internals = lqopen();
+  table = lhopen(80);
+  for (i = 0; i < numThreads; i++) {
+    if (pthread_create(&threads[i], NULL, crawlPages, (void *)p) != 0) {
+      // TODO: move crawler code into a function crawlPages and decide what arg
+      // to pass to it (queue of pages and hashtable of URLs are both shared)
+      printf("Thread %d failed to be created.\n", i);
+      exit(EXIT_FAILURE);
+    }
+  }
+  for (i = 0; i < numThreads; i++) {
+    if (pthread_join(threads[i], NULL) != 0) {
+      printf("Thread %d failed to join.\n", i);
+      exit(EXIT_FAILURE);
+    }
+  }
+  free(p);
+  lhclose(table);
+  lqclose(internals);
   return 0;
 }

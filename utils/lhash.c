@@ -9,7 +9,7 @@
 
 pthread_mutex_t m;
 
-lhashtable_t* hopen(uint32_t hsize) {
+lhashtable_t* lhopen(uint32_t hsize) {
   pthread_mutex_init(&m, NULL);
   pthread_mutex_lock(&m);
   lhashtable_t* h = (lhashtable_t*)hopen(hsize);
