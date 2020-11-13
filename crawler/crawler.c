@@ -42,10 +42,12 @@ void *crawlPages(void *p) {
   int id = 0;
   char *pageCopy = (char *)calloc(strlen(data->seedurl) + 1, sizeof(char));
   strcpy(pageCopy, data->seedurl);
-  hput(table, pageCopy, pageCopy, strlen(pageCopy));
+  lhput(table, pageCopy, pageCopy, strlen(pageCopy));
   int depth = 0;
   webpage_t *qp1;
-  while ((qp1 = (webpage_t *)qget(internals)) != NULL) {
+  while ((qp1 = (webpage_t *)lqget(internals)) != NULL) {
+    // TODO: ensure the program doesn't terminate before all pages are saved
+    // (queue can be empty but not all pages retrieved yet)
     depth = webpage_getDepth(qp1);
     if (webpage_fetch(qp1)) {
       pagesave(qp1, ++id, data->pagedir);
