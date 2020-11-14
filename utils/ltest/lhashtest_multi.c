@@ -224,7 +224,7 @@ int main(void) {
   }
 
   sleep(2);
-	printf("final hash table: (should be empty)\n");
+	printf("Final hash table: (should be empty)\n");
   lhapply(h1, print_car);
   lhclose(h1);
 
