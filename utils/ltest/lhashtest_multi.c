@@ -16,7 +16,7 @@ typedef struct car {
   int year;
 } car_t;
 
-car_t *make_car(char plate[], double price, int year) {
+car_t *make_car(char* plate, double price, int year) {
   car_t *new;
   if (!(new = (car_t *)malloc(sizeof(car_t)))) {
     printf("Malloc failure\n");
@@ -53,8 +53,8 @@ void *htestA(void *h) {
   car_t *c2 = make_car("ABCDEF", 120000, 2019);
 
   printf("Test 2A : Put to hash table (Adds cars 123123 and ABCDEF)\n");
-  lhput(h1, (void *)c1, (char*)(c1->plate), sizeof((char*)(c1->plate)));
-  lhput(h1, (void *)c2, (char*)(c2->plate), sizeof((char*)(c2->plate)));
+  lhput(h1, (void *)c1, (char*)(c1->plate), strlen((char*)(c1->plate)));
+  lhput(h1, (void *)c2, (char*)(c2->plate), strlen((char*)(c2->plate)));
   printf("\n\n");
 
   printf("Test 3A : Apply print to nonempty hashtable\n");
@@ -68,13 +68,13 @@ void *htestA(void *h) {
 
   printf("Test 4A: Search for plate 'ABCDEF' from nonempty hash table\n");
   char *plate1 = "ABCDEF";
-  car_t *find_car1 = lhsearch(h1, platecheck, (void *)plate1, sizeof((void*)plate1));
+  car_t *find_car1 = lhsearch(h1, platecheck, (void *)plate1, strlen((void*)plate1));
   print_car(find_car1);
   printf("\n\n");
 
   printf("Test 5A: Search for plate 'THIS_SHOULD_FAIL' from nonempty hash table\n");
   char *plate2 = "THIS_SHOULD_FAIL";
-  car_t *find_car2 = lhsearch(h1, platecheck, (void *)plate2, sizeof((void*)plate2));
+  car_t *find_car2 = lhsearch(h1, platecheck, (void *)plate2, strlen((void*)plate2));
   print_car(find_car2);
   printf("\n\n");
 
@@ -84,8 +84,8 @@ void *htestA(void *h) {
   char *plate3 = "123123";
   printf("Test 6A: Remove plate from  nonempty hash table\n");
   printf("(Removing plates 123123 and ABCDEF)\n");
-  free(lhremove(h1, platecheck, (void *)plate1, sizeof((void*)plate1)));
-  free(lhremove(h1, platecheck, (void *)plate3, sizeof((void*)plate3)));
+  free(lhremove(h1, platecheck, (void *)plate1, strlen((void*)plate1)));
+  free(lhremove(h1, platecheck, (void *)plate3, strlen((void*)plate3)));
   printf("Hash table after removal:\n");
   lhapply(h1, print_car);
   printf("\n\n");
@@ -100,8 +100,8 @@ void *htestB(void *h) {
   car_t *c2 = make_car("GHIJKL", 120000, 2019);
 
   printf("Test 2B : Put to hash table (Adds cars 456456 and GHIJKL)\n");
-	lhput(h1, (void *)c1, (char*)(c1->plate), sizeof((char*)(c1->plate)));
-	lhput(h1, (void *)c2, (char*)(c2->plate), sizeof((char*)(c2->plate)));
+	lhput(h1, (void *)c1, (char*)(c1->plate), strlen((char*)(c1->plate)));
+	lhput(h1, (void *)c2, (char*)(c2->plate), strlen((char*)(c2->plate)));
 
   printf("\n\n");
 
@@ -116,13 +116,13 @@ void *htestB(void *h) {
 
   printf("Test 4B: Search for plate 'GHIJKL' from nonempty hash table\n");
   char *plate1 = "GHIJKL";
-  car_t *find_car1 = lhsearch(h1, platecheck, (void *)plate1, sizeof((void*)plate1));
+  car_t *find_car1 = lhsearch(h1, platecheck, (void *)plate1, strlen((void*)plate1));
   print_car(find_car1);
   printf("\n\n");
 
   printf("Test 5B: Search for plate 'THIS_SHOULD_FAIL' from nonempty hash table\n");
   char *plate2 = "THIS_SHOULD_FAIL";
-  car_t *find_car2 = lhsearch(h1, platecheck, (void *)plate2, sizeof((void*)plate2));
+  car_t *find_car2 = lhsearch(h1, platecheck, (void *)plate2, strlen((void*)plate2));
   print_car(find_car2);
   printf("\n\n");
 
@@ -132,8 +132,8 @@ void *htestB(void *h) {
   char *plate3 = "456456";
   printf("Test 6B: Remove plate from  nonempty hash table\n");
   printf("(Removing plates 456456 and GHIJKL)\n");
-  free(lhremove(h1, platecheck, (void *)plate1, sizeof((void*)plate1)));
-  free(lhremove(h1, platecheck, (void *)plate3, sizeof((void*)plate3)));
+  free(lhremove(h1, platecheck, (void *)plate1, strlen((void*)plate1)));
+  free(lhremove(h1, platecheck, (void *)plate3, strlen((void*)plate3)));
   printf("Hash table after removal:\n");
   lhapply(h1, print_car);
   printf("\n\n");
@@ -149,8 +149,8 @@ void *htestC(void *h) {
   car_t *c2 = make_car("MNOPQR", 120000, 2019);
 
   printf("Test 2C : Put to hash table (Adds cars 789789 and MNOPQR)\n");
-	lhput(h1, (void *)c1, (char*)(c1->plate), sizeof((char*)(c1->plate)));
-	lhput(h1, (void *)c2, (char*)(c2->plate), sizeof((char*)(c2->plate)));
+	lhput(h1, (void *)c1, (char*)(c1->plate), strlen((char*)(c1->plate)));
+	lhput(h1, (void *)c2, (char*)(c2->plate), strlen((char*)(c2->plate)));
   printf("\n\n");
 
   printf("Test 3C : Apply print to nonempty hash table\n");
@@ -164,13 +164,13 @@ void *htestC(void *h) {
 
   printf("Test 4C: Search for plate 'MNOPQR' from nonempty hash table/n");
   char *plate1 = "MNOPQR";
-  car_t *find_car1 = lhsearch(h1, platecheck, (void *)plate1, sizeof((void*)plate1));
+  car_t *find_car1 = lhsearch(h1, platecheck, (void *)plate1, strlen((void*)plate1));
   print_car(find_car1);
   printf("\n\n");
 
   printf("Test 5C: Search for plate 'THIS_SHOULD_FAIL' from nonempty hash table\n");
   char *plate2 = "THIS_SHOULD_FAIL";
-  car_t *find_car2 = lhsearch(h1, platecheck, (void *)plate2, sizeof((void*)plate2));
+  car_t *find_car2 = lhsearch(h1, platecheck, (void *)plate2, strlen((void*)plate2));
   print_car(find_car2);
   printf("\n\n");
 
