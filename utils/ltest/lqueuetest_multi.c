@@ -65,13 +65,13 @@ void *qtestA(void *q) {
   // print_car(cc1);
   // printf("\n\n");
 
-  printf("Test 5A: Search for plate 'ABCDEF' from nonempty queue\n");
+  printf("Test 4A: Search for plate 'ABCDEF' from nonempty queue\n");
   char *plate1 = "ABCDEF";
   car_t *find_car1 = lqsearch(q1, platecheck, (void *)plate1);
   print_car(find_car1);
   printf("\n\n");
 
-  printf("Test 6A: Search for plate 'THIS_SHOULD_FAIL' from nonempty queue\n");
+  printf("Test 5A: Search for plate 'THIS_SHOULD_FAIL' from nonempty queue\n");
   char *plate2 = "THIS_SHOULD_FAIL";
   car_t *find_car2 = lqsearch(q1, platecheck, (void *)plate2);
   print_car(find_car2);
@@ -81,7 +81,7 @@ void *qtestA(void *q) {
   lqapply(q1, print_car);
 
   char *plate3 = "123123";
-  printf("Test 7A: Remove plate from  nonempty queue\n");
+  printf("Test 6A: Remove plate from  nonempty queue\n");
   printf("(Removing plates 123123 and ABCDEF)\n");
   free(lqremove(q1, platecheck, (void *)plate1));
   free(lqremove(q1, platecheck, (void *)plate3));
@@ -112,13 +112,13 @@ void *qtestB(void *q) {
   // print_car(cc1);
   // printf("\n\n");
 
-  printf("Test 5B: Search for plate 'GHIJKL' from nonempty queue\n");
+  printf("Test 4B: Search for plate 'GHIJKL' from nonempty queue\n");
   char *plate1 = "GHIJKL";
   car_t *find_car1 = lqsearch(q1, platecheck, (void *)plate1);
   print_car(find_car1);
   printf("\n\n");
 
-  printf("Test 6B: Search for plate 'THIS_SHOULD_FAIL' from nonempty queue\n");
+  printf("Test 5B: Search for plate 'THIS_SHOULD_FAIL' from nonempty queue\n");
   char *plate2 = "THIS_SHOULD_FAIL";
   car_t *find_car2 = lqsearch(q1, platecheck, (void *)plate2);
   print_car(find_car2);
@@ -128,7 +128,7 @@ void *qtestB(void *q) {
   lqapply(q1, print_car);
 
   char *plate3 = "456456";
-  printf("Test 7B: Remove plate from  nonempty queue\n");
+  printf("Test 6B: Remove plate from  nonempty queue\n");
   printf("(Removing plates 456456 and GHIJKL)\n");
   free(lqremove(q1, platecheck, (void *)plate1));
   free(lqremove(q1, platecheck, (void *)plate3));
@@ -160,13 +160,13 @@ void *qtestC(void *q) {
   // print_car(cc1);
   // printf("\n\n");
 
-  printf("Test 5C: Search for plate 'MNOPQR' from nonempty queue\n");
+  printf("Test 4C: Search for plate 'MNOPQR' from nonempty queue\n");
   char *plate1 = "MNOPQR";
   car_t *find_car1 = lqsearch(q1, platecheck, (void *)plate1);
   print_car(find_car1);
   printf("\n\n");
 
-  printf("Test 6C: Search for plate 'THIS_SHOULD_FAIL' from nonempty queue\n");
+  printf("Test 5C: Search for plate 'THIS_SHOULD_FAIL' from nonempty queue\n");
   char *plate2 = "THIS_SHOULD_FAIL";
   car_t *find_car2 = lqsearch(q1, platecheck, (void *)plate2);
   print_car(find_car2);
@@ -176,7 +176,7 @@ void *qtestC(void *q) {
   lqapply(q1, print_car);
 
   char *plate3 = "789789";
-  printf("Test 7C: Remove plate from  nonempty queue\n");
+  printf("Test 6C: Remove plate from  nonempty queue\n");
   printf("(Removing plates 789789 and MNOPQR)\n");
   free(lqremove(q1, platecheck, (void *)plate1));
   free(lqremove(q1, platecheck, (void *)plate3));
