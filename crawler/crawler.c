@@ -112,14 +112,18 @@ int main(int argc, char *argv[]) {
     if (pthread_create(&threads[i], NULL, crawlPages, (void *)p) != 0) {
       // TODO: move crawler code into a function crawlPages and decide what arg
       // to pass to it (queue of pages and hashtable of URLs are both shared)
-      printf("Thread %d failed to be created.\n", i);
+      printf("Thread %d failed to be created.\n", i + 1);
       exit(EXIT_FAILURE);
+    } else {
+      printf("Thread %d created\n", i + 1);
     }
   }
   for (i = 0; i < numThreads; i++) {
     if (pthread_join(threads[i], NULL) != 0) {
       printf("Thread %d failed to join.\n", i);
       exit(EXIT_FAILURE);
+    } else {
+      printf("Thread %d finished\n", i + 1);
     }
   }
   free(p);
