@@ -9,5 +9,5 @@ fi
 
 make clean
 make all
-valgrind --leak-check=full ./crawler "https://thayer.github.io/engs50/" "../pages" 1 2
+valgrind --leak-check=full ./crawler "https://thayer.github.io/engs50/" "../pages" 1 3
 

@@ -38,23 +38,19 @@ bool urlcheck(void *elementp, const void *searchkeyp) {
 
 void *crawlPages(void *p) {
   pageData_t *data = (pageData_t *)p;
-  webpage_t *page = webpage_new(data->seedurl, 0, NULL);
-  lqput(internals, page);
   webpage_t *new;
-  char *pageCopy = (char *)calloc(strlen(data->seedurl) + 1, sizeof(char));
-  strcpy(pageCopy, data->seedurl);
-  lhput(table, pageCopy, pageCopy, strlen(pageCopy));
   int depth = 0;
   webpage_t *qp1;
-  while ((qp1 = (webpage_t *)lqget(internals)) != NULL) { // ||  crawling != 0) {
-		//		printf("crawling = %d\n",crawling);
-		//crawling++;
-		// TODO: ensure the program doesn't terminate before all pages are saved
+  while ((qp1 = (webpage_t *)lqget(internals)) !=
+         NULL) {  // ||  crawling != 0) {
+                  //		printf("crawling = %d\n",crawling);
+                  // crawling++;
+    // TODO: ensure the program doesn't terminate before all pages are saved
     // (queue can be empty but not all pages retrieved yet)
     depth = webpage_getDepth(qp1);
     if (webpage_fetch(qp1)) {
-			pagesave(qp1, ++id, data->pagedir);
-			printf("made page for %s\n",webpage_getURL(qp1));
+      pagesave(qp1, ++id, data->pagedir);
+      printf("made page for %s\n", webpage_getURL(qp1));
       if (depth < data->maxDepth) {
         int i = 0;
         char *result = NULL;
@@ -75,9 +71,9 @@ void *crawlPages(void *p) {
         }
       }
     }
-		//crawling--;
+    // crawling--;
     webpage_delete(qp1);
-	}
+  }
   return NULL;
 }
 
@@ -113,8 +109,13 @@ int main(int argc, char *argv[]) {
   p->maxDepth = maxdepth;
   internals = lqopen();
   table = lhopen(80);
-	crawling = 0;
-	id = 0;
+  crawling = 0;
+  id = 0;
+  webpage_t *page = webpage_new(seedurl, 0, NULL);
+  lqput(internals, page);
+  char *pageCopy = (char *)calloc(strlen(seedurl) + 1, sizeof(char));
+  strcpy(pageCopy, seedurl);
+  lhput(table, pageCopy, pageCopy, strlen(pageCopy));
   for (i = 0; i < numThreads; i++) {
     if (pthread_create(&threads[i], NULL, crawlPages, (void *)p) != 0) {
       // TODO: move crawler code into a function crawlPages and decide what arg
@@ -123,6 +124,7 @@ int main(int argc, char *argv[]) {
       exit(EXIT_FAILURE);
     } else {
       printf("Thread %d created\n", i + 1);
+      sleep(1);
     }
   }
   for (i = 0; i < numThreads; i++) {
