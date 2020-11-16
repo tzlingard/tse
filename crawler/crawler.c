@@ -128,6 +128,8 @@ int main(int argc, char *argv[]) {
   }
   free(p);
   lhclose(table);
+  printf("closed table\n");
   lqclose(internals);
+  printf("closed queue\n");
   return 0;
 }
